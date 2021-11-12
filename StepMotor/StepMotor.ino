@@ -6,7 +6,7 @@
 #define y_limit_max 11  //End stop HIGH
 
 const int stepsPerRev = 200; // <=> 1.8° par step
-int pulseWidthMicros = 500;  // microseconds
+int pulseWidthMicros = 500;  // microseconds //def 100
 int millisBtwnSteps = 1000;
 
 // 2 mm => 1 tour => 200 steps
@@ -154,9 +154,7 @@ void CommandManager(){
   }
 }
 
-//todo : petit coup de pouce car semble bloqué !! :(
-
-float GetVal(){
+float GetVal(){ // retourne en float la suite du message
   return String(message).substring(1).toFloat();
 }
 
