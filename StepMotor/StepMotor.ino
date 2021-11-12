@@ -56,7 +56,7 @@ void loop() {
 
     case etalonnage:
       digitalWrite(enPin, LOW);
-      DemandeEtalonnage(false, 10);
+      DemandeEtalonnage(true, 10);
       //356.5 mm entre d_min et d_max
       digitalWrite(enPin, HIGH);
       todo = arret;
@@ -87,11 +87,10 @@ bool SerialManager() {
     {
       //Add the incoming byte to our message
       message[message_pos] = inByte;
-      message_pos++;
+      message_pos ++;
     }else{//Full message received...
       //Add null character to string
       message[message_pos] = '\0';      
-      
       //Reset for the next message
       message_pos = 0;
     }
@@ -100,6 +99,7 @@ bool SerialManager() {
 }
 
 void CommandManager(){
+  float val; //à déclarer en dehors du switch !
   switch(message[0]){
     case 'e':
     case 'E':
@@ -107,6 +107,7 @@ void CommandManager(){
       au = false;
       todo = etalonnage;
       break;
+      
     case 'a':
     case 'A':
     case 's':
@@ -115,39 +116,49 @@ void CommandManager(){
       au = true;
       digitalWrite(enPin, HIGH); //arrêt
       break;
+      
     case 'd':
     case 'D':    
       Serial.print("D max = ");
       Serial.println(d_abs_mm); 
       break;
+      
     case 'p':
-    case 'P':    
-      Serial.print("Position = ");
-      Serial.println(d); 
+    case 'P':
+      PrintPosition();
       break;
+      
     case 'b':
-      digitalWrite(enPin, LOW);
-      Deplacement(-1, true);
-      digitalWrite(enPin, HIGH);
     case 'B':
+      Serial.println("descente demandée");
+      val = GetVal();
+      if (val == 0) val = -1;
+      if (val > 0)  val = -val;      
       digitalWrite(enPin, LOW);
-      Deplacement(-1, false);
+      Deplacement(val);
       digitalWrite(enPin, HIGH);
+      PrintPosition();
       break;
+      
     case 'h':
-      digitalWrite(enPin, LOW);
-      Deplacement(1, true);
-      digitalWrite(enPin, HIGH);
     case 'H':
+      Serial.println("monté demandée");
+      val = GetVal();
+      if (val == 0) val = 1;
+      if (val < 0)  val = -val;
       digitalWrite(enPin, LOW);
-      Deplacement(1, false);
+      Deplacement(val);
       digitalWrite(enPin, HIGH);
+      PrintPosition();
       break;      
   }
 }
 
 //todo : petit coup de pouce car semble bloqué !! :(
 
+float GetVal(){
+  return String(message).substring(1).toFloat();
+}
 
 void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
   Etalonnage(termineExtremiteHaute);
@@ -158,9 +169,9 @@ void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
     if (degagement < 0)
       degagement = -degagement;
     if (termineExtremiteHaute)
-      Deplacement(-degagement, false);    
+      Deplacement(-degagement);    
     else
-      Deplacement(degagement, false); 
+      Deplacement(degagement); 
   }  
 }
 
@@ -169,69 +180,83 @@ float Etalonnage(bool termineExtremiteHaute){
   if(termineExtremiteHaute)
   { 
     //on descend jusqu'à Y min par pas de 10mm 
-    while(Deplacement(-10, true) && !au){}
+    while(Deplacement(-10) && !au){}
     if (au) return;
     Serial.println("Y min atteint");
     //d_abs_mm = 0;
     d = 0;
     //on remonte jusqu'à Y max  
-    while(Deplacement(10, true) && !au){}
+    while(Deplacement(10) && !au){}
     if (au) return;
     Serial.println("Y max atteint");
-    Serial.print("D max = ");
     d_abs_mm = d;
-    Serial.println(d_abs_mm); 
      
   }else{
     
     //on monte jusqu'à Y max par pas de 10mm 
-    while(Deplacement(10, true) && !au){}
+    while(Deplacement(10) && !au){}
     if (au) return;
     Serial.println("Y max atteint");
     d = 0;
     //on descend jusqu'à Y min  
-    while(Deplacement(-10, true) && !au){}
+    while(Deplacement(-10) && !au){}
     if (au) return;
     Serial.println("Y min atteint");
-    Serial.print("D max = ");
     d_abs_mm = -d;
     d = 0;
-    Serial.println(-d_abs_mm);
   }
   
+  Serial.print("D max = ");
+  Serial.print(d_abs_mm);
+  Serial.println("mm");
   Serial.println("Etalonnage terminé");   
 }
 
-bool Deplacement(float d_rel_mm, bool testlimit){
+bool Deplacement(float d_rel_mm){
   float d_step_mm_signed;  
   int steps;
   
   if (d_rel_mm > 0){
+    //on monte
     digitalWrite(dirYPin, HIGH);
     steps = d_rel_mm / d_step_mm;
     d_step_mm_signed = d_step_mm;
+
+    for (int i = 0; i < steps; i++) {
+      if (digitalRead(y_limit_max) == LOW)
+        return false;
+      if (InteractionManager()) 
+        return false;
+      Move1Step();
+      d += d_step_mm_signed;
+    }    
   }
   else{
+    //on descend
     digitalWrite(dirYPin, LOW);
     steps = - d_rel_mm / d_step_mm;
-    d_step_mm_signed = d_step_mm;
-  }
-  
-  for (int i = 0; i < steps; i++) {
-    if (testlimit && digitalRead(y_limit_min) == LOW)
-      return false;      
-    Move1Step();
-    //d_abs_mm += d_step_mm_signed;
-    d += d_step_mm_signed;
+    d_step_mm_signed = -d_step_mm;
+
+    for (int i = 0; i < steps; i++) {
+      if (digitalRead(y_limit_min) == LOW)
+        return false;
+      if (InteractionManager()) 
+        return false;
+      Move1Step();
+      d += d_step_mm_signed;
+    }
   }
   return true;
 }
 
 void Move1Step(){
-  if (InteractionManager()) 
-    return;
   digitalWrite(stepYPin, HIGH);
   delayMicroseconds(pulseWidthMicros);
   digitalWrite(stepYPin, LOW);
   delayMicroseconds(millisBtwnSteps);  
+}
+
+void PrintPosition(){
+  Serial.print("Position = ");
+  Serial.println(d);
 }
