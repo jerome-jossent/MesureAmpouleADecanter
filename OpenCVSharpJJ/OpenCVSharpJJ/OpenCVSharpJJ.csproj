@@ -127,11 +127,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ImageIHM_UC.xaml.cs">
+      <DependentUpon>ImageIHM_UC.xaml</DependentUpon>
+    </Compile>
     <Compile Include="MesureAmpouleADecanter.xaml.cs">
       <DependentUpon>MesureAmpouleADecanter.xaml</DependentUpon>
     </Compile>
     <Compile Include="VideoInInfo.cs" />
     <Page Include="ihm_code_UC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ImageIHM_UC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -227,12 +234,6 @@
   <ItemGroup>
     <Resource Include="images\arrow_down.png" />
     <Resource Include="images\arrow_up.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ImageProcessing\ImageProcessing.csproj">
-      <Project>{45e48cad-d8c8-4a1c-bc81-0f81b0b5b1d8}</Project>
-      <Name>ImageProcessing</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

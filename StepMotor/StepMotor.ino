@@ -25,7 +25,24 @@ enum Action {arret, etalonnage, STOP};
 Action todo;
 bool au;
 
+//Memory Manager ==================================================
+//#include <Wire.h>
+//#define EEPROM_I2C_ADDRESS_0 0x50
+//#define EEPROM_I2C_ADDRESS_1 0x51
+//int EEPROM_I2C_ADDRESS = NULL;
+
+#include <AT24C256.h>
+AT24C256 eeprom = AT24C256();
+int Add_d = 0;
+int Add_dmax = 10;
+
+union Float_Bytes{
+  float f;
+  byte by[4];
+};
+
 void setup() {
+  
   Serial.begin(9600);
   // init CNC shield
   pinMode(enPin, OUTPUT);
@@ -35,11 +52,16 @@ void setup() {
   pinMode(y_limit_min, INPUT_PULLUP);
   pinMode(y_limit_max, INPUT_PULLUP);
   
-  Serial.println(F("CNC Shield Initialized"));
-  d_abs_mm = 0;
-
   todo = arret;
   au = false;
+    
+  d = Read_d(Add_d);
+  PrintPosition();
+    
+  d_abs_mm = Read_d(Add_dmax);
+  PrintD();
+  
+  Serial.println(F("CNC Shield Initialized"));
 }
 
 void loop() {  
@@ -131,6 +153,7 @@ void CommandManager(){
       digitalWrite(enPin, LOW);
       Deplacement(val);
       digitalWrite(enPin, HIGH);
+      Save_d(Add_d, d);
       PrintPosition();
       break;
       
@@ -142,6 +165,7 @@ void CommandManager(){
       digitalWrite(enPin, LOW);
       Deplacement(val);
       digitalWrite(enPin, HIGH);
+      Save_d(Add_d, d);
       PrintPosition();
       break;      
   }
@@ -163,7 +187,8 @@ void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
     if (termineExtremiteHaute)
       Deplacement(-degagement);    
     else
-      Deplacement(degagement); 
+      Deplacement(degagement);    
+    Save_d(Add_d, d);
   }
   PrintPosition();
 }
@@ -174,32 +199,33 @@ float Etalonnage(bool termineExtremiteHaute){
   { 
     //on descend jusqu'à Y min par pas de 10mm 
     while(Deplacement(-10) && !au){}
+    Save_d(Add_d, d);
     if (au) return;
-    Serial.println("Y min atteint");
     d = 0;
     
     //on remonte jusqu'à Y max  
     while(Deplacement(10) && !au){}
+    Save_d(Add_d, d);
     if (au) return;
-    Serial.println("Y max atteint");
     d_abs_mm = d;
-     
+         
   }else{
     
     //on monte jusqu'à Y max par pas de 10mm 
     while(Deplacement(10) && !au){}
+    Save_d(Add_d, d);
     if (au) return;
-    Serial.println("Y max atteint");
     d = 0;
     
     //on descend jusqu'à Y min  
     while(Deplacement(-10) && !au){}
+    Save_d(Add_d, d);
     if (au) return;
-    Serial.println("Y min atteint");
     d_abs_mm = -d;
     d = 0;
   }
-  
+  Save_d(Add_dmax, d_abs_mm);
+  PrintD();
   Serial.println("Etalonnage terminé");
 }
 
@@ -214,11 +240,14 @@ bool Deplacement(float d_rel_mm){
     d_step_mm_signed = d_step_mm;
 
     for (int i = 0; i < steps; i++) {
-      if (digitalRead(y_limit_max) == LOW) return false;
+      if (digitalRead(y_limit_max) == LOW) {
+        Serial.println("Y max atteint");
+        return false;
+      }
       Move1Step();
       if (au) return false;
       d += d_step_mm_signed;
-    }    
+    }
   }
   else{
     //on descend
@@ -227,7 +256,11 @@ bool Deplacement(float d_rel_mm){
     d_step_mm_signed = -d_step_mm;
 
     for (int i = 0; i < steps; i++) {
-      if (digitalRead(y_limit_min) == LOW) return false;
+      if (digitalRead(y_limit_min) == LOW) 
+      {
+        Serial.println("Y min atteint");
+        return false;
+      }
       Move1Step();
       if (au) return false;
       d += d_step_mm_signed;
@@ -243,6 +276,24 @@ void Move1Step(){
   delayMicroseconds(pulseWidthMicros);
   digitalWrite(stepYPin, LOW);
   delayMicroseconds(millisBtwnSteps); 
+}
+
+void Save_d(int Add, float val){
+  Float_Bytes D;
+  D.f = val;
+  eeprom.write(D.by[0], Add);
+  eeprom.write(D.by[1], Add + 1);
+  eeprom.write(D.by[2], Add + 2);
+  eeprom.write(D.by[3], Add + 3);
+}
+
+float Read_d(int Add){
+  Float_Bytes D;
+  D.by[0] = eeprom.read(Add);
+  D.by[1] = eeprom.read(Add + 1);
+  D.by[2] = eeprom.read(Add + 2);
+  D.by[3] = eeprom.read(Add + 3);
+  return D.f;
 }
 
 void PrintPosition(){

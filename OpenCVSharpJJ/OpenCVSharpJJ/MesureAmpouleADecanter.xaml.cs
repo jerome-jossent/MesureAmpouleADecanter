@@ -25,6 +25,17 @@ namespace OpenCVSharpJJ
 {
     public partial class MesureAmpouleADecanter : System.Windows.Window, INotifyPropertyChanged
     {
+        public enum ImageType
+        {
+            original,
+            rotated,
+            roi1, roi2,
+            gray1, gray2,
+            bw1, bw2,
+            canny,
+            bgr1, bgr2,
+            debug1, debug2, debug3, debug4, debug5
+        }
 
         #region BINDINGS
         public event PropertyChangedEventHandler PropertyChanged;
@@ -168,12 +179,15 @@ namespace OpenCVSharpJJ
 
         #region PARAMETERS
         long T0;
-        Mat frame;
-        Mat frameGray;
-        Mat cannymat;
-        Mat BGR;
-
+        Mat frame = new Mat();
+        Mat rotated = new Mat();
+        Mat frameGray = new Mat();
+        Mat cannymat = new Mat();
+        Mat BGR = new Mat();
+        Mat ROI1 = new Mat();
         Mat[] bgr;
+        Dictionary<ImageType, Mat> MatNamesToMats;
+
         Thread thread;
         int indexDevice;
         VideoInInfo.Format format;
@@ -191,11 +205,8 @@ namespace OpenCVSharpJJ
         Communication_Série.Communication_Série cs;
         string buffer;
         char[] split_car = new char[] { '\n' };
-
-        Dictionary<System.Windows.Controls.Image, System.Windows.Controls.ComboBox> ImagesCbxs;
-        Dictionary<string, Mat> MatNamesToMats;
-        Dictionary<System.Windows.Controls.Image, string> ImagesMatNames;
-        Dictionary<System.Windows.Controls.Image, System.Drawing.Bitmap> ImagesBitmaps;
+        float camera_pos;
+        float camera_pos_max;
         #endregion
 
         #region WINDOW MANAGEMENT
@@ -220,34 +231,24 @@ namespace OpenCVSharpJJ
                 cbx_COM.Text = nom;
             cbx_bauds.Text = "9600";
 
-            //IHM
-            ImagesCbxs = new Dictionary<System.Windows.Controls.Image, ComboBox>();
-            ImagesCbxs.Add(image, cbx_image0);
-            ImagesCbxs.Add(image_1, cbx_image1);
-            ImagesCbxs.Add(image_2, cbx_image2);
-            ImagesCbxs.Add(image_3, cbx_image3);
+            MatNamesToMats = new Dictionary<ImageType, Mat>();
+            MatNamesToMats.Add(ImageType.original, frame);
+            MatNamesToMats.Add(ImageType.gray1, frameGray);
+            MatNamesToMats.Add(ImageType.canny, cannymat);
+            MatNamesToMats.Add(ImageType.bgr1, BGR);
+            MatNamesToMats.Add(ImageType.roi1, ROI1);
+            MatNamesToMats.Add(ImageType.rotated, rotated);
 
-            MatNamesToMats = new Dictionary<string, Mat>();
-            MatNamesToMats.Add("frame", frame);
-            MatNamesToMats.Add("frameGray", frameGray);
-            MatNamesToMats.Add("cannymat", cannymat);
-            MatNamesToMats.Add("BGR", BGR);
+            i1._UpdateCombobox(MatNamesToMats);
+            i2._UpdateCombobox(MatNamesToMats);
+            i3._UpdateCombobox(MatNamesToMats);
+            i4._UpdateCombobox(MatNamesToMats);
 
-            foreach (ComboBox cbx in ImagesCbxs.Values)
-                foreach (string nomImage in MatNamesToMats.Keys)
-                    cbx.Items.Add(nomImage);
-
-            ImagesMatNames = new Dictionary<System.Windows.Controls.Image, string>();
-            ImagesMatNames.Add(image, "frame");
-            ImagesMatNames.Add(image_1, "frameGray");
-            ImagesMatNames.Add(image_2, "cannymat");
-            ImagesMatNames.Add(image_3, "BGR");
-
-            ImagesBitmaps = new Dictionary<System.Windows.Controls.Image, Bitmap>();
-            ImagesBitmaps.Add(image, _imageSource);
-            ImagesBitmaps.Add(image_1, _image1);
-            ImagesBitmaps.Add(image_2, _image2);
-            ImagesBitmaps.Add(image_3, _image3);
+            int i = 0;
+            i1.matName = MatNamesToMats.ElementAt(i++).Key;
+            i2.matName = MatNamesToMats.ElementAt(i++).Key;
+            i3.matName = MatNamesToMats.ElementAt(i++).Key;
+            i4.matName = MatNamesToMats.ElementAt(i++).Key;
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -470,12 +471,12 @@ namespace OpenCVSharpJJ
                         Init();
                         first = false;
                     }
-                    Cv2.Rotate(frame, frame, RotateFlags.Rotate90Counterclockwise);
+                    Cv2.Rotate(frame, rotated, RotateFlags.Rotate90Counterclockwise);
 
-                    if (!frame.Empty())
-                        FrameProcessing(frame);
+                    if (!rotated.Empty())
+                        FrameProcessing(rotated);
 
-                    videoWriter?.Write(frame);
+                    videoWriter?.Write(rotated);
 
                     DisplayFPS();
                 }
@@ -483,25 +484,30 @@ namespace OpenCVSharpJJ
         }
         #endregion
 
-        void FrameProcessing(Mat frame)
+        void FrameProcessing(Mat rotated)
         {
-            frameGray = new Mat();
-            Cv2.CvtColor(frame, frameGray, ColorConversionCodes.RGB2GRAY);
+            if (roi.Width > 0)
+                ROI1 = new Mat(rotated, roi);
+            else
+                ROI1 = rotated;
 
-            cannymat = new Mat();
+            //frameGray = new Mat();
+            Cv2.CvtColor(ROI1, frameGray, ColorConversionCodes.RGB2GRAY);
+
+            //cannymat = new Mat();
             Cv2.Canny(frameGray, cannymat, 50, 200);
 
             bgr[0] = cannymat;
-            bgr[1] = new Mat(frame.Size(), MatType.CV_8UC1);
+            bgr[1] = new Mat(rotated.Size(), MatType.CV_8UC1);
             bgr[2] = bgr[1];// new Mat(frame.Size(), MatType.CV_8UC1);
 
-            BGR = new Mat();
+            //BGR = new Mat();
             Cv2.Merge(bgr, BGR);
 
             UpdateDisplayImages();
         }
 
-        #region DISPLAY IMAGE
+        #region DISPLAY IMAGE(S)
         void Init()
         {
             bgr = new Mat[] { new Mat(frame.Size(), MatType.CV_8UC1),
@@ -538,17 +544,25 @@ namespace OpenCVSharpJJ
             //OnPropertyChanged("_image2");
             //OnPropertyChanged("_image3");
 
-            Show(frame, ref imageSource);
-            OnPropertyChanged("_imageSource");
 
-            Show(frameGray, ref image1);
-            OnPropertyChanged("_image1");
+            i1._Update(MatNamesToMats);
+            i2._Update(MatNamesToMats);
+            i3._Update(MatNamesToMats);
+            i4._Update(MatNamesToMats);
 
-            Show(cannymat, ref image2);
-            OnPropertyChanged("_image2");
 
-            Show(BGR, ref image3);
-            OnPropertyChanged("_image3");
+
+            //Show(frame, ref imageSource);
+            //OnPropertyChanged("_imageSource");
+
+            //Show(frameGray, ref image1);
+            //OnPropertyChanged("_image1");
+
+            //Show(cannymat, ref image2);
+            //OnPropertyChanged("_image2");
+
+            //Show(BGR, ref image3);
+            //OnPropertyChanged("_image3");
 
         }
 
@@ -575,48 +589,48 @@ namespace OpenCVSharpJJ
                 bitmap = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frame);
         }
 
-        private void Image_Enter(object sender, MouseEventArgs e)
-        {
-            System.Windows.Controls.Image im = sender as System.Windows.Controls.Image;
-            ComboBox cbx = ImagesCbxs[im];
-            cbx.Visibility = Visibility.Visible;
-        }
+        //private void Image_Enter(object sender, MouseEventArgs e)
+        //{
+        //    System.Windows.Controls.Image im = sender as System.Windows.Controls.Image;
+        //    ComboBox cbx = ImagesCbxs[im];
+        //    cbx.Visibility = Visibility.Visible;
+        //}
 
-        private void Image_Leave(object sender, MouseEventArgs e)
-        {
-            System.Windows.Controls.Image im = sender as System.Windows.Controls.Image;
-            ComboBox cbx = ImagesCbxs[im];
-            cbx.Visibility = Visibility.Collapsed;
-        }
+        //private void Image_Leave(object sender, MouseEventArgs e)
+        //{
+        //    System.Windows.Controls.Image im = sender as System.Windows.Controls.Image;
+        //    ComboBox cbx = ImagesCbxs[im];
+        //    cbx.Visibility = Visibility.Collapsed;
+        //}
 
-        private void ImageCBX_Enter(object sender, MouseEventArgs e)
-        {
-            ComboBox cbx = sender as ComboBox;
-            cbx.Visibility = Visibility.Visible;
-        }
+        //private void ImageCBX_Enter(object sender, MouseEventArgs e)
+        //{
+        //    ComboBox cbx = sender as ComboBox;
+        //    cbx.Visibility = Visibility.Visible;
+        //}
 
-        private void ImageCBX_Leave(object sender, MouseEventArgs e)
-        {
-            ComboBox cbx = sender as ComboBox;
-            cbx.Visibility = Visibility.Collapsed;
-        }
+        //private void ImageCBX_Leave(object sender, MouseEventArgs e)
+        //{
+        //    ComboBox cbx = sender as ComboBox;
+        //    cbx.Visibility = Visibility.Collapsed;
+        //}
 
-        private void ImageCBX_SelectionChange(object sender, SelectionChangedEventArgs e)
-        {
-            ComboBox cbx = sender as ComboBox;
-            string matName = cbx.Text;
-            System.Windows.Controls.Image image = null;
-            foreach (var item in ImagesCbxs)
-            {
-                ComboBox item_cbx = item.Value;
-                if (item_cbx == cbx)
-                {
-                    image = item.Key;
-                    break;
-                }
-            }
-            ImagesMatNames[image] = matName;
-        }
+        //private void ImageCBX_SelectionChange(object sender, SelectionChangedEventArgs e)
+        //{
+        //    ComboBox cbx = sender as ComboBox;
+        //    string matName = cbx.Text;
+        //    System.Windows.Controls.Image image = null;
+        //    foreach (var item in ImagesCbxs)
+        //    {
+        //        ComboBox item_cbx = item.Value;
+        //        if (item_cbx == cbx)
+        //        {
+        //            image = item.Key;
+        //            break;
+        //        }
+        //    }
+        //    ImagesMatNames[image] = matName;
+        //}
 
         void DisplayFPS()
         {
@@ -630,7 +644,7 @@ namespace OpenCVSharpJJ
         private void Button_CaptureDeviceROI_Click(object sender, RoutedEventArgs e)
         {
             string window_name = "Valid ROI with 'Enter' or 'Space', cancel with 'c'";
-            OpenCvSharp.Rect newroi = Cv2.SelectROI(window_name, frame, true);
+            OpenCvSharp.Rect newroi = Cv2.SelectROI(window_name, rotated, true);
             if (newroi.Width > 0)
                 roi = newroi;
             _title = roi.ToString();
@@ -687,8 +701,6 @@ namespace OpenCVSharpJJ
             buffer = lignes[lignes.Length - 1];
         }
 
-        float camera_pos;
-        float camera_pos_max;
         private void ArduinoInterpretMessage(string txt)
         {
             string val_txt;
@@ -743,9 +755,16 @@ namespace OpenCVSharpJJ
                 DispatcherPriority.Background,
                 new Action(() =>
                 {
-                    ArduinoMessages.Insert(0, message);
+                    ////last is up
+                    //ArduinoMessages.Insert(0, message);
+                    //while (ArduinoMessages.Count > 100)
+                    //    ArduinoMessages.RemoveAt(ArduinoMessages.Count - 1);
+
+                    //last is down
+                    ArduinoMessages.Add(message);
                     while (ArduinoMessages.Count > 100)
-                        ArduinoMessages.RemoveAt(ArduinoMessages.Count - 1);
+                        ArduinoMessages.RemoveAt(0);
+                    lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
                 }));
 
             OnPropertyChanged("ArduinoMessages");
