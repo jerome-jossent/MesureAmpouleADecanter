@@ -101,22 +101,31 @@ namespace OpenCVSharpJJ
             matName = (ImageType)e.AddedItems[0];
         }
 
-        internal void _UpdateCombobox(Dictionary<ImageType, Mat> matNamesToMats)
+        internal void _UpdateCombobox(NamedMats NMs)
         {
             cbx_wpf.Items.Clear();
-            foreach (var item in matNamesToMats)
+            foreach (var item in NMs.MatNamesToMats)
             {
                 cbx_wpf.Items.Add(item.Key);
             }
         }
 
-        internal void _Update(Dictionary<ImageType, Mat> matNamesToMats)
+        internal void _Update(Dictionary<ImageType, NamedMat> matNamesToMats)
         {
             if (matNamesToMats.ContainsKey(matName))
             {
-                Mat frame = matNamesToMats[matName];
+                Mat frame = matNamesToMats[matName].mat;
                 if (frame != null && !frame.Empty())
+                {
                     _bitmap = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frame);
+                    Application.Current.Dispatcher.BeginInvoke(
+                        DispatcherPriority.Background,
+                        new Action(() =>
+                        {
+                            image_wpf.MaxHeight = frame.Height;
+                            image_wpf.MaxWidth = frame.Width;
+                        }));
+                }
             }
         }
     }

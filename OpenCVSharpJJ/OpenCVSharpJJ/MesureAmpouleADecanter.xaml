@@ -96,6 +96,9 @@
                     <ColumnDefinition Width="60"/>
                     <ColumnDefinition Width="200"/>
                     <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="5"/><!--MARGE-->
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="200"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -117,14 +120,20 @@
                 <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDeviceStop" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
                        RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>
 
-                <Button Grid.Row="2" Grid.Column="1" Margin="2" Content="Define ROI" Click="Button_CaptureDeviceROI_Click"/>
+                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                    <Button Margin="2" Content="Define ROI" Click="Button_CaptureDeviceROI_Click"/>
+                    <Button Margin="2" Content="Scan" Click="Button_CaptureDeviceSCAN_Click"/>
+                </StackPanel>
 
                 <Image Grid.Row="2" Grid.Column="2" x:Name="Button_CaptureDeviceRECORD" Margin="2" Source="images/record.png" Stretch="Uniform" 
                        RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_CaptureDeviceRECORD_Click" ToolTip="Start recording"/>
                 <Image Grid.Row="2" Grid.Column="2" x:Name="Button_CaptureDeviceRECORDSTOP" Margin="2" Source="images/Stop.png" Stretch="Uniform" 
                        RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_CaptureDeviceRECORD_Click" ToolTip="Stop recording" Visibility="Collapsed" />
 
-                <Grid Grid.Row="3" Grid.ColumnSpan="4">
+                <!--2nd colonne-->
+                <ComboBox Grid.Row="0" Grid.Column="5" Name="cbx_processingType" Margin="2" SelectionChanged="Combobox_processingType_Change" VerticalContentAlignment="Center"/>
+
+                <Grid Grid.Row="3" Grid.ColumnSpan="100">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="auto"/>
@@ -132,7 +141,7 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Image x:Name="image" Stretch="Uniform"
+                    <!--<Image x:Name="image" Stretch="Uniform"
                    Source="{Binding _imageSource, Mode=OneWay, NotifyOnSourceUpdated=True, Converter={StaticResource bitmapConverter}}"
                    MouseDown="img_mousedown"
                    >
@@ -190,7 +199,7 @@
                     <Image x:Name="imagecalque" Stretch="Uniform"
                    Source="{Binding _imageCalque, Mode=OneWay, NotifyOnSourceUpdated=True, Converter={StaticResource bitmapConverter}}"
                    MouseDown="img_mousedown"
-                   />
+                   />-->
                     
                     <local:ImageIHM_UC Grid.Column="0" x:Name="i1" MinWidth="100"/>
                     <local:ImageIHM_UC Grid.Column="1" x:Name="i2" MinWidth="100"/>

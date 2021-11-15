@@ -13,8 +13,7 @@
         <Image Stretch="Uniform" Source="{Binding _bitmap, Mode=OneWay, NotifyOnSourceUpdated=True, Converter={StaticResource bitmapConverter}}"
                Name="image_wpf" MouseEnter="Image_Enter" MouseLeave="Image_Leave" VerticalAlignment="Top"/>
         
-        <ComboBox Height="30" VerticalAlignment="Top" Name="cbx_wpf" MouseEnter="ImageCBX_Enter" MouseLeave="ImageCBX_Leave" 
+        <ComboBox Height="25" VerticalAlignment="Top" VerticalContentAlignment="Center" Name="cbx_wpf" MouseEnter="ImageCBX_Enter" MouseLeave="ImageCBX_Leave" 
                   Visibility="Collapsed" SelectionChanged="ImageCBX_SelectionChange"/>
-        <!--<Label Content="{Binding matName}" VerticalAlignment="Bottom" Foreground="White"/>-->
     </Grid>
 </UserControl>

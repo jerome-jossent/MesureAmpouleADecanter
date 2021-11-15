@@ -10,7 +10,7 @@ int pulseWidthMicros = 500;  // microseconds //def 100
 int millisBtwnSteps = 1000;
 
 // 2 mm => 1 tour => 200 steps
-// 2 / 200 = 0,00975 mm/step
+// 2 / 200 = 0,01 mm/step
 const float d_step_mm = 0.01f;
 float d;
 float d_abs_mm;
@@ -26,11 +26,6 @@ Action todo;
 bool au;
 
 //Memory Manager ==================================================
-//#include <Wire.h>
-//#define EEPROM_I2C_ADDRESS_0 0x50
-//#define EEPROM_I2C_ADDRESS_1 0x51
-//int EEPROM_I2C_ADDRESS = NULL;
-
 #include <AT24C256.h>
 AT24C256 eeprom = AT24C256();
 int Add_d = 0;
@@ -42,7 +37,6 @@ union Float_Bytes{
 };
 
 void setup() {
-  
   Serial.begin(9600);
   // init CNC shield
   pinMode(enPin, OUTPUT);
@@ -99,19 +93,19 @@ bool SerialManager() {
   {
     static unsigned int message_pos = 0;
     
-    //Read the next available byte in the serial receive buffer
+    // Read the next available byte in the serial receive buffer
     char inByte = Serial.read();
     
-    //Message coming in (check not terminating character) and guard for over message size
+    // Message coming in (check not terminating character) and guard for over message size
     if (inByte != '\n' && (message_pos < MAX_MESSAGE_LENGTH - 1) )
     {
-      //Add the incoming byte to our message
+      // Add the incoming byte to our message
       message[message_pos] = inByte;
       message_pos ++;
-    }else{//Full message received...
-      //Add null character to string
+    }else{// Full message received...
+      // Add null character to string
       message[message_pos] = '\0';      
-      //Reset for the next message
+      // Reset for the next message
       message_pos = 0;
     }
   }
@@ -119,15 +113,13 @@ bool SerialManager() {
 }
 
 void CommandManager(){
-  float val; //à déclarer en dehors du switch !
-
+  float val; // à déclarer en dehors du switch !
   if (message[0] != 'a')
       au = false; 
   
   switch(message[0]){
     case 'e':
       Serial.println("Etalonnage demandé");
-      au = false;
       todo = etalonnage;
       break;
       
@@ -167,7 +159,22 @@ void CommandManager(){
       digitalWrite(enPin, HIGH);
       Save_d(Add_d, d);
       PrintPosition();
-      break;      
+      break; 
+
+    case 'B':   
+      digitalWrite(enPin, LOW);
+      Deplacement_Min();
+      digitalWrite(enPin, HIGH);
+      PrintPosition();
+      break;
+      
+    case 'H':   
+      digitalWrite(enPin, LOW);
+      Deplacement_Max();
+      digitalWrite(enPin, HIGH);
+      PrintPosition();
+      PrintD();
+      break;
   }
 }
 
@@ -179,7 +186,7 @@ void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
   Etalonnage(termineExtremiteHaute);
   if (au) return;
   
-  //dégagement du contact de x mm
+  // dégagement du contact de x mm
   if (degagement != 0)
   {
     if (degagement < 0)
@@ -193,33 +200,46 @@ void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
   PrintPosition();
 }
 
+void Deplacement_Max(){
+  Serial.println("position max demandée");
+  // on remonte jusqu'à Y max  
+  while(Deplacement(10) && !au){}
+  Save_d(Add_d, d);
+  d_abs_mm = d;
+  Save_d(Add_dmax, d_abs_mm);
+  if (au) return;
+  Serial.println("position max atteinte");
+}
+
+void Deplacement_Min(){
+  Serial.println("position min demandée");
+  // on descend jusqu'à Y min par pas de 10mm
+  while(Deplacement(-10) && !au){}
+  d = 0;
+  Save_d(Add_d, d);
+  if (au) return;
+  Serial.println("position min atteinte");
+}
+
 float Etalonnage(bool termineExtremiteHaute){
   Serial.println("Etalonnage démarré");
-  if(termineExtremiteHaute)
-  { 
-    //on descend jusqu'à Y min par pas de 10mm 
-    while(Deplacement(-10) && !au){}
-    Save_d(Add_d, d);
+  if (termineExtremiteHaute)
+  {  
+    Deplacement_Min();
     if (au) return;
     d = 0;
     
-    //on remonte jusqu'à Y max  
-    while(Deplacement(10) && !au){}
-    Save_d(Add_d, d);
+    Deplacement_Max();
     if (au) return;
     d_abs_mm = d;
          
   }else{
     
-    //on monte jusqu'à Y max par pas de 10mm 
-    while(Deplacement(10) && !au){}
-    Save_d(Add_d, d);
+    Deplacement_Max();
     if (au) return;
     d = 0;
     
-    //on descend jusqu'à Y min  
-    while(Deplacement(-10) && !au){}
-    Save_d(Add_d, d);
+    Deplacement_Min();
     if (au) return;
     d_abs_mm = -d;
     d = 0;
