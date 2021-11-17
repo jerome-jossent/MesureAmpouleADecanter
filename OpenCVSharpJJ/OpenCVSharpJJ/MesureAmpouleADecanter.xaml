@@ -97,7 +97,7 @@
                     <ColumnDefinition Width="200"/>
                     <ColumnDefinition Width="30"/>
                     <ColumnDefinition Width="5"/><!--MARGE-->
-                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="auto"/>
                     <ColumnDefinition Width="200"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
@@ -132,6 +132,15 @@
 
                 <!--2nd colonne-->
                 <ComboBox Grid.Row="0" Grid.Column="5" Name="cbx_processingType" Margin="2" SelectionChanged="Combobox_processingType_Change" VerticalContentAlignment="Center"/>
+                
+                <Label Grid.Row="1" Grid.Column="4" Content="Threshold 1" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                <Slider Grid.Row="1" Grid.Column="5" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
+                <Label Grid.Row="1" Grid.Column="6" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+                <Label Grid.Row="2" Grid.Column="4" Content="Threshold 2" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                <Slider Grid.Row="2" Grid.Column="5" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
+                <Label Grid.Row="2" Grid.Column="6" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
 
                 <Grid Grid.Row="3" Grid.ColumnSpan="100">
                     <Grid.ColumnDefinitions>

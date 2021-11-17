@@ -25,7 +25,7 @@ namespace OpenCVSharpJJ
 {
     public partial class MesureAmpouleADecanter : System.Windows.Window, INotifyPropertyChanged
     {
-        #region BINDINGS
+        #region BINDINGS IHM
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged(string name = null)
@@ -54,6 +54,27 @@ namespace OpenCVSharpJJ
             }
         }
         string fps;
+
+        public int Threshold1
+        {
+            get { return threshold1; }
+            set
+            {
+                threshold1 = value;
+                OnPropertyChanged("Threshold1");
+            }
+        }
+        int threshold1 = 127;
+        public int Threshold2
+        {
+            get { return threshold2; }
+            set
+            {
+                threshold2 = value;
+                OnPropertyChanged("Threshold2");
+            }
+        }
+        int threshold2 = 127;
 
         public System.Drawing.Bitmap _imageSource
         {
@@ -162,7 +183,6 @@ namespace OpenCVSharpJJ
             }
         }
         ObservableCollection<string> arduinoMessages = new ObservableCollection<string>();
-
         #endregion
 
         #region ENUMERATIONS
@@ -223,6 +243,8 @@ namespace OpenCVSharpJJ
         NamedMat debug2 = new NamedMat(ImageType.debug2);
         NamedMat debug3 = new NamedMat(ImageType.debug3);
         NamedMat debug4 = new NamedMat(ImageType.debug4);
+        NamedMat bw1 = new NamedMat(ImageType.bw1);
+        NamedMat bw2 = new NamedMat(ImageType.bw2);
         Mat[] bgr;
 
         Thread thread;
@@ -235,7 +257,7 @@ namespace OpenCVSharpJJ
         System.Diagnostics.Stopwatch chrono = new System.Diagnostics.Stopwatch();
 
         VideoWriter videoWriter;
-        OpenCvSharp.Rect roi = new OpenCvSharp.Rect(0, 538, 1080, 2);
+        OpenCvSharp.Rect roi;
 
         Communication_Série.Communication_Série cs;
         string buffer;
@@ -467,6 +489,7 @@ namespace OpenCVSharpJJ
             NMs = new NamedMats();
             NMs.MatNamesToMats.Add(ImageType.original, frame);
             NMs.MatNamesToMats.Add(ImageType.rotated, rotated);
+            NMs.MatNamesToMats.Add(ImageType.bw1, bw1);
             NMs.MatNamesToMats.Add(ImageType.debug1, debug1);
             NMs.MatNamesToMats.Add(ImageType.gray1, frameGray);
             NMs.MatNamesToMats.Add(ImageType.canny, cannymat);
@@ -476,6 +499,7 @@ namespace OpenCVSharpJJ
             NMs.MatNamesToMats.Add(ImageType.debug2, debug2);
             NMs.MatNamesToMats.Add(ImageType.debug3, debug3);
             NMs.MatNamesToMats.Add(ImageType.debug4, debug4);
+            NMs.MatNamesToMats.Add(ImageType.bw2, bw2);
         }
 
         private void Combobox_processingType_Change(object sender, SelectionChangedEventArgs e)
@@ -523,21 +547,21 @@ namespace OpenCVSharpJJ
 
             NamedMat BW1 = NMs.Get(ImageType.bw1);
 
-            BW1.mat = frameGray.mat.Threshold(120, 255, ThresholdTypes.Binary);
+            //BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
+            Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
+
         }
 
         void FrameProcessing3(Mat rotated)
         {
 
 
-            UpdateDisplayImages();
         }
 
         void FrameProcessing4(Mat rotated)
         {
 
 
-            UpdateDisplayImages();
         }
         #endregion
 
@@ -651,12 +675,12 @@ namespace OpenCVSharpJJ
                 SLD_camera_position_max(camera_pos_max);
             }
 
-            if (txt.Contains("position max atteinte"))
+            if (txt.Contains("Y max atteint"))
             {
                 camera_pos_high_switch = true;
             }
 
-            if (txt.Contains("position min atteinte"))
+            if (txt.Contains("Y min atteint"))
             {
                 camera_pos_low_switch = true;
             }
@@ -800,32 +824,39 @@ namespace OpenCVSharpJJ
             OpenCvSharp.Rect rect = new OpenCvSharp.Rect(p, new OpenCvSharp.Size(s.Width, H));
 
             NamedMat d = NMs.Get(ImageType.debug1);
-
-            float camera_pos_last = 666;
-            while (!camera_pos_low_switch && camera_pos_last != camera_pos)
+            d.mat = new Mat();
+            while (!camera_pos_low_switch)
             {
                 //descend de 1mm
                 float camera_pos_prec = camera_pos;
                 float delta_mm = 1;
-                while (camera_pos_prec - camera_pos < delta_mm && !camera_pos_low_switch && camera_pos_last != camera_pos)
+                while (camera_pos_prec - camera_pos < delta_mm)// && !camera_pos_low_switch)
                 {
                     SendToArduino("b1");
                     Thread.Sleep(200);
-                    camera_pos_last = camera_pos;
                 }
 
-                if (!camera_pos_low_switch)
-                {
-                    NamedMat roi2 = NMs.Get(ImageType.roi2);
 
-                    roi2.mat = new Mat(rotated.mat, rect);
-                    if (d.mat.Size().Width == 0)
-                        Cv2.VConcat(new List<Mat> { roi2.mat }, d.mat);
-                    else
-                        Cv2.VConcat(new List<Mat> { d.mat, roi2.mat }, d.mat);
+                //améliorer la neteté
+                //TODO : prendre plusieurs fois la ROI et en faire la médiane
+                List<Mat> mediane = new List<Mat>();
 
-                    UpdateDisplayImages();
-                }
+
+
+
+
+
+
+
+
+                NamedMat roi2 = NMs.Get(ImageType.roi2);
+                roi2.mat = new Mat(rotated.mat, rect);
+
+                if (d.mat.Size().Width == 0)
+                    Cv2.VConcat(new List<Mat> { roi2.mat }, d.mat);
+                else
+                    Cv2.VConcat(new List<Mat> { d.mat, roi2.mat }, d.mat);
+
             }
         }
 

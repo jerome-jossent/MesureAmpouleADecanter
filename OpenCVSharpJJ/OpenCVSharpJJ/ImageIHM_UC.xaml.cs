@@ -117,14 +117,27 @@ namespace OpenCVSharpJJ
                 Mat frame = matNamesToMats[matName].mat;
                 if (frame != null && !frame.Empty())
                 {
-                    _bitmap = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frame);
-                    Application.Current.Dispatcher.BeginInvoke(
-                        DispatcherPriority.Background,
-                        new Action(() =>
+                    try
+                    {
+                        _bitmap = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frame);
+
+                        Application.Current.Dispatcher.BeginInvoke(
+                            DispatcherPriority.Background,
+                            new Action(() =>
+                            {
+                                image_wpf.MaxHeight = frame.Height;
+                                image_wpf.MaxWidth = frame.Width;
+                            }));
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message == "")
                         {
-                            image_wpf.MaxHeight = frame.Height;
-                            image_wpf.MaxWidth = frame.Width;
-                        }));
+                            Console.WriteLine("Erreur inconnue");
+                            return;
+                        }
+                        throw;
+                    }
                 }
             }
         }
