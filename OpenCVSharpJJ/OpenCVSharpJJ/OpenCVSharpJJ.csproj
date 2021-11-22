@@ -41,9 +41,6 @@
     <ApplicationIcon>images\19780-bubka-Find.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Communication_Série">
-      <HintPath>..\..\..\Communication_Série\bin\Debug\Communication_Série.dll</HintPath>
-    </Reference>
     <Reference Include="DirectShowLib, Version=2.1.0.1599, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DirectShowLib.1.0.0\lib\DirectShowLib.dll</HintPath>
     </Reference>
@@ -227,6 +224,12 @@
   <ItemGroup>
     <Resource Include="images\arrow_down.png" />
     <Resource Include="images\arrow_up.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Communication_Série\Communication_Série\Communication_Série.csproj">
+      <Project>{6b67fd91-af94-4f24-b934-43cbf1d56927}</Project>
+      <Name>Communication_Série</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
