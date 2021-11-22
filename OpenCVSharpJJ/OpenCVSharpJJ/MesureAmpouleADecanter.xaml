@@ -14,7 +14,7 @@
     <Grid>        
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" Name="grd_visu"/>
-            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="auto"/> <!--splitter-->
             <ColumnDefinition Width="2*"/>
         </Grid.ColumnDefinitions>
 
@@ -77,6 +77,7 @@
             X2="2" Y2="10000"
             Stroke="Black" StrokeDashArray="2, 4"
             StrokeThickness="2" />
+        
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" MouseEnter="gds_mouseenter" MouseLeave="gds_mouseleave" Background="#02FFFFFF"
                       ToolTip="Adjust view"/>
 
@@ -92,57 +93,115 @@
 
             <!--CAPTURE-->
             <Grid Grid.Column="1" Margin="5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="60"/>
-                    <ColumnDefinition Width="200"/>
-                    <ColumnDefinition Width="30"/>
-                    <ColumnDefinition Width="5"/><!--MARGE-->
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="200"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="30"/>
-                    <RowDefinition Height="30"/>
-                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
+                
+                <!--MENU-->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>                    
+                    
+                    <!--Caméra-->
+                    <Grid Grid.Column="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="30"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
 
-                <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/camera.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/camera.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_device" Margin="2" SelectionChanged="Combobox_CaptureDevice_Change" VerticalContentAlignment="Center"/>
-                <Image Grid.Row="0" Grid.Column="2" x:Name="Button_ListDevices" Margin="2" Source="images/refresh.png" Stretch="Uniform" 
+                        <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_device" Margin="2" SelectionChanged="Combobox_CaptureDevice_Change" VerticalContentAlignment="Center"/>
+                        <Image Grid.Row="0" Grid.Column="2" x:Name="Button_ListDevices" Margin="2" Source="images/refresh.png" Stretch="Uniform" 
                        RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_ListDevices_Click" ToolTip="Refresh video device list"/>
 
-                <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_deviceFormat" Margin="2" SelectionChanged="Combobox_CaptureDeviceFormat_Change" VerticalContentAlignment="Center"/>
-                <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDevicePlay" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
+                        <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_deviceFormat" Margin="2" SelectionChanged="Combobox_CaptureDeviceFormat_Change" VerticalContentAlignment="Center"/>
+                        <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDevicePlay" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
                        RenderOptions.BitmapScalingMode="HighQuality" Source="images/Lecture.png" ToolTip="Start camera"/>
-                <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDeviceStop" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
-                       RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>
+                        <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDeviceStop" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
+                       RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>                        
+                    </Grid>
 
-                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
-                    <Button Margin="2" Content="Define ROI" Click="Button_CaptureDeviceROI_Click"/>
-                    <Button Margin="2" Content="Scan" Click="Button_CaptureDeviceSCAN_Click"/>
-                </StackPanel>
+                    <!--MARGE-->
+                    <GridSplitter Grid.Column="1" Width="4" Margin="5" Background="LightGray"/>
 
-                <Image Grid.Row="2" Grid.Column="2" x:Name="Button_CaptureDeviceRECORD" Margin="2" Source="images/record.png" Stretch="Uniform" 
-                       RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_CaptureDeviceRECORD_Click" ToolTip="Start recording"/>
-                <Image Grid.Row="2" Grid.Column="2" x:Name="Button_CaptureDeviceRECORDSTOP" Margin="2" Source="images/Stop.png" Stretch="Uniform" 
-                       RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_CaptureDeviceRECORD_Click" ToolTip="Stop recording" Visibility="Collapsed" />
+                    <!--Processing-->
+                    <Grid Grid.Column="2" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_processingType" Margin="2" SelectionChanged="Combobox_processingType_Change" VerticalContentAlignment="Center"/>
 
-                <!--2nd colonne-->
-                <ComboBox Grid.Row="0" Grid.Column="5" Name="cbx_processingType" Margin="2" SelectionChanged="Combobox_processingType_Change" VerticalContentAlignment="Center"/>
-                
-                <Label Grid.Row="1" Grid.Column="4" Content="Threshold 1" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                <Slider Grid.Row="1" Grid.Column="5" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
-                <Label Grid.Row="1" Grid.Column="6" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                        <!--RECORD-->
+                        <Image Grid.Row="0" Grid.Column="0" x:Name="Button_CaptureDeviceRECORD" Margin="2" Source="images/record.png" Stretch="Uniform" 
+                           RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_CaptureDeviceRECORD_Click" ToolTip="Start recording"/>
+                        <Image Grid.Row="0" Grid.Column="0" x:Name="Button_CaptureDeviceRECORDSTOP" Margin="2" Source="images/Stop.png" Stretch="Uniform" 
+                           RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_CaptureDeviceRECORD_Click" ToolTip="Stop recording" Visibility="Collapsed" />
 
-                <Label Grid.Row="2" Grid.Column="4" Content="Threshold 2" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                <Slider Grid.Row="2" Grid.Column="5" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
-                <Label Grid.Row="2" Grid.Column="6" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                            <Button Margin="2" Content="Scan" Click="Button_CaptureDeviceSCAN_Click"/>
+                        </StackPanel>
+                    </Grid>
 
+                    <!--MARGE-->
+                    <GridSplitter Grid.Column="3" Width="4" Margin="5" Background="LightGray"/>
 
-                <Grid Grid.Row="3" Grid.ColumnSpan="100">
+                    <!--Réglages-->
+                    <Grid Grid.Column="4" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                            <Button Margin="2" Content="Define ROI" Click="Button_CaptureDeviceROI_Click"/>
+                        </StackPanel>
+
+                        <Label Grid.Row="1" Grid.Column="0" Content="Gray" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_grayProcessingType" Margin="2" SelectionChanged="Combobox_grayProcessingType_Change" VerticalContentAlignment="Center"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content="Threshold 1" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                        <Slider Grid.Row="2" Grid.Column="1" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label Grid.Row="2" Grid.Column="2" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Threshold 2" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                        <Slider Grid.Row="3" Grid.Column="1" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label Grid.Row="3" Grid.Column="2" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                    </Grid>
+
+                </Grid>
+
+                <!--IMAGES-->
+                <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="auto"/>
@@ -210,10 +269,10 @@
                    MouseDown="img_mousedown"
                    />-->
                     
-                    <local:ImageIHM_UC Grid.Column="0" x:Name="i1" MinWidth="100"/>
-                    <local:ImageIHM_UC Grid.Column="1" x:Name="i2" MinWidth="100"/>
-                    <local:ImageIHM_UC Grid.Column="2" x:Name="i3" MinWidth="100"/>
-                    <local:ImageIHM_UC Grid.Column="3" x:Name="i4" MinWidth="100"/>                   
+                    <local:ImageIHM_UC Grid.Column="0" x:Name="i1" MinWidth="20"/>
+                    <local:ImageIHM_UC Grid.Column="1" x:Name="i2" MinWidth="20"/>
+                    <local:ImageIHM_UC Grid.Column="2" x:Name="i3" MinWidth="20"/>
+                    <local:ImageIHM_UC Grid.Column="3" x:Name="i4" MinWidth="20"/>                   
                     
                 </Grid>
             </Grid>

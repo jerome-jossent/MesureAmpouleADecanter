@@ -188,6 +188,7 @@ namespace OpenCVSharpJJ
         #region ENUMERATIONS
         public enum ImageType
         {
+            none,
             original,
             rotated,
             roi1, roi2,
@@ -207,11 +208,12 @@ namespace OpenCVSharpJJ
         #region CLASSES
         public class NamedMat
         {
-            public Mat mat = new Mat();
+            public Mat mat;
             public ImageType imageType;
             public NamedMat(ImageType imageType)
             {
                 this.imageType = imageType;
+                mat = new Mat();
             }
         }
 
@@ -229,9 +231,11 @@ namespace OpenCVSharpJJ
 
         #region PARAMETERS
         ProcessingType processingType;
+        Calque grayProcessingType;
 
         long T0;
         NamedMats NMs;
+        NamedMat none = new NamedMat(ImageType.none);
         NamedMat frame = new NamedMat(ImageType.original);
         NamedMat rotated = new NamedMat(ImageType.rotated);
         NamedMat frameGray = new NamedMat(ImageType.gray1);
@@ -363,9 +367,10 @@ namespace OpenCVSharpJJ
             if (videoWriter == null)
             {
                 //ok
-                //videoWriter = new VideoWriter("D:\\video.avi", FourCC.FromString("XVID"), 30, new OpenCvSharp.Size(1080, 1920));
-                //ok
-                videoWriter = new VideoWriter("D:\\Projets\\video.mp4", FourCC.MP4V, 30, new OpenCvSharp.Size(frame.mat.Width, frame.mat.Height));
+                videoWriter = new VideoWriter("D:\\Projets\\video.avi", FourCC.XVID, 30, new OpenCvSharp.Size(frame.mat.Width, frame.mat.Height));
+
+                //plus ok
+                //videoWriter = new VideoWriter("D:\\Projets\\video.mp4", FourCC.MP4V, 30, new OpenCvSharp.Size(frame.mat.Width, frame.mat.Height));
 
                 //pas ok
                 //videoWriter = new VideoWriter("D:\\Projets\\video.mp4", FourCC.H264, 30, new OpenCvSharp.Size(frame.Width, frame.Height));
@@ -470,6 +475,9 @@ namespace OpenCVSharpJJ
             cbx_processingType.ItemsSource = Enum.GetValues(typeof(ProcessingType));
             cbx_processingType.SelectedIndex = 0;
 
+            cbx_grayProcessingType.ItemsSource = Enum.GetValues(typeof(Calque));
+            cbx_grayProcessingType.SelectedIndex = 0;
+
             MatNamesToMats_Reset();
 
             i1._UpdateCombobox(NMs);
@@ -487,19 +495,20 @@ namespace OpenCVSharpJJ
         void MatNamesToMats_Reset()
         {
             NMs = new NamedMats();
+            NMs.MatNamesToMats.Add(ImageType.none, none);
             NMs.MatNamesToMats.Add(ImageType.original, frame);
             NMs.MatNamesToMats.Add(ImageType.rotated, rotated);
-            NMs.MatNamesToMats.Add(ImageType.bw1, bw1);
-            NMs.MatNamesToMats.Add(ImageType.debug1, debug1);
             NMs.MatNamesToMats.Add(ImageType.gray1, frameGray);
             NMs.MatNamesToMats.Add(ImageType.canny, cannymat);
+            NMs.MatNamesToMats.Add(ImageType.bw1, bw1);
+            NMs.MatNamesToMats.Add(ImageType.bw2, bw2);
             NMs.MatNamesToMats.Add(ImageType.bgr1, BGR);
             NMs.MatNamesToMats.Add(ImageType.roi1, ROI1);
             NMs.MatNamesToMats.Add(ImageType.roi2, ROI2);
+            NMs.MatNamesToMats.Add(ImageType.debug1, debug1);
             NMs.MatNamesToMats.Add(ImageType.debug2, debug2);
             NMs.MatNamesToMats.Add(ImageType.debug3, debug3);
             NMs.MatNamesToMats.Add(ImageType.debug4, debug4);
-            NMs.MatNamesToMats.Add(ImageType.bw2, bw2);
         }
 
         private void Combobox_processingType_Change(object sender, SelectionChangedEventArgs e)
@@ -525,7 +534,7 @@ namespace OpenCVSharpJJ
             else
                 ROI1.mat = rotated;
 
-            Cv2.CvtColor(ROI1.mat, frameGray.mat, ColorConversionCodes.RGB2GRAY);
+            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
 
             Cv2.Canny(frameGray.mat, cannymat.mat, 50, 200);
 
@@ -543,12 +552,33 @@ namespace OpenCVSharpJJ
             else
                 ROI1.mat = rotated;
 
-            Cv2.CvtColor(ROI1.mat, frameGray.mat, ColorConversionCodes.RGB2GRAY);
+            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
 
             NamedMat BW1 = NMs.Get(ImageType.bw1);
 
-            //BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
-            Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
+            ////BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
+            //Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
+
+
+
+
+            //Cv2.Canny(ROI1.mat, cannymat.mat, 95, 100);
+            Cv2.Canny(ROI1.mat, cannymat.mat, Threshold1, Threshold2);
+
+            //HoughLinesP
+            LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
+
+            //debug1.mat = ROI1.mat.EmptyClone();
+
+            bgr[0] = frameGray.mat;
+            bgr[1] = bgr[0];
+            bgr[2] = bgr[1];
+            Cv2.Merge(bgr, BGR.mat);
+
+            debug1.mat = BGR.mat.Clone();
+
+            foreach (LineSegmentPoint s in segHoughP)
+                debug1.mat.Line(s.P1, s.P2, Scalar.Red, 1, LineTypes.AntiAlias, 0);
 
         }
 
@@ -563,6 +593,40 @@ namespace OpenCVSharpJJ
 
 
         }
+
+        #region COMMON IMAGE PROCESSING
+
+        private void Combobox_grayProcessingType_Change(object sender, SelectionChangedEventArgs e)
+        {
+            Enum.TryParse<Calque>(cbx_grayProcessingType.SelectedValue.ToString(), out grayProcessingType);
+        }
+
+        enum Calque { all, red, green, blue}
+        Mat RGBToGray(Mat input, Calque calque)
+        {
+            Mat gris = new Mat();
+            Mat[] layers = null;
+            switch (calque)
+            {
+                case Calque.all:
+                    Cv2.CvtColor(input, gris, ColorConversionCodes.RGB2GRAY);
+                    break;
+                case Calque.red:
+                    layers = input.Split();
+                    gris = layers[2];
+                    break;
+                case Calque.green:
+                    layers = input.Split();
+                    gris = layers[1];
+                    break;
+                case Calque.blue:
+                    layers = input.Split();
+                    gris = layers[0];
+                    break;
+            }
+            return gris;
+        }
+        #endregion
         #endregion
 
         #region DISPLAY IMAGE(S)
