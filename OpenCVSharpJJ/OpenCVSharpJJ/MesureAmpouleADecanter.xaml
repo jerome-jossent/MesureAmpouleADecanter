@@ -112,10 +112,11 @@
                     <Grid Grid.Column="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="60"/>
-                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="30"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="30"/>
@@ -131,7 +132,17 @@
                         <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDevicePlay" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
                        RenderOptions.BitmapScalingMode="HighQuality" Source="images/Lecture.png" ToolTip="Start camera"/>
                         <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDeviceStop" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
-                       RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>                        
+                       RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>
+
+
+                        <Image Grid.Row="2" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/files.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+                               MouseDown="Button_PickFiles_Click" ToolTip="Select new image files"/>
+                        <ListBox Grid.Row="2" Grid.Column="1" Grid.RowSpan="2" x:Name="lbx_files" SelectionChanged="lbx_files_Change" />
+                        <Image Grid.Row="2" Grid.Column="2" Margin="2" Source="images/croix.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+                               MouseDown="Button_Files_Clear" ToolTip="Select image files"/>
+                        <Image Grid.Row="3" Grid.Column="2" Margin="2" Source="images/moins.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+                               MouseDown="Button_PickFilesAdd_Click" ToolTip="Add image files"/>
+
                     </Grid>
 
                     <!--MARGE-->
@@ -141,8 +152,7 @@
                     <Grid Grid.Column="2" >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>

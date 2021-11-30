@@ -601,7 +601,7 @@ namespace OpenCVSharpJJ
             Enum.TryParse<Calque>(cbx_grayProcessingType.SelectedValue.ToString(), out grayProcessingType);
         }
 
-        enum Calque { all, red, green, blue}
+        enum Calque { all, red, green, blue }
         Mat RGBToGray(Mat input, Calque calque)
         {
             Mat gris = new Mat();
@@ -864,6 +864,38 @@ namespace OpenCVSharpJJ
             Thread t = new Thread(Scan);
             t.Start();
         }
+
+        #region IMAGE FILE(S)
+        private void Button_PickFiles_Click(object sender, MouseButtonEventArgs e)
+        {
+            lbx_files.Items.Clear();
+            SelectFiles();
+        }
+
+        private void Button_PickFilesAdd_Click(object sender, MouseButtonEventArgs e)
+        {
+            SelectFiles();
+        }
+
+        void SelectFiles()
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Multiselect = true;
+            if (openFileDialog.ShowDialog() == true)
+                foreach (var item in openFileDialog.FileNames)
+                    lbx_files.Items.Add(item);
+        }
+
+        private void Button_Files_Clear(object sender, MouseButtonEventArgs e)
+        {
+            lbx_files.Items.Clear();
+        }
+
+        private void lbx_files_Change(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+        #endregion
 
         private void Scan()
         {
