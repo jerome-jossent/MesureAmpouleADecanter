@@ -403,6 +403,9 @@ namespace OpenCVSharpJJ
             thread = null;
         }
 
+        OpenCvSharp.Window w;
+        bool display_in_OpenCVSharpWindow = true;
+
         void CaptureCameraCallback()
         {
             int actualindexDevice = indexDevice;
@@ -414,12 +417,14 @@ namespace OpenCVSharpJJ
             {
                 while (isRunning)
                 {
+                    //Si changement de camera
                     if (indexDevice != actualindexDevice)
                     {
                         capture.Open(indexDevice, VideoCaptureAPIs.DSHOW);
                         actualindexDevice = indexDevice;
                     }
 
+                    //si changement de format vidéo
                     if (format != null)
                     {
                         capture.Set(VideoCaptureProperties.FrameWidth, format.w);
@@ -428,6 +433,7 @@ namespace OpenCVSharpJJ
                         capture.Set(VideoCaptureProperties.FourCC, OpenCvSharp.FourCC.FromString(format.format));
                         format = null;
                     }
+
                     if (first)
                     {
                         Display_Init();
@@ -435,7 +441,24 @@ namespace OpenCVSharpJJ
                         first = false;
                     }
 
+                    //captation de l'image
                     capture.Read(frame.mat);
+
+                    //Viewer debug
+                    if (display_in_OpenCVSharpWindow)
+                    {
+                        if (frame.mat.Empty())
+                            Cv2.DestroyWindow(w.Name);
+                        else
+                        {
+                            if (w == null)
+                                w = new OpenCvSharp.Window();
+
+                            w.ShowImage(frame.mat);
+                            Cv2.WaitKey(1);
+                        }
+                    }
+
                     Cv2.Rotate(frame.mat, rotated.mat, RotateFlags.Rotate90Counterclockwise);
 
                     if (!rotated.mat.Empty())
