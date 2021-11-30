@@ -231,6 +231,16 @@
       <Name>Communication_Série</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\file.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\files.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\Moins.png" />
+    <Resource Include="images\Plus.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

@@ -115,7 +115,8 @@ namespace OpenCVSharpJJ
             if (matNamesToMats.ContainsKey(matName))
             {
                 Mat frame = matNamesToMats[matName].mat;
-                if (frame != null && !frame.Empty())
+                //if (frame != null && !frame.Empty())
+                if (!frame.Empty())
                 {
                     try
                     {
@@ -138,6 +139,16 @@ namespace OpenCVSharpJJ
                         }
                         throw;
                     }
+                }
+                else
+                {
+                    Application.Current.Dispatcher.BeginInvoke(
+                               DispatcherPriority.Background,
+                               new Action(() =>
+                               {
+                                   image_wpf.MaxHeight = 20;
+                                   image_wpf.MaxWidth = 20;
+                               }));
                 }
             }
         }
