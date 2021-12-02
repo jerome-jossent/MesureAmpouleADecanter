@@ -9,9 +9,10 @@
         public MainWindow()
         {
             InitializeComponent();
+           
+            new MesureAmpouleADecanter().Show();
+            //new CaptureVideo().Show();
 
-            MesureAmpouleADecanter mesureAmpouleADecanter = new MesureAmpouleADecanter();
-            mesureAmpouleADecanter.Show();
             this.Close();
         }
     }

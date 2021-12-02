@@ -1,0 +1,50 @@
+﻿<Window x:Class="OpenCVSharpJJ.CaptureVideo"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OpenCVSharpJJ"
+        mc:Ignorable="d"
+        Title="CaptureVideo" Height="450" Width="800"
+        Closing="Window_Closing" Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <local:BitmapToBitmapImageConverter x:Name="binaryConverter" x:Key="bitmapConverter"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!--Caméra-->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="30"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+            </Grid.RowDefinitions>
+
+            <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/camera.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+            <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_device" Margin="2" SelectionChanged="Combobox_CaptureDevice_Change" VerticalContentAlignment="Center"/>
+            <Image Grid.Row="0" Grid.Column="2" x:Name="Button_ListDevices" Margin="2" Source="images/refresh.png" Stretch="Uniform" 
+                       RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_ListDevices_Click" ToolTip="Refresh video device list"/>
+
+            <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_deviceFormat" Margin="2" SelectionChanged="Combobox_CaptureDeviceFormat_Change" VerticalContentAlignment="Center"/>
+            <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDevicePlay" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
+                       RenderOptions.BitmapScalingMode="HighQuality" Source="images/Lecture.png" ToolTip="Start camera"/>
+            <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDeviceStop" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
+                       RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>
+        </Grid>
+
+        <!--Image-->
+        <Image Grid.Row="1"
+            Stretch="Uniform" Source="{Binding _bitmap, Mode=OneWay, NotifyOnSourceUpdated=True, Converter={StaticResource bitmapConverter}}"
+               VerticalAlignment="Top"/>
+    </Grid>
+</Window>

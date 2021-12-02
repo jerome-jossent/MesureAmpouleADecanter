@@ -124,13 +124,23 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CaptureVideo.xaml.cs">
+      <DependentUpon>CaptureVideo.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ImageIHM_UC.xaml.cs">
       <DependentUpon>ImageIHM_UC.xaml</DependentUpon>
     </Compile>
     <Compile Include="MesureAmpouleADecanter.xaml.cs">
       <DependentUpon>MesureAmpouleADecanter.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Processing\ImPr.cs" />
+    <Compile Include="Processing\ImPr_Converter.cs" />
+    <Compile Include="Processing\ImPr_Rotation.cs" />
     <Compile Include="VideoInInfo.cs" />
+    <Page Include="CaptureVideo.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ImageIHM_UC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -232,14 +242,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="images\file.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="images\files.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="images\Moins.png" />
-    <Resource Include="images\Plus.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

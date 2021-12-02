@@ -20,6 +20,8 @@ using Communication_Série;
 using System.IO.Ports;
 using System.Collections.ObjectModel;
 using System.Windows.Threading;
+using OpenCVSharpJJ.Processing;
+using Newtonsoft.Json;
 
 namespace OpenCVSharpJJ
 {
@@ -270,6 +272,9 @@ namespace OpenCVSharpJJ
         float camera_pos_max;
 
         bool camera_pos_low_switch, camera_pos_high_switch;
+
+        OpenCvSharp.Window w;
+        bool display_in_OpenCVSharpWindow = true;
         #endregion
 
         #region WINDOW MANAGEMENT
@@ -408,9 +413,6 @@ namespace OpenCVSharpJJ
             thread = null;
         }
 
-        OpenCvSharp.Window w;
-        bool display_in_OpenCVSharpWindow = true;
-
         void CaptureCameraCallback()
         {
             int actualindexDevice = indexDevice;
@@ -464,33 +466,42 @@ namespace OpenCVSharpJJ
                         }
                     }
 
-                    Cv2.Rotate(frame.mat, rotated.mat, RotateFlags.Rotate90Counterclockwise);
-
-                    if (!rotated.mat.Empty())
-                        switch (processingType)
-                        {
-                            case ProcessingType.process1:
-                                FrameProcessing1(rotated.mat);
-                                break;
-                            case ProcessingType.process2:
-                                FrameProcessing2(rotated.mat);
-                                break;
-                            case ProcessingType.process3:
-                                FrameProcessing3(rotated.mat);
-                                break;
-                            case ProcessingType.process4:
-                                FrameProcessing4(rotated.mat);
-                                break;
-                        }
-                    UpdateDisplayImages();
-
-                    videoWriter?.Write(rotated.mat);
-
-                    DisplayFPS();
+                    ComputePicture();
                 }
             }
         }
         #endregion
+
+        Collection<ImPr> taches;
+
+
+        void ComputePicture()
+        {
+
+            Cv2.Rotate(frame.mat, rotated.mat, RotateFlags.Rotate90Counterclockwise);
+
+            if (!rotated.mat.Empty())
+                switch (processingType)
+                {
+                    case ProcessingType.process1:
+                        FrameProcessing1(rotated.mat);
+                        break;
+                    case ProcessingType.process2:
+                        FrameProcessing2(rotated.mat);
+                        break;
+                    case ProcessingType.process3:
+                        FrameProcessing3(rotated.mat);
+                        break;
+                    case ProcessingType.process4:
+                        FrameProcessing4(rotated.mat);
+                        break;
+                }
+            UpdateDisplayImages();
+
+            videoWriter?.Write(rotated.mat);
+
+            DisplayFPS();
+        }
 
         #region IMAGE PROCESSINGS
         private void ImageProcessing_Init()
@@ -513,6 +524,38 @@ namespace OpenCVSharpJJ
             i2.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
             i3.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
             i4.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
+
+
+            //taches = new Collection<ImPr>();
+            //if (System.IO.File.Exists("c:\\_JJ\\process.impr.txt"))
+            //{
+            //    //https://stackoverflow.com/questions/20995865/deserializing-json-to-abstract-class
+            //    string JSON = System.IO.File.ReadAllText("c:\\_JJ\\process.impr.txt");
+            //    taches = JsonConvert.DeserializeObject<Collection<ImPr>>(File.ReadAllText(JSON), new JsonSerializerSettings
+            //    {
+            //        TypeNameHandling = TypeNameHandling.All
+            //    });
+            //    //Collection<ImPr> temps = Newtonsoft.Json.JsonConvert.DeserializeObject<Collection<ImPr>>(JSON);
+            //}
+            //else
+            //{
+            //    taches.Add(new ImPr_Rotation(RotateFlags.Rotate180));
+            //    Taches_Save();
+            //}
+        }
+
+        void Taches_Save()
+        {
+            //string json = Newtonsoft.Json.JsonConvert.SerializeObject(taches, Newtonsoft.Json.Formatting.Indented);
+
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(taches,
+                Newtonsoft.Json.Formatting.Indented, 
+                new Newtonsoft.Json.JsonSerializerSettings
+            {
+                TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All
+            });
+
+            System.IO.File.WriteAllText("c:\\_JJ\\process.impr.txt", json);
         }
 
         void MatNamesToMats_Reset()
@@ -888,38 +931,6 @@ namespace OpenCVSharpJJ
             t.Start();
         }
 
-        #region IMAGE FILE(S)
-        private void Button_PickFiles_Click(object sender, MouseButtonEventArgs e)
-        {
-            lbx_files.Items.Clear();
-            SelectFiles();
-        }
-
-        private void Button_PickFilesAdd_Click(object sender, MouseButtonEventArgs e)
-        {
-            SelectFiles();
-        }
-
-        void SelectFiles()
-        {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Multiselect = true;
-            if (openFileDialog.ShowDialog() == true)
-                foreach (var item in openFileDialog.FileNames)
-                    lbx_files.Items.Add(item);
-        }
-
-        private void Button_Files_Clear(object sender, MouseButtonEventArgs e)
-        {
-            lbx_files.Items.Clear();
-        }
-
-        private void lbx_files_Change(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-        #endregion
-
         private void Scan()
         {
             camera_pos_high_switch = false;
@@ -978,6 +989,48 @@ namespace OpenCVSharpJJ
 
             }
         }
+
+        #region IMAGE FILE(S)
+        private void Button_PickFiles_Click(object sender, MouseButtonEventArgs e)
+        {
+            lbx_files.Items.Clear();
+            SelectFiles();
+        }
+
+        private void Button_PickFilesAdd_Click(object sender, MouseButtonEventArgs e)
+        {
+            SelectFiles();
+        }
+
+        void SelectFiles()
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Multiselect = true;
+            if (openFileDialog.ShowDialog() == true)
+                foreach (var item in openFileDialog.FileNames)
+                    lbx_files.Items.Add(item);
+            if (lbx_files.Items.Count > 0)
+                lbx_files.SelectedIndex = 0;
+        }
+
+        private void Button_Files_Clear(object sender, MouseButtonEventArgs e)
+        {
+            lbx_files.Items.Clear();
+        }
+
+        private void lbx_files_Change(object sender, SelectionChangedEventArgs e)
+        {
+            if (first)
+            {
+                Display_Init();
+                MatNamesToMats_Reset();
+                first = false;
+            }
+            frame.mat = new Mat(lbx_files.SelectedValue.ToString());
+
+            ComputePicture();
+        }
+        #endregion
 
         #region Clic droit sur image (INACTIF)  
         //Décommenter dans XAML les 2 images
