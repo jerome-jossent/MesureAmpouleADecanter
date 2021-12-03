@@ -274,7 +274,7 @@ namespace OpenCVSharpJJ
         bool camera_pos_low_switch, camera_pos_high_switch;
 
         OpenCvSharp.Window w;
-        bool display_in_OpenCVSharpWindow = true;
+        bool display_in_OpenCVSharpWindow = false;
         #endregion
 
         #region WINDOW MANAGEMENT
@@ -472,7 +472,7 @@ namespace OpenCVSharpJJ
         }
         #endregion
 
-        Collection<ImPr> taches;
+        List<ImPr> taches;
 
 
         void ComputePicture()
@@ -526,36 +526,36 @@ namespace OpenCVSharpJJ
             i4.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
 
 
-            //taches = new Collection<ImPr>();
-            //if (System.IO.File.Exists("c:\\_JJ\\process.impr.txt"))
-            //{
-            //    //https://stackoverflow.com/questions/20995865/deserializing-json-to-abstract-class
-            //    string JSON = System.IO.File.ReadAllText("c:\\_JJ\\process.impr.txt");
-            //    taches = JsonConvert.DeserializeObject<Collection<ImPr>>(File.ReadAllText(JSON), new JsonSerializerSettings
-            //    {
-            //        TypeNameHandling = TypeNameHandling.All
-            //    });
-            //    //Collection<ImPr> temps = Newtonsoft.Json.JsonConvert.DeserializeObject<Collection<ImPr>>(JSON);
-            //}
-            //else
-            //{
-            //    taches.Add(new ImPr_Rotation(RotateFlags.Rotate180));
-            //    Taches_Save();
-            //}
+            taches = new List<ImPr>();
+            if (File.Exists("c:\\_JJ\\process.impr.txt"))
+            {
+                //https://stackoverflow.com/questions/20995865/deserializing-json-to-abstract-class
+                string JSON = File.ReadAllText("c:\\_JJ\\process.impr.txt");
+                taches = JsonConvert.DeserializeObject<List<ImPr>>(JSON,
+                    new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
+
+                lbx_ImPr.Items.Clear();
+                for (int j = 0; j < taches.Count; j++)
+                    lbx_ImPr.Items.Add(taches[j].ListBoxItem());
+            }
+            else
+            {
+                taches.Add(new ImPr_Rotation(RotateFlags.Rotate90Clockwise));
+                taches.Add(new ImPr_Resize(new OpenCvSharp.Size(640, 480), InterpolationFlags.Cubic));
+                Taches_Save();
+            }
         }
 
         void Taches_Save()
         {
-            //string json = Newtonsoft.Json.JsonConvert.SerializeObject(taches, Newtonsoft.Json.Formatting.Indented);
-
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(taches,
-                Newtonsoft.Json.Formatting.Indented, 
-                new Newtonsoft.Json.JsonSerializerSettings
-            {
-                TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All
-            });
-
-            System.IO.File.WriteAllText("c:\\_JJ\\process.impr.txt", json);
+            string json = JsonConvert.SerializeObject(taches,
+                Formatting.Indented,
+                new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All
+                });
+            Directory.CreateDirectory("c:\\_JJ");
+            File.WriteAllText("c:\\_JJ\\process.impr.txt", json);
         }
 
         void MatNamesToMats_Reset()

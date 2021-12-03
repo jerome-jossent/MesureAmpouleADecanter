@@ -135,6 +135,7 @@
     </Compile>
     <Compile Include="Processing\ImPr.cs" />
     <Compile Include="Processing\ImPr_Converter.cs" />
+    <Compile Include="Processing\ImPr_Resize.cs" />
     <Compile Include="Processing\ImPr_Rotation.cs" />
     <Compile Include="VideoInInfo.cs" />
     <Page Include="CaptureVideo.xaml">

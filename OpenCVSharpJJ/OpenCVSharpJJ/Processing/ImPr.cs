@@ -21,11 +21,8 @@ namespace OpenCVSharpJJ.Processing
         public Mat Input;
         public Mat Output;
 
-        public virtual void Process() { }
+        public abstract void Process();
 
-        public string ToJson()
-        {
-            return Newtonsoft.Json.JsonConvert.SerializeObject(this);
-        }
+        public abstract System.Windows.Controls.ListBoxItem ListBoxItem();
     }
 }
