@@ -15,6 +15,9 @@ namespace OpenCVSharpJJ.Processing
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public RotateFlags rotationType { get; set; }
 
+        [Newtonsoft.Json.JsonIgnore]
+        public ImPr_Rotation_UC ImPr_Rotation_UC;
+
         public ImPr_Rotation()
         {
             hasToBeBinary = false;
@@ -28,6 +31,7 @@ namespace OpenCVSharpJJ.Processing
 
         public override void Process()
         {
+            if (Output == null) Output = new Mat();
             Cv2.Rotate(Input, Output, rotationType);
         }
 
@@ -46,6 +50,16 @@ namespace OpenCVSharpJJ.Processing
             lbi.Content = sp;
 
             return lbi;
+        }
+
+        public override UserControl UC()
+        {
+            if (ImPr_Rotation_UC == null)
+            {
+                ImPr_Rotation_UC = new ImPr_Rotation_UC();
+                ImPr_Rotation_UC.Link(this);
+            }
+            return ImPr_Rotation_UC;
         }
     }
 }

@@ -219,7 +219,12 @@
                     </Grid.ColumnDefinitions>
 
                     <Grid Grid.Column="0">
-                        <ListBox x:Name="lbx_ImPr"/>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" x:Name="grd_ImPr_Selected"/>
+                        <ListBox Grid.Row="1" x:Name="lbx_ImPr" SelectionChanged="lbx_ImPr_Selected"/>
                     </Grid>
                     
                     <Grid Grid.Column="1">

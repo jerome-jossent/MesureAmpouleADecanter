@@ -10,12 +10,14 @@ namespace OpenCVSharpJJ.Processing
 {
     public class ImPr_Resize : ImPr
     {
-
         public override ImPr_Converter.ImPrType imPrType => ImPr_Converter.ImPrType.Resize;
         public Size size { get; set; }
 
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public InterpolationFlags interpolationType { get; set; }
+
+        [Newtonsoft.Json.JsonIgnore]
+        public ImPr_Resize_UC ImPr_Resize_UC;
 
         public ImPr_Resize()
         {
@@ -31,6 +33,7 @@ namespace OpenCVSharpJJ.Processing
 
         public override void Process()
         {
+            if (Output == null) Output = new Mat();
             Cv2.Resize(Input, Output, size, interpolation: interpolationType);
         }
 
@@ -51,6 +54,15 @@ namespace OpenCVSharpJJ.Processing
             lbi.Content = sp;
 
             return lbi;
+        }
+
+        public override UserControl UC()
+        {
+            if (ImPr_Resize_UC == null)
+            {
+                ImPr_Resize_UC = new ImPr_Resize_UC();
+            }
+            return ImPr_Resize_UC;
         }
     }
 }

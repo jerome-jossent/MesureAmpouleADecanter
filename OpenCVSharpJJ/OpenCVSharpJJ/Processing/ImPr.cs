@@ -24,5 +24,7 @@ namespace OpenCVSharpJJ.Processing
         public abstract void Process();
 
         public abstract System.Windows.Controls.ListBoxItem ListBoxItem();
+
+        public abstract System.Windows.Controls.UserControl UC();
     }
 }

@@ -473,7 +473,7 @@ namespace OpenCVSharpJJ
         #endregion
 
         List<ImPr> taches;
-
+        Dictionary<ListBoxItem, ImPr> Taches;
 
         void ComputePicture()
         {
@@ -533,10 +533,14 @@ namespace OpenCVSharpJJ
                 string JSON = File.ReadAllText("c:\\_JJ\\process.impr.txt");
                 taches = JsonConvert.DeserializeObject<List<ImPr>>(JSON,
                     new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
-
+                Taches = new Dictionary<ListBoxItem, ImPr>();
                 lbx_ImPr.Items.Clear();
                 for (int j = 0; j < taches.Count; j++)
-                    lbx_ImPr.Items.Add(taches[j].ListBoxItem());
+                {
+                    ListBoxItem lbi = taches[j].ListBoxItem();
+                    Taches.Add(lbi, taches[j]);
+                    lbx_ImPr.Items.Add(lbi);
+                }
             }
             else
             {
@@ -620,7 +624,7 @@ namespace OpenCVSharpJJ
 
             frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
 
-            NamedMat BW1 = NMs.Get(ImageType.bw1);
+            //NamedMat BW1 = NMs.Get(ImageType.bw1);
 
             ////BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
             //Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
@@ -632,7 +636,8 @@ namespace OpenCVSharpJJ
             Cv2.Canny(ROI1.mat, cannymat.mat, Threshold1, Threshold2);
 
             //HoughLinesP
-            LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
+            //LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
+            LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 2, 2, 30, 1);
 
             //debug1.mat = ROI1.mat.EmptyClone();
 
@@ -650,8 +655,15 @@ namespace OpenCVSharpJJ
 
         void FrameProcessing3(Mat rotated)
         {
-
-
+            Mat i1 = rotated;
+            for (int i = 0; i < taches.Count; i++)
+            {
+                ImPr imPr = taches[i];
+                imPr.Input = i1;
+                imPr.Process();
+                i1 = imPr.Output;
+            }
+            debug1.mat = i1;
         }
 
         void FrameProcessing4(Mat rotated)
@@ -1016,6 +1028,14 @@ namespace OpenCVSharpJJ
         private void Button_Files_Clear(object sender, MouseButtonEventArgs e)
         {
             lbx_files.Items.Clear();
+        }
+
+        private void lbx_ImPr_Selected(object sender, SelectionChangedEventArgs e)
+        {
+            ListBoxItem lbi = (ListBoxItem)e.AddedItems[0];
+            ImPr imPr = Taches[lbi];
+            grd_ImPr_Selected.Children.Clear();
+            grd_ImPr_Selected.Children.Add(imPr.UC());
         }
 
         private void lbx_files_Change(object sender, SelectionChangedEventArgs e)
