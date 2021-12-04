@@ -13,14 +13,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-using OpenCvSharp;
 using System.ComponentModel;
 
 namespace OpenCVSharpJJ.Processing
 {
-    public partial class ImPr_Rotation_UC : UserControl, INotifyPropertyChanged
+    public partial class ImPr_ListBoxItem : UserControl, INotifyPropertyChanged
     {
-        private ImPr_Rotation imPr_Rotation;
+        ImPr imPr;
 
         #region BINDINGS IHM
         public event PropertyChangedEventHandler PropertyChanged;
@@ -30,47 +29,39 @@ namespace OpenCVSharpJJ.Processing
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        public bool _actived
+        public string _titre
         {
             get
             {
-                if (imPr_Rotation != null)
-                    return imPr_Rotation._actived;
-                else
-                    return false;
-            }
-            set
-            {
-                imPr_Rotation._actived = value;
-                OnPropertyChanged("_actived");
+                return imPr.imPrType.ToString();
             }
         }
 
-        public RotateFlags _rotationType
+        public string _info
         {
             get
             {
-                if (imPr_Rotation != null)
-                    return imPr_Rotation.rotationType;
-                else
-                    return RotateFlags.Rotate180;
+                return l_info;
+                //return imPr._string;
             }
             set
             {
-                imPr_Rotation.rotationType = value;
-                OnPropertyChanged("_rotationType");
-                imPr_Rotation.Update_string();
+                l_info = value;
+                OnPropertyChanged("_info");
             }
         }
+        string l_info;
         #endregion
 
-        public ImPr_Rotation_UC()
+        public ImPr_ListBoxItem()
         {
             InitializeComponent();
             DataContext = this;
         }
 
-        public void Link(ImPr_Rotation imPr_Rotation) { this.imPr_Rotation = imPr_Rotation; }
-
+        public void ImPr_Link(ImPr imPr)
+        {
+            this.imPr = imPr;
+        }
     }
 }

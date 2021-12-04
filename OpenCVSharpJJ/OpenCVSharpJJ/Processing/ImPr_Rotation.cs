@@ -31,25 +31,29 @@ namespace OpenCVSharpJJ.Processing
 
         public override void Process()
         {
-            if (Output == null) Output = new Mat();
-            Cv2.Rotate(Input, Output, rotationType);
+            if (!_actived)
+            {
+                Output = Input;
+                return;
+            }
+            if (Output == null) 
+                Output = new Mat();
+
+            //CHRONO
+            try
+            {
+                Cv2.Rotate(Input, Output, rotationType);
+                //AFFICHE CHRONO
+            }
+            catch (Exception ex)
+            {
+                //AFFICHE STACKTRACE
+            }
         }
 
-        public override ListBoxItem ListBoxItem()
+        public override void Update_string()
         {
-            System.Windows.Controls.ListBoxItem lbi = new ListBoxItem();
-
-            Label lbl_titre = new Label() { Content = imPrType.ToString(), FontWeight = System.Windows.FontWeights.Bold };
-            Label lbl_1 = new Label() { Content = rotationType.ToString() };
-
-            StackPanel sp = new StackPanel();
-            sp.Orientation = Orientation.Horizontal;
-            sp.Children.Add(lbl_titre);
-            sp.Children.Add(lbl_1);
-
-            lbi.Content = sp;
-
-            return lbi;
+            _string = rotationType.ToString();
         }
 
         public override UserControl UC()

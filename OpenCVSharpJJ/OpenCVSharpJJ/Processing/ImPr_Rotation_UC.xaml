@@ -23,7 +23,7 @@
             <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>   
-        <Label Content="ROTATION" FontWeight="Bold"/>
+        <CheckBox IsChecked="{Binding _actived}" Content="ROTATION" FontWeight="Bold"/>
         <ComboBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource dataFromEnum}}"
                   SelectedItem="{Binding Path=_rotationType}" />
 

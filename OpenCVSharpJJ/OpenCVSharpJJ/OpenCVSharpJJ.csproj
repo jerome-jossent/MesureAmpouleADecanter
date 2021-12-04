@@ -150,6 +150,9 @@
     </Compile>
     <Compile Include="Processing\ImPr.cs" />
     <Compile Include="Processing\ImPr_Converter.cs" />
+    <Compile Include="Processing\ImPr_ListBoxItem.xaml.cs">
+      <DependentUpon>ImPr_ListBoxItem.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Processing\ImPr_Resize.cs" />
     <Compile Include="Processing\ImPr_Resize_UC.xaml.cs">
       <DependentUpon>ImPr_Resize_UC.xaml</DependentUpon>
@@ -182,6 +185,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="MesureAmpouleADecanter.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Processing\ImPr_ListBoxItem.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

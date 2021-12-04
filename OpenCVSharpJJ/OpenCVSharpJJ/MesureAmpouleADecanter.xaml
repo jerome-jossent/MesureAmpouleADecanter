@@ -211,22 +211,24 @@
 
                 </Grid>
 
-                <!--IMAGES-->
+                <!--PROCESS & IMAGES-->
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
+                    
+                    <!--PROCESS-->
                     <Grid Grid.Column="0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <Grid Grid.Row="0" x:Name="grd_ImPr_Selected"/>
-                        <ListBox Grid.Row="1" x:Name="lbx_ImPr" SelectionChanged="lbx_ImPr_Selected"/>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ListBox Grid.Column="0" x:Name="lbx_ImPr" SelectionChanged="lbx_ImPr_Selected"/>
+                        <Grid Grid.Column="1" x:Name="grd_ImPr_Selected"/>
                     </Grid>
                     
+                    <!--IMAGES-->
                     <Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>

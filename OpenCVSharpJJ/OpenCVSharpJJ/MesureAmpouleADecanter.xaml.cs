@@ -473,7 +473,7 @@ namespace OpenCVSharpJJ
         #endregion
 
         List<ImPr> taches;
-        Dictionary<ListBoxItem, ImPr> Taches;
+        Dictionary<ImPr_ListBoxItem, ImPr> Taches;
 
         void ComputePicture()
         {
@@ -504,10 +504,10 @@ namespace OpenCVSharpJJ
         }
 
         #region IMAGE PROCESSINGS
-        private void ImageProcessing_Init()
+        void ImageProcessing_Init()
         {
             cbx_processingType.ItemsSource = Enum.GetValues(typeof(ProcessingType));
-            cbx_processingType.SelectedIndex = 0;
+            cbx_processingType.SelectedIndex = 2;
 
             cbx_grayProcessingType.ItemsSource = Enum.GetValues(typeof(Calque));
             cbx_grayProcessingType.SelectedIndex = 0;
@@ -521,11 +521,16 @@ namespace OpenCVSharpJJ
 
             int i = 1;
             i1.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
+            i1.matName = ImageType.debug1;
             i2.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
             i3.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
             i4.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
 
+            Taches_Init();
+        }
 
+        void Taches_Init()
+        {
             taches = new List<ImPr>();
             if (File.Exists("c:\\_JJ\\process.impr.txt"))
             {
@@ -533,11 +538,12 @@ namespace OpenCVSharpJJ
                 string JSON = File.ReadAllText("c:\\_JJ\\process.impr.txt");
                 taches = JsonConvert.DeserializeObject<List<ImPr>>(JSON,
                     new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
-                Taches = new Dictionary<ListBoxItem, ImPr>();
+                Taches = new Dictionary<ImPr_ListBoxItem, ImPr>();
                 lbx_ImPr.Items.Clear();
                 for (int j = 0; j < taches.Count; j++)
                 {
-                    ListBoxItem lbi = taches[j].ListBoxItem();
+                    taches[j].ImPr_Init();
+                    ImPr_ListBoxItem lbi = taches[j].imPr_ListBoxItem;
                     Taches.Add(lbi, taches[j]);
                     lbx_ImPr.Items.Add(lbi);
                 }
@@ -672,8 +678,15 @@ namespace OpenCVSharpJJ
 
         }
 
-        #region COMMON IMAGE PROCESSING
+        private void lbx_ImPr_Selected(object sender, SelectionChangedEventArgs e)
+        {
+            ImPr_ListBoxItem lbi = (ImPr_ListBoxItem)e.AddedItems[0];
+            ImPr imPr = Taches[lbi];
+            grd_ImPr_Selected.Children.Clear();
+            grd_ImPr_Selected.Children.Add(imPr.UC());
+        }
 
+        #region COMMON IMAGE PROCESSING
         private void Combobox_grayProcessingType_Change(object sender, SelectionChangedEventArgs e)
         {
             Enum.TryParse<Calque>(cbx_grayProcessingType.SelectedValue.ToString(), out grayProcessingType);
@@ -1028,14 +1041,6 @@ namespace OpenCVSharpJJ
         private void Button_Files_Clear(object sender, MouseButtonEventArgs e)
         {
             lbx_files.Items.Clear();
-        }
-
-        private void lbx_ImPr_Selected(object sender, SelectionChangedEventArgs e)
-        {
-            ListBoxItem lbi = (ListBoxItem)e.AddedItems[0];
-            ImPr imPr = Taches[lbi];
-            grd_ImPr_Selected.Children.Clear();
-            grd_ImPr_Selected.Children.Add(imPr.UC());
         }
 
         private void lbx_files_Change(object sender, SelectionChangedEventArgs e)

@@ -33,27 +33,28 @@ namespace OpenCVSharpJJ.Processing
 
         public override void Process()
         {
-            if (Output == null) Output = new Mat();
-            Cv2.Resize(Input, Output, size, interpolation: interpolationType);
+            if (!_actived)
+            {
+                Output = Input;
+                return;
+            }
+            if (Output == null)
+                Output = new Mat();
+
+            try
+            {
+                Cv2.Resize(Input, Output, size, interpolation: interpolationType);
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
-        public override ListBoxItem ListBoxItem()
+        public override void Update_string()
         {
-            System.Windows.Controls.ListBoxItem lbi = new ListBoxItem();
-
-            Label lbl_titre = new Label() { Content = imPrType.ToString(), FontWeight = System.Windows.FontWeights.Bold };
-            Label lbl_1 = new Label() { Content = size.Width + "x" + size.Height };
-            Label lbl_2 = new Label() { Content = interpolationType.ToString() };
-
-            StackPanel sp = new StackPanel();
-            sp.Orientation = Orientation.Horizontal;
-            sp.Children.Add(lbl_titre);
-            sp.Children.Add(lbl_1);
-            sp.Children.Add(lbl_2);
-
-            lbi.Content = sp;
-
-            return lbi;
+            _string = size.Width + "x" + size.Height + 
+                " [" + interpolationType.ToString() + "]";
         }
 
         public override UserControl UC()
@@ -61,6 +62,7 @@ namespace OpenCVSharpJJ.Processing
             if (ImPr_Resize_UC == null)
             {
                 ImPr_Resize_UC = new ImPr_Resize_UC();
+                ImPr_Resize_UC.Link(this);
             }
             return ImPr_Resize_UC;
         }
