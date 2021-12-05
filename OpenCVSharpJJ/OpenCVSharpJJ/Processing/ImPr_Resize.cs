@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace OpenCVSharpJJ.Processing
     public class ImPr_Resize : ImPr
     {
         public override ImPr_Converter.ImPrType imPrType => ImPr_Converter.ImPrType.Resize;
-        public Size size { get; set; }
+        public OpenCvSharp.Size size { get; set; }
 
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public InterpolationFlags interpolationType { get; set; }
@@ -41,13 +42,21 @@ namespace OpenCVSharpJJ.Processing
             if (Output == null)
                 Output = new Mat();
 
+            //CHRONO
+            long T0 = Cv2.GetTickCount();
             try
             {
                 Cv2.Resize(Input, Output, size, interpolation: interpolationType);
+
+                //AFFICHE CHRONO
+                long T1 = Cv2.GetTickCount();
+                long T = (T1 - T0)*1000;
+                Update_Debug((T / Cv2.GetTickFrequency()).ToString("F1") + "ms", black);
             }
             catch (Exception ex)
             {
-
+                //AFFICHE STACKTRACE
+                Update_Debug(ex.Message, red);
             }
         }
 
@@ -65,6 +74,14 @@ namespace OpenCVSharpJJ.Processing
                 ImPr_Resize_UC.Link(this);
             }
             return ImPr_Resize_UC;
+        }
+
+        public override void Update_Debug(string txt, System.Windows.Media.SolidColorBrush color)
+        {
+            if (ImPr_Resize_UC == null) 
+                return;
+            ImPr_Resize_UC._ImPr_Debug._debuginfo = txt;
+            ImPr_Resize_UC._ImPr_Debug._debugcolor = color;
         }
     }
 }

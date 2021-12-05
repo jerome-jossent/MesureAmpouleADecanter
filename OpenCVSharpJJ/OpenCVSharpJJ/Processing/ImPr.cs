@@ -30,24 +30,36 @@ namespace OpenCVSharpJJ.Processing
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        public string _string
+        [JsonIgnore]
+        public string _name
         {
-            //get
-            //{
-            //    return l_string;
-            //}
-            set
+            get
             {
-                //l_string = value;
-                //OnPropertyChanged("_string");
-                imPr_ListBoxItem._info = value;
+                return imPrType.ToString();
             }
         }
-        //string l_string;
+
+        [JsonIgnore]
+        public string _string
+        {
+            set
+            {
+                imPr_ListBoxItem._info = value;
+            }
+            get {
+                return imPr_ListBoxItem._info;
+            }
+        }
         #endregion
 
         [JsonIgnore]
         public ImPr_ListBoxItem imPr_ListBoxItem;
+        [JsonIgnore]
+        public System.Windows.Media.SolidColorBrush transparent = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Transparent);
+        [JsonIgnore]
+        public System.Windows.Media.SolidColorBrush red = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Red);
+         [JsonIgnore]
+        public System.Windows.Media.SolidColorBrush black = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Black);
 
         public Mat Input;
         public Mat Output;
@@ -60,6 +72,7 @@ namespace OpenCVSharpJJ.Processing
         }
 
         public abstract void Update_string();
+        public abstract void Update_Debug(string txt, System.Windows.Media.SolidColorBrush color);
         public abstract void Process();
         
         public abstract System.Windows.Controls.UserControl UC();

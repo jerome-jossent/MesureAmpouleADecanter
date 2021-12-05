@@ -22,10 +22,18 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
-        </Grid.RowDefinitions>   
-        <CheckBox IsChecked="{Binding _actived}" Content="ROTATION" FontWeight="Bold"/>
-        <ComboBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource dataFromEnum}}"
+        </Grid.RowDefinitions>
+        
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <CheckBox IsChecked="{Binding _actived}" Content="ROTATION" FontWeight="Bold"/>
+            <ComboBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource dataFromEnum}}"
                   SelectedItem="{Binding Path=_rotationType}" />
-
+        </Grid>
+        
+        <local:ImPr_Debug x:Name="_ImPr_Debug" Grid.Row="1"/>
     </Grid>
 </UserControl>

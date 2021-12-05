@@ -1,6 +1,7 @@
 ﻿using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,14 +41,20 @@ namespace OpenCVSharpJJ.Processing
                 Output = new Mat();
 
             //CHRONO
+            long T0 = Cv2.GetTickCount();
             try
             {
                 Cv2.Rotate(Input, Output, rotationType);
+
                 //AFFICHE CHRONO
+                long T1 = Cv2.GetTickCount();
+                long T = (T1 - T0) * 1000;
+                Update_Debug((T / Cv2.GetTickFrequency()).ToString("F1") + "ms", black);
             }
             catch (Exception ex)
             {
                 //AFFICHE STACKTRACE
+                Update_Debug(ex.Message, red);
             }
         }
 
@@ -64,6 +71,15 @@ namespace OpenCVSharpJJ.Processing
                 ImPr_Rotation_UC.Link(this);
             }
             return ImPr_Rotation_UC;
+        }
+
+        public override void Update_Debug(string txt, System.Windows.Media.SolidColorBrush color)
+        {
+            if (ImPr_Rotation_UC == null)
+                return;
+
+            ImPr_Rotation_UC._ImPr_Debug._debuginfo = txt;
+            ImPr_Rotation_UC._ImPr_Debug._debugcolor = color;
         }
     }
 }

@@ -40,6 +40,8 @@ namespace OpenCVSharpJJ
             get { return title + _fps; }
             set
             {
+                if (title == value)
+                    return;
                 title = value;
                 OnPropertyChanged("_title");
             }
@@ -51,6 +53,8 @@ namespace OpenCVSharpJJ
             get { return fps; }
             set
             {
+                if (fps == value)
+                    return;
                 fps = value;
                 OnPropertyChanged("_title");
             }
@@ -62,6 +66,8 @@ namespace OpenCVSharpJJ
             get { return threshold1; }
             set
             {
+                if (threshold1 == value)
+                    return;
                 threshold1 = value;
                 OnPropertyChanged("Threshold1");
             }
@@ -72,6 +78,8 @@ namespace OpenCVSharpJJ
             get { return threshold2; }
             set
             {
+                if (threshold2 == value)
+                    return;
                 threshold2 = value;
                 OnPropertyChanged("Threshold2");
             }
@@ -472,8 +480,29 @@ namespace OpenCVSharpJJ
         }
         #endregion
 
-        List<ImPr> taches;
+        //List<ImPr> taches;
         Dictionary<ImPr_ListBoxItem, ImPr> Taches;
+
+
+        public ObservableCollection<ImPr> taches
+        {
+            get
+            {
+                return _taches;
+            }
+            set
+            {
+                _taches = value;
+                OnPropertyChanged("taches");
+            }
+        }
+        ObservableCollection<ImPr> _taches = new ObservableCollection<ImPr>();
+
+
+
+
+
+
 
         void ComputePicture()
         {
@@ -504,6 +533,50 @@ namespace OpenCVSharpJJ
         }
 
         #region IMAGE PROCESSINGS
+
+        #region ImPr edit list
+        private void Button_ImPr_Up(object sender, RoutedEventArgs e)
+        {
+            //if (lbx_ImPr.SelectedItem == null) return;
+
+            //if (lbx_ImPr.SelectedIndex > 0)
+            //{
+            //    var itemToMoveUp = taches[lbx_ImPr.SelectedIndex];
+            //    taches.RemoveAt(lbx_ImPr.SelectedIndex);
+            //    taches.Insert(lbx_ImPr.SelectedIndex - 1, itemToMoveUp);
+            //    lbx_ImPr.SelectedIndex = lbx_ImPr.SelectedIndex - 1;
+            //}
+            //lbx_ImPr
+        }
+
+        private void Button_ImPr_Down(object sender, RoutedEventArgs e)
+        {
+            //if (lbx_ImPr.SelectedItem == null) return;
+
+
+
+            //lbx_ImPr.SelectedItem
+
+//            taches_to_Taches(false);
+        }
+
+        private void Button_ImPr_Add_Rotation(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Button_ImPr_Add_Resize(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Button_ImPr_Delete(object sender, RoutedEventArgs e)
+        {
+            //if (lbx_ImPr.SelectedItem == null) return;
+
+        }
+        #endregion
+
         void ImageProcessing_Init()
         {
             cbx_processingType.ItemsSource = Enum.GetValues(typeof(ProcessingType));
@@ -531,21 +604,27 @@ namespace OpenCVSharpJJ
 
         void Taches_Init()
         {
-            taches = new List<ImPr>();
+            //taches = new List<ImPr>();
+            taches = new ObservableCollection<ImPr>();
+
             if (File.Exists("c:\\_JJ\\process.impr.txt"))
             {
                 //https://stackoverflow.com/questions/20995865/deserializing-json-to-abstract-class
                 string JSON = File.ReadAllText("c:\\_JJ\\process.impr.txt");
-                taches = JsonConvert.DeserializeObject<List<ImPr>>(JSON,
+                //taches = JsonConvert.DeserializeObject<List<ImPr>>(JSON,
+                //    new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
+                taches = JsonConvert.DeserializeObject<ObservableCollection<ImPr>>(JSON,
                     new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
                 Taches = new Dictionary<ImPr_ListBoxItem, ImPr>();
-                lbx_ImPr.Items.Clear();
+
+                //lbx_ImPr.Items.Clear();
                 for (int j = 0; j < taches.Count; j++)
                 {
+
                     taches[j].ImPr_Init();
                     ImPr_ListBoxItem lbi = taches[j].imPr_ListBoxItem;
                     Taches.Add(lbi, taches[j]);
-                    lbx_ImPr.Items.Add(lbi);
+                    //lbx_ImPr.Items.Add(lbi);
                 }
             }
             else
@@ -555,6 +634,7 @@ namespace OpenCVSharpJJ
                 Taches_Save();
             }
         }
+
 
         void Taches_Save()
         {

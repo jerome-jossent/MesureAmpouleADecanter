@@ -23,24 +23,32 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <CheckBox IsChecked="{Binding _actived}" Content="RESIZE" FontWeight="Bold"/>
-        <Label Grid.Row="1" Grid.Column="0" Content="Width" HorizontalContentAlignment="Right"/>
-        <xctk:IntegerUpDown Grid.Row="1" Grid.Column="1" Value="{Binding _width}" />
-        <Label Grid.Row="2" Grid.Column="0" Content="Height" HorizontalContentAlignment="Right"/>
-        <xctk:IntegerUpDown Grid.Row="2" Grid.Column="1" Value="{Binding _height}" />
 
-        <Label Grid.Row="3" Grid.Column="0" Content="Interpolation" HorizontalContentAlignment="Right"/>
-        <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Source={StaticResource dataFromEnum}}"
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <CheckBox IsChecked="{Binding _actived}" Content="RESIZE" FontWeight="Bold"/>
+            <Label Grid.Row="1" Grid.Column="0" Content="Width" HorizontalContentAlignment="Right"/>
+            <xctk:IntegerUpDown Grid.Row="1" Grid.Column="1" Value="{Binding _width}" />
+            <Label Grid.Row="2" Grid.Column="0" Content="Height" HorizontalContentAlignment="Right"/>
+            <xctk:IntegerUpDown Grid.Row="2" Grid.Column="1" Value="{Binding _height}" />
+
+            <Label Grid.Row="3" Grid.Column="0" Content="Interpolation" HorizontalContentAlignment="Right"/>
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Source={StaticResource dataFromEnum}}"
                   SelectedItem="{Binding Path=_interpolationType}" />
 
-
-
+        </Grid>
+        
+        <local:ImPr_Debug x:Name="_ImPr_Debug" Grid.Row="1"/>
     </Grid>
+
 </UserControl>

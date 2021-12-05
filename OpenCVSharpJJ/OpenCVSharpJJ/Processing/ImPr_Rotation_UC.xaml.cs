@@ -41,6 +41,8 @@ namespace OpenCVSharpJJ.Processing
             }
             set
             {
+                if (imPr_Rotation._actived == value)
+                    return;
                 imPr_Rotation._actived = value;
                 OnPropertyChanged("_actived");
             }
@@ -57,6 +59,8 @@ namespace OpenCVSharpJJ.Processing
             }
             set
             {
+                if (imPr_Rotation.rotationType == value)
+                    return;
                 imPr_Rotation.rotationType = value;
                 OnPropertyChanged("_rotationType");
                 imPr_Rotation.Update_string();

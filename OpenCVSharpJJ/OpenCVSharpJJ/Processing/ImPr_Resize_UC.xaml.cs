@@ -41,6 +41,8 @@ namespace OpenCVSharpJJ.Processing
             }
             set
             {
+                if (imPr_Resize._actived == value)
+                    return;
                 imPr_Resize._actived = value;
                 OnPropertyChanged("_actived");
             }
@@ -57,6 +59,8 @@ namespace OpenCVSharpJJ.Processing
             }
             set
             {
+                if (imPr_Resize.size.Width == value)
+                    return;
                 imPr_Resize.size = new OpenCvSharp.Size(value, imPr_Resize.size.Height);
                 OnPropertyChanged("_width");
                 imPr_Resize.Update_string();
@@ -73,6 +77,8 @@ namespace OpenCVSharpJJ.Processing
             }
             set
             {
+                if (imPr_Resize.size.Height == value)
+                    return;
                 imPr_Resize.size = new OpenCvSharp.Size(imPr_Resize.size.Width, value);
                 OnPropertyChanged("_height");
                 imPr_Resize.Update_string();
@@ -87,6 +93,8 @@ namespace OpenCVSharpJJ.Processing
             }
             set
             {
+                if (imPr_Resize.interpolationType == value)
+                    return;
                 imPr_Resize.interpolationType = value;
                 OnPropertyChanged("_interpolationType");
                 imPr_Resize.Update_string();

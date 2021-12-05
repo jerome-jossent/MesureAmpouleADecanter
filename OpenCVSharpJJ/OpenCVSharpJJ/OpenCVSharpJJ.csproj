@@ -150,6 +150,9 @@
     </Compile>
     <Compile Include="Processing\ImPr.cs" />
     <Compile Include="Processing\ImPr_Converter.cs" />
+    <Compile Include="Processing\ImPr_Debug.xaml.cs">
+      <DependentUpon>ImPr_Debug.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Processing\ImPr_ListBoxItem.xaml.cs">
       <DependentUpon>ImPr_ListBoxItem.xaml</DependentUpon>
     </Compile>
@@ -185,6 +188,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="MesureAmpouleADecanter.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Processing\ImPr_Debug.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -283,6 +290,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="images\Moins.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\Plus.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

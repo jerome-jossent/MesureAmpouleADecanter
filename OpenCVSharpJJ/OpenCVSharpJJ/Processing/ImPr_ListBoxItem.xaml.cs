@@ -42,10 +42,11 @@ namespace OpenCVSharpJJ.Processing
             get
             {
                 return l_info;
-                //return imPr._string;
             }
             set
             {
+                if (l_info == value)
+                    return;
                 l_info = value;
                 OnPropertyChanged("_info");
             }
