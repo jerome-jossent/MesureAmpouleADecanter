@@ -104,8 +104,12 @@ namespace Communication_Série
         {
             try
             {
-                MySerialPort.Write(texte);
-                return true;
+                if (MySerialPort != null)
+                {
+                    MySerialPort.Write(texte);
+                    return true;
+                }
+                return false;
             }
             catch (Exception)
             {

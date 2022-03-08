@@ -46,7 +46,7 @@ namespace OpenCVSharpJJ
                 OnPropertyChanged("_title");
             }
         }
-        string title = "Mesure ampoule à décanter";
+        string title = "Mesure décantation";
 
         public string _fps
         {
@@ -70,9 +70,11 @@ namespace OpenCVSharpJJ
                     return;
                 threshold1 = value;
                 OnPropertyChanged("Threshold1");
+                if (!isRunning)
+                    ComputePicture();
             }
         }
-        int threshold1 = 127;
+        int threshold1 = 150;
         public int Threshold2
         {
             get { return threshold2; }
@@ -82,9 +84,32 @@ namespace OpenCVSharpJJ
                     return;
                 threshold2 = value;
                 OnPropertyChanged("Threshold2");
+                if (!isRunning)
+                    ComputePicture();
             }
         }
-        int threshold2 = 127;
+        int threshold2 = 10;
+
+        public int ResizeFactor
+        {
+            get { return resizeFactor; }
+            set
+            {
+                if (resizeFactor == value)
+                    return;
+                resizeFactor = value;
+                OnPropertyChanged("ResizeFactor");
+                OnPropertyChanged("ResizeFactorString");
+                if (!isRunning)
+                    ComputePicture();
+            }
+        }
+        int resizeFactor = 100;
+
+        public string ResizeFactorString
+        {
+            get { return resizeFactor.ToString() + " %"; }
+        }
 
         public System.Drawing.Bitmap _imageSource
         {
@@ -240,8 +265,11 @@ namespace OpenCVSharpJJ
         #endregion
 
         #region PARAMETERS
+        int distancepixel;
+
         ProcessingType processingType;
         Calque grayProcessingType;
+        RotateFlags? rotation;
 
         long T0;
         NamedMats NMs;
@@ -262,6 +290,7 @@ namespace OpenCVSharpJJ
         Mat[] bgr;
 
         Thread thread;
+        Thread threadCommandeArduino;
         int indexDevice;
         VideoInInfo.Format format;
         Dictionary<string, VideoInInfo.Format> formats;
@@ -270,13 +299,12 @@ namespace OpenCVSharpJJ
         bool first = true;
         System.Diagnostics.Stopwatch chrono = new System.Diagnostics.Stopwatch();
 
-        VideoWriter videoWriter;
         OpenCvSharp.Rect roi;
 
         Communication_Série.Communication_Série cs;
         string buffer;
         char[] split_car = new char[] { '\n' };
-        float camera_pos;
+        float? camera_pos;
         float camera_pos_max;
 
         bool camera_pos_low_switch, camera_pos_high_switch;
@@ -294,13 +322,26 @@ namespace OpenCVSharpJJ
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            cbx_rotation.Items.Add("Non");
+            cbx_rotation.Items.Add(RotateFlags.Rotate90Clockwise.ToString());
+            cbx_rotation.Items.Add(RotateFlags.Rotate180.ToString());
+            cbx_rotation.Items.Add(RotateFlags.Rotate90Counterclockwise.ToString());
+
+            cbx_rotation.SelectedIndex = 3;
+
             Camera_Init();
             Arduino_Init();
             ImageProcessing_Init();
+
+            threadCommandeArduino = new Thread(CameraDisplacement);
+            threadCommandeArduino.Start();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            threadCommandeArduino?.Abort();
+            threadCommandeArduino = null;
+
             isRunning = false;
             CaptureCameraStop();
             cs?.PortCom_OFF();
@@ -375,30 +416,6 @@ namespace OpenCVSharpJJ
             format = formats[cbx_deviceFormat.SelectedValue as string];
         }
 
-        private void Button_CaptureDeviceRECORD_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (videoWriter == null)
-            {
-                //ok
-                videoWriter = new VideoWriter("D:\\Projets\\video.avi", FourCC.XVID, 30, new OpenCvSharp.Size(frame.mat.Width, frame.mat.Height));
-
-                //plus ok
-                //videoWriter = new VideoWriter("D:\\Projets\\video.mp4", FourCC.MP4V, 30, new OpenCvSharp.Size(frame.mat.Width, frame.mat.Height));
-
-                //pas ok
-                //videoWriter = new VideoWriter("D:\\Projets\\video.mp4", FourCC.H264, 30, new OpenCvSharp.Size(frame.Width, frame.Height));
-
-                Button_CaptureDeviceRECORD.Visibility = Visibility.Collapsed;
-                Button_CaptureDeviceRECORDSTOP.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                videoWriter.Release();
-                videoWriter = null;
-                Button_CaptureDeviceRECORD.Visibility = Visibility.Visible;
-                Button_CaptureDeviceRECORDSTOP.Visibility = Visibility.Collapsed;
-            }
-        }
         #endregion
 
         #region CAMERA MANAGEMENT
@@ -453,6 +470,7 @@ namespace OpenCVSharpJJ
                     {
                         Display_Init();
                         MatNamesToMats_Reset();
+                        roi = new OpenCvSharp.Rect();
                         first = false;
                     }
 
@@ -480,111 +498,19 @@ namespace OpenCVSharpJJ
         }
         #endregion
 
-        //List<ImPr> taches;
-        Dictionary<ImPr_ListBoxItem, ImPr> Taches;
-
-
-        public ObservableCollection<ImPr> taches
-        {
-            get
-            {
-                return _taches;
-            }
-            set
-            {
-                _taches = value;
-                OnPropertyChanged("taches");
-            }
-        }
-        ObservableCollection<ImPr> _taches = new ObservableCollection<ImPr>();
-
-
-
-
-
-
-
         void ComputePicture()
         {
+            if (!frame.mat.Empty())
+                FrameProcessing1();
 
-            Cv2.Rotate(frame.mat, rotated.mat, RotateFlags.Rotate90Counterclockwise);
-
-            if (!rotated.mat.Empty())
-                switch (processingType)
-                {
-                    case ProcessingType.process1:
-                        FrameProcessing1(rotated.mat);
-                        break;
-                    case ProcessingType.process2:
-                        FrameProcessing2(rotated.mat);
-                        break;
-                    case ProcessingType.process3:
-                        FrameProcessing3(rotated.mat);
-                        break;
-                    case ProcessingType.process4:
-                        FrameProcessing4(rotated.mat);
-                        break;
-                }
             UpdateDisplayImages();
-
-            videoWriter?.Write(rotated.mat);
 
             DisplayFPS();
         }
 
         #region IMAGE PROCESSINGS
-
-        #region ImPr edit list
-        private void Button_ImPr_Up(object sender, RoutedEventArgs e)
-        {
-            //if (lbx_ImPr.SelectedItem == null) return;
-
-            //if (lbx_ImPr.SelectedIndex > 0)
-            //{
-            //    var itemToMoveUp = taches[lbx_ImPr.SelectedIndex];
-            //    taches.RemoveAt(lbx_ImPr.SelectedIndex);
-            //    taches.Insert(lbx_ImPr.SelectedIndex - 1, itemToMoveUp);
-            //    lbx_ImPr.SelectedIndex = lbx_ImPr.SelectedIndex - 1;
-            //}
-            //lbx_ImPr
-        }
-
-        private void Button_ImPr_Down(object sender, RoutedEventArgs e)
-        {
-            //if (lbx_ImPr.SelectedItem == null) return;
-
-
-
-            //lbx_ImPr.SelectedItem
-
-//            taches_to_Taches(false);
-        }
-
-        private void Button_ImPr_Add_Rotation(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Button_ImPr_Add_Resize(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Button_ImPr_Delete(object sender, RoutedEventArgs e)
-        {
-            //if (lbx_ImPr.SelectedItem == null) return;
-
-        }
-        #endregion
-
         void ImageProcessing_Init()
         {
-            cbx_processingType.ItemsSource = Enum.GetValues(typeof(ProcessingType));
-            cbx_processingType.SelectedIndex = 2;
-
-            cbx_grayProcessingType.ItemsSource = Enum.GetValues(typeof(Calque));
-            cbx_grayProcessingType.SelectedIndex = 0;
-
             MatNamesToMats_Reset();
 
             i1._UpdateCombobox(NMs);
@@ -594,58 +520,13 @@ namespace OpenCVSharpJJ
 
             int i = 1;
             i1.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-            i1.matName = ImageType.debug1;
+            i1.matName = ImageType.rotated;
             i2.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
+            i2.matName = ImageType.roi1;
             i3.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
+            i3.matName = ImageType.gray1;
             i4.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-
-            Taches_Init();
-        }
-
-        void Taches_Init()
-        {
-            //taches = new List<ImPr>();
-            taches = new ObservableCollection<ImPr>();
-
-            if (File.Exists("c:\\_JJ\\process.impr.txt"))
-            {
-                //https://stackoverflow.com/questions/20995865/deserializing-json-to-abstract-class
-                string JSON = File.ReadAllText("c:\\_JJ\\process.impr.txt");
-                //taches = JsonConvert.DeserializeObject<List<ImPr>>(JSON,
-                //    new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
-                taches = JsonConvert.DeserializeObject<ObservableCollection<ImPr>>(JSON,
-                    new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
-                Taches = new Dictionary<ImPr_ListBoxItem, ImPr>();
-
-                //lbx_ImPr.Items.Clear();
-                for (int j = 0; j < taches.Count; j++)
-                {
-
-                    taches[j].ImPr_Init();
-                    ImPr_ListBoxItem lbi = taches[j].imPr_ListBoxItem;
-                    Taches.Add(lbi, taches[j]);
-                    //lbx_ImPr.Items.Add(lbi);
-                }
-            }
-            else
-            {
-                taches.Add(new ImPr_Rotation(RotateFlags.Rotate90Clockwise));
-                taches.Add(new ImPr_Resize(new OpenCvSharp.Size(640, 480), InterpolationFlags.Cubic));
-                Taches_Save();
-            }
-        }
-
-
-        void Taches_Save()
-        {
-            string json = JsonConvert.SerializeObject(taches,
-                Formatting.Indented,
-                new JsonSerializerSettings
-                {
-                    TypeNameHandling = TypeNameHandling.All
-                });
-            Directory.CreateDirectory("c:\\_JJ");
-            File.WriteAllText("c:\\_JJ\\process.impr.txt", json);
+            i4.matName = ImageType.bw1;
         }
 
         void MatNamesToMats_Reset()
@@ -667,110 +548,190 @@ namespace OpenCVSharpJJ
             NMs.MatNamesToMats.Add(ImageType.debug4, debug4);
         }
 
-        private void Combobox_processingType_Change(object sender, SelectionChangedEventArgs e)
-        {
-            Enum.TryParse<ProcessingType>(cbx_processingType.SelectedValue.ToString(), out processingType);
-            first = true;
-        }
-
         private void Button_CaptureDeviceROI_Click(object sender, RoutedEventArgs e)
         {
             string window_name = "Valid ROI with 'Enter' or 'Space', cancel with 'c'";
+
+            if (frame.mat.Empty())
+                return;
+
+            rotated.mat = Resize(frame.mat);
+            rotated.mat = Rotation(rotated.mat);
+
             OpenCvSharp.Rect newroi = Cv2.SelectROI(window_name, rotated.mat, true);
-            if (newroi.Width > 0)
-                roi = newroi;
+            //            if (newroi.Width > 0)
+            roi = newroi;
             _title = roi.ToString();
             Cv2.DestroyWindow(window_name);
         }
 
-        void FrameProcessing1(Mat rotated)
+        private void Button_CaptureDeviceROI_Save_Click(object sender, RoutedEventArgs e)
         {
-            if (roi.Width > 0)
-                ROI1.mat = new Mat(rotated, roi);
-            else
-                ROI1.mat = rotated;
-
-            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
-
-            Cv2.Canny(frameGray.mat, cannymat.mat, 50, 200);
-
-            bgr[0] = cannymat.mat;
-            bgr[1] = new Mat(bgr[0].Size(), MatType.CV_8UC1);
-            bgr[2] = bgr[1];
-
-            Cv2.Merge(bgr, BGR.mat);
+            Properties.Settings.Default.roi = roi.X + "|" + roi.Y + "|" + roi.Width + "|" + roi.Height + "|";
+            Properties.Settings.Default.Save();
         }
 
-        void FrameProcessing2(Mat rotated)
+        private void Button_CaptureDeviceROI_Load_Click(object sender, RoutedEventArgs e)
         {
-            if (roi.Width > 0)
-                ROI1.mat = new Mat(rotated, roi);
-            else
-                ROI1.mat = rotated;
+            string[] param = Properties.Settings.Default.roi.Split('|');
+            int x = int.Parse(param[0]);
+            int y = int.Parse(param[1]);
+            int w = int.Parse(param[2]);
+            int h = int.Parse(param[3]);
 
-            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
-
-            //NamedMat BW1 = NMs.Get(ImageType.bw1);
-
-            ////BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
-            //Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
-
-
-
-
-            //Cv2.Canny(ROI1.mat, cannymat.mat, 95, 100);
-            Cv2.Canny(ROI1.mat, cannymat.mat, Threshold1, Threshold2);
-
-            //HoughLinesP
-            //LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
-            LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 2, 2, 30, 1);
-
-            //debug1.mat = ROI1.mat.EmptyClone();
-
-            bgr[0] = frameGray.mat;
-            bgr[1] = bgr[0];
-            bgr[2] = bgr[1];
-            Cv2.Merge(bgr, BGR.mat);
-
-            debug1.mat = BGR.mat.Clone();
-
-            foreach (LineSegmentPoint s in segHoughP)
-                debug1.mat.Line(s.P1, s.P2, Scalar.Red, 1, LineTypes.AntiAlias, 0);
-
+            roi = new OpenCvSharp.Rect(x, y, w, h);
         }
 
-        void FrameProcessing3(Mat rotated)
+        Mat Rotation(Mat frame)
         {
-            Mat i1 = rotated;
-            for (int i = 0; i < taches.Count; i++)
+            Mat _out = new Mat();
+            switch (rotation)
             {
-                ImPr imPr = taches[i];
-                imPr.Input = i1;
-                imPr.Process();
-                i1 = imPr.Output;
+                case null:
+                    return frame;
+                case RotateFlags.Rotate90Clockwise:
+                    Cv2.Rotate(frame, _out, RotateFlags.Rotate90Clockwise);
+                    break;
+                case RotateFlags.Rotate90Counterclockwise:
+                    Cv2.Rotate(frame, _out, RotateFlags.Rotate90Counterclockwise);
+                    break;
+                case RotateFlags.Rotate180:
+                    Cv2.Rotate(frame, _out, RotateFlags.Rotate180);
+                    break;
             }
-            debug1.mat = i1;
+            return _out;
         }
 
-        void FrameProcessing4(Mat rotated)
+        Mat Resize(Mat frame)
         {
+            if (ResizeFactor == 100)
+                return frame;
+            double facteur = (double)resizeFactor / 100;
+            Mat _out = new Mat();
+            Cv2.Resize(frame, _out, new OpenCvSharp.Size(0, 0), facteur, facteur, InterpolationFlags.Cubic);
 
-
+            return _out;
         }
 
-        private void lbx_ImPr_Selected(object sender, SelectionChangedEventArgs e)
+        void FrameProcessing1()
         {
-            ImPr_ListBoxItem lbi = (ImPr_ListBoxItem)e.AddedItems[0];
-            ImPr imPr = Taches[lbi];
-            grd_ImPr_Selected.Children.Clear();
-            grd_ImPr_Selected.Children.Add(imPr.UC());
+            //resize
+            rotated.mat = Resize(frame.mat);
+
+            rotated.mat = Rotation(rotated.mat);
+
+            if (roi.Width > 0)
+                ROI1.mat = new Mat(rotated.mat, roi);
+            else
+                ROI1.mat = rotated.mat;
+
+            //gris
+            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
+
+            //seuillage
+            bw1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
+
+            //trouve niveau :
+            int p = bw1.mat.Height - 1;
+
+            var mat3 = new Mat<byte>(bw1.mat);
+            var indexer = mat3.GetIndexer();
+
+            //somme par ligne
+            int[] valeurs = new int[bw1.mat.Height];
+            for (int y = 0; y < bw1.mat.Height; y++)
+                for (int x = 0; x < bw1.mat.Width; x++)
+                    valeurs[y] += indexer[y, x];
+
+
+            bool test = true;
+            bool fail = false;
+
+            float seuil = (float)bw1.mat.Width * threshold2 / 100;
+
+            while (test)
+            {
+                float somme = 0;
+                for (int y = p; y < valeurs.Length; y++)
+                    somme += valeurs[y];
+
+                float moy = somme / (valeurs.Length - p);
+
+                if (moy < Threshold2)
+                {
+                    p -= 1;
+                    if (p <= 0)
+                    {
+                        test = false;
+                        fail = true;
+                    }
+                }
+                else
+                {
+                    p += 2;
+                    test = false;
+                }
+            }
+            if (!fail)
+            {
+                int milieuhauteur = rotated.mat.Height / 2;
+                int milieulargeur = rotated.mat.Width / 2;
+                Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, new Scalar(0, 0, 255), 2);
+                Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, new Scalar(0, 0, 255), 2);
+
+                Cv2.Line(ROI1.mat, 0, p, ROI1.mat.Width - 1, p, new Scalar(0, 255, 0), 1);
+
+                distancepixel = milieuhauteur - (p + roi.Y);
+
+                Cv2.PutText(rotated.mat, distancepixel.ToString(), new OpenCvSharp.Point(0,rotated.mat.Height), HersheyFonts.HersheyTriplex, 5, new Scalar(255, 255, 255), thickness:4);
+            }
+
+            void FrameProcessing2(Mat rotated)
+            {
+                if (roi.Width > 0)
+                    ROI1.mat = new Mat(rotated, roi);
+                else
+                    ROI1.mat = rotated;
+
+                frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
+
+                //NamedMat BW1 = NMs.Get(ImageType.bw1);
+
+                ////BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
+                //Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
+
+
+                //Cv2.Canny(frameGray.mat, cannymat.mat, 50, 200);
+
+                //bgr[0] = cannymat.mat;
+                //bgr[1] = new Mat(bgr[0].Size(), MatType.CV_8UC1);
+                //bgr[2] = bgr[1];
+
+                //Cv2.Merge(bgr, BGR.mat);
+
+
+                //Cv2.Canny(ROI1.mat, cannymat.mat, 95, 100);
+                Cv2.Canny(ROI1.mat, cannymat.mat, Threshold1, Threshold2);
+
+                //HoughLinesP
+                //LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
+                LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 2, 2, 30, 1);
+
+                //debug1.mat = ROI1.mat.EmptyClone();
+
+                bgr[0] = frameGray.mat;
+                bgr[1] = bgr[0];
+                bgr[2] = bgr[1];
+                Cv2.Merge(bgr, BGR.mat);
+
+                debug1.mat = BGR.mat.Clone();
+
+                foreach (LineSegmentPoint s in segHoughP)
+                    debug1.mat.Line(s.P1, s.P2, Scalar.Red, 1, LineTypes.AntiAlias, 0);
+            }
         }
 
         #region COMMON IMAGE PROCESSING
-        private void Combobox_grayProcessingType_Change(object sender, SelectionChangedEventArgs e)
-        {
-            Enum.TryParse<Calque>(cbx_grayProcessingType.SelectedValue.ToString(), out grayProcessingType);
-        }
 
         enum Calque { all, red, green, blue }
         Mat RGBToGray(Mat input, Calque calque)
@@ -896,7 +857,7 @@ namespace OpenCVSharpJJ
                 val_txt = val_txt.Replace("mm", "");
                 val_txt = val_txt.Replace(".", ",");
                 camera_pos = float.Parse(val_txt);
-                SLD_camera_position(camera_pos);
+                SLD_camera_position((float)camera_pos);
             }
             if (txt.Contains("D max = "))
             {
@@ -1021,6 +982,7 @@ namespace OpenCVSharpJJ
         }
         private void Button_GetPosition_Click(object sender, RoutedEventArgs e)
         {
+            camera_pos = null;
             SendToArduino("p");
         }
 
@@ -1028,6 +990,37 @@ namespace OpenCVSharpJJ
         {
             SendToArduino("a");
         }
+        #endregion
+
+        #region ARDUINO - MANAGE DEPLACEMENT
+        //thread qui suit la valeur "distancepixel"
+        void CameraDisplacement()
+        {
+            while (true)
+            {
+                int delta = 5;
+
+                if (Math.Abs(distancepixel) < delta)
+                {
+                    //on est ok
+                }
+                else
+                {
+                    if (distancepixel > 0)
+                    {
+                        //on monte
+                        SendToArduino("h");
+                    }
+                    else
+                    {
+                        // on descend
+                        SendToArduino("b");
+                    }
+                }
+                Thread.Sleep(1000);
+            }
+        }
+
         #endregion
 
         private void Button_CaptureDeviceSCAN_Click(object sender, RoutedEventArgs e)
@@ -1063,7 +1056,7 @@ namespace OpenCVSharpJJ
             while (!camera_pos_low_switch)
             {
                 //descend de 1mm
-                float camera_pos_prec = camera_pos;
+                float camera_pos_prec = (float)camera_pos;
                 float delta_mm = 1;
                 while (camera_pos_prec - camera_pos < delta_mm)// && !camera_pos_low_switch)
                 {
@@ -1123,6 +1116,26 @@ namespace OpenCVSharpJJ
             lbx_files.Items.Clear();
         }
 
+        private void cbx_rotation_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            switch (cbx_rotation.SelectedItem.ToString())
+            {
+                case "Non":
+                    rotation = null;
+                    break;
+                case "Rotate90Clockwise":
+                    rotation = RotateFlags.Rotate90Clockwise;
+                    break;
+                case "Rotate180":
+                    rotation = RotateFlags.Rotate180;
+                    break;
+                case "Rotate90Counterclockwise":
+                    rotation = RotateFlags.Rotate90Counterclockwise;
+                    break;
+            }
+        }
+
+
         private void lbx_files_Change(object sender, SelectionChangedEventArgs e)
         {
             if (first)
@@ -1131,73 +1144,14 @@ namespace OpenCVSharpJJ
                 MatNamesToMats_Reset();
                 first = false;
             }
+            if (lbx_files.SelectedValue == null)
+                return;
+
             frame.mat = new Mat(lbx_files.SelectedValue.ToString());
 
             ComputePicture();
         }
         #endregion
 
-        #region Clic droit sur image (INACTIF)  
-        //Décommenter dans XAML les 2 images
-
-        //private void img_mousedown(object sender, MouseButtonEventArgs e)
-        //{
-        //    if (ctxm_hideothers.IsChecked)
-        //    {
-        //        if (e.ChangedButton == MouseButton.Left)
-        //            this.DragMove();
-        //    }
-        //}
-
-        //private void ctxm_alwaysontop_Click(object sender, RoutedEventArgs e)
-        //{
-        //    Topmost = ctxm_alwaysontop.IsChecked;
-        //}
-
-        //private void ctxm_hideothers_Click(object sender, RoutedEventArgs e)
-        //{
-        //    if (ctxm_hideothers.IsChecked)
-        //    {
-        //        grd_visu.Width = new GridLength(0);
-        //        WindowStyle = WindowStyle.None;
-        //    }
-        //    else
-        //    {
-        //        grd_visu.Width = new GridLength(1, GridUnitType.Auto);
-        //        WindowStyle = WindowStyle.SingleBorderWindow;
-        //    }
-        //}
-
-        //private void ctxm_quit_Click(object sender, RoutedEventArgs e)
-        //{
-        //    Close();
-        //}
-
-        //private void ctxm_calque_Add_Click(object sender, RoutedEventArgs e)
-        //{
-        //    string file = @"D:\Images\_JJ\_\cadran.png";
-        //    FileInfo fi = new FileInfo(file);
-
-        //    StackPanel sp = new StackPanel();
-        //    sp.Orientation = System.Windows.Controls.Orientation.Horizontal;
-
-        //    System.Windows.Controls.Image im = new System.Windows.Controls.Image();
-        //    im.Source = new BitmapImage(new Uri(file));
-        //    im.Width = 20;
-        //    im.Height = 20;
-        //    sp.Children.Add(im);
-
-        //    Label lbl = new Label();
-        //    lbl.Content = fi.Name;
-        //    sp.Children.Add(lbl);
-
-        //    MenuItem mi = new MenuItem();
-        //    mi.Header = sp;
-        //    ctxm_calque.Items.Add(mi);
-
-
-        //    _imageCalque = new Bitmap(file);
-        //}
-        #endregion
     }
 }

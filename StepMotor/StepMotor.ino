@@ -6,7 +6,7 @@
 #define y_limit_max 11  //End stop HIGH
 
 const int stepsPerRev = 200; // <=> 1.8° par step
-int pulseWidthMicros = 500;  // microseconds //def 100
+int pulseWidthMicros = 1000;  // microseconds //def 500
 int millisBtwnSteps = 1000;
 
 // 2 mm => 1 tour => 200 steps
@@ -38,6 +38,8 @@ union Float_Bytes{
 
 void setup() {
   Serial.begin(9600);
+  Serial.println(F("STARTING"));
+  
   // init CNC shield
   pinMode(enPin, OUTPUT);
   digitalWrite(enPin, HIGH); //arrêt

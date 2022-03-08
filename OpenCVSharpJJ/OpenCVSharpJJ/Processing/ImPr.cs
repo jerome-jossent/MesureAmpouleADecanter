@@ -13,6 +13,7 @@ using static OpenCVSharpJJ.Processing.ImPr_Converter;
 
 namespace OpenCVSharpJJ.Processing
 {
+    //Im age Pr ocessing
     public abstract class ImPr: INotifyPropertyChanged
     {
         [JsonConverter(typeof(StringEnumConverter))]
