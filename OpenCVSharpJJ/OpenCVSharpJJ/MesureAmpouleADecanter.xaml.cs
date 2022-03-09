@@ -643,7 +643,6 @@ namespace OpenCVSharpJJ
                 for (int x = 0; x < bw1.mat.Width; x++)
                     valeurs[y] += indexer[y, x];
 
-
             bool test = true;
             bool fail = false;
 
@@ -657,7 +656,7 @@ namespace OpenCVSharpJJ
 
                 float moy = somme / (valeurs.Length - p);
 
-                if (moy < Threshold2)
+                if (moy < seuil)
                 {
                     p -= 1;
                     if (p <= 0)
