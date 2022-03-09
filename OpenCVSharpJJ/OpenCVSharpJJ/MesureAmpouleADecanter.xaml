@@ -17,6 +17,23 @@
 
     <Window.Resources>
         <local:BitmapToBitmapImageConverter x:Name="binaryConverter" x:Key="bitmapConverter"/>
+        
+        <Style TargetType="{x:Type ToggleButton}"
+           x:Key="toggleButtonStyle">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Content" Value="Drive by vision ON" />
+                    <Setter Property="Background" Value="Green" />
+                    <Setter Property="Foreground" Value="White" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="False">
+                    <Setter Property="Content" Value="Drive by vision OFF" />
+                    <Setter Property="Background" Value="Red" />
+                    <Setter Property="Foreground" Value="White" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -61,9 +78,10 @@
                    MouseDown="Button_DOWN_Click" ToolTip="DOWN"/>
 
             <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
-                <Button Margin="2" Content="ARRÊT" Click="Button_ARRETURGENCE_Click" Background="Red" Foreground="#FFFFFA00"/>
-                <Button Margin="2" Content="Etalonnage" Click="Button_Etalonnage_Click"/>
+                <Button Margin="2" Content="STOP" Click="Button_ARRETURGENCE_Click" Background="Red" Foreground="#FFFFFA00"/>
+                <Button Margin="2" Content="Calibrate" Click="Button_Etalonnage_Click"/>
                 <Button Margin="2" Content="Get Position" Click="Button_GetPosition_Click"/>
+                <ToggleButton Margin="2" Style="{StaticResource toggleButtonStyle}" IsChecked="{Binding CameraDisplacement_Running}" Width="125"/>
             </StackPanel>
 
             <TextBox Grid.Row="3" Grid.Column="1" x:Name="tbx_txt_to_arduino" Margin="2" VerticalContentAlignment="Center" KeyDown="tbx_txt_to_arduino_KeyDown"/>
