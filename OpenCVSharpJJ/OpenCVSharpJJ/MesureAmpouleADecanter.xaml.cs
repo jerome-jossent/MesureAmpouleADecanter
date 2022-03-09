@@ -247,11 +247,6 @@ namespace OpenCVSharpJJ
             bgr1, bgr2,
             debug1, debug2, debug3, debug4, debug5
         }
-
-        public enum ProcessingType
-        {
-            process1, process2, process3, process4,
-        }
         #endregion
 
         #region CLASSES
@@ -282,8 +277,6 @@ namespace OpenCVSharpJJ
         #region PARAMETERS
         int distancepixel;
 
-        ProcessingType processingType;
-        Calque grayProcessingType;
         RotateFlags? rotation;
 
         long T0;
@@ -325,7 +318,7 @@ namespace OpenCVSharpJJ
         bool camera_pos_low_switch, camera_pos_high_switch;
 
         OpenCvSharp.Window w;
-        bool display_in_OpenCVSharpWindow = true;
+        bool display_in_OpenCVSharpWindow = false;
         #endregion
 
         #region WINDOW MANAGEMENT
@@ -345,8 +338,8 @@ namespace OpenCVSharpJJ
             //PRESETS
             cbx_rotation.SelectedIndex = 3;
 
-            cbx_device.SelectedIndex = 1;
-            cbx_deviceFormat.SelectedIndex = 0;
+            //cbx_device.SelectedIndex = 1;
+            //cbx_deviceFormat.SelectedIndex = 0;
             Capture_Start();
         }
 
@@ -374,6 +367,7 @@ namespace OpenCVSharpJJ
         private void Camera_Init()
         {
             ListDevices();
+            Capture_Button_Update();
         }
 
         private void Button_ListDevices_Click(object sender, MouseButtonEventArgs e)
@@ -402,12 +396,23 @@ namespace OpenCVSharpJJ
             {
                 indexDevice = cbx_device.SelectedIndex;
                 CaptureCamera(indexDevice);
+            }
+            else
+            {
+                CaptureCamera_Stop();
+            }
+            Capture_Button_Update();
+        }
+
+        void Capture_Button_Update()
+        {
+            if (isRunning)
+            {
                 Button_CaptureDevicePlay.Visibility = Visibility.Collapsed;
                 Button_CaptureDeviceStop.Visibility = Visibility.Visible;
             }
             else
             {
-                CaptureCamera_Stop();
                 Button_CaptureDevicePlay.Visibility = Visibility.Visible;
                 Button_CaptureDeviceStop.Visibility = Visibility.Collapsed;
             }
@@ -630,32 +635,38 @@ namespace OpenCVSharpJJ
             return _out;
         }
 
+        Mat ROI(Mat frame, OpenCvSharp.Rect roi)
+        {
+            Mat _out = new Mat();
+            if (roi.Width > 0 &&
+                    frame.Height - roi.Y > 0 &&
+                    frame.Width - roi.X > 0 &&
+                    frame.Height - (roi.Y + roi.Height) > 0 &&
+                    frame.Width - (roi.X + roi.Width) > 0)
+                _out = new Mat(frame, roi);
+            else
+                _out = frame;
+            return _out;
+        }
+
+        Mat ROI_NewMat(Mat frame, OpenCvSharp.Rect roi)
+        {
+            return ROI_NewMat(frame, roi).Clone();
+        }
+
         void FrameProcessing1()
         {
             //filtre gaussien
             //Savitzky-Golay filter     https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_filter.html
 
-
-
-            //resize
             rotated.mat = Resize(frame.mat);
 
             rotated.mat = Rotation(rotated.mat);
 
-            Mat I = rotated.mat;
-
-            if (roi.Width > 0 &&
-                    I.Height - roi.Y > 0 &&
-                    I.Width - roi.X > 0 &&
-                    I.Height - (roi.Y + roi.Height) > 0 &&
-                    I.Width - (roi.X + roi.Width) > 0)
-                ROI1.mat = new Mat(rotated.mat, roi);
-            else
-                ROI1.mat = rotated.mat;
-
+            rotated.mat = ROI_NewMat(rotated.mat, roi);
 
             //gris
-            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
+            frameGray.mat = RGBToGray(ROI1.mat, Calque.all);
 
             //seuillage
             bw1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
@@ -722,7 +733,7 @@ namespace OpenCVSharpJJ
             else
                 ROI1.mat = rotated;
 
-            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
+            frameGray.mat = RGBToGray(ROI1.mat, Calque.all);
 
             //NamedMat BW1 = NMs.Get(ImageType.bw1);
 
@@ -1068,13 +1079,13 @@ namespace OpenCVSharpJJ
 
         #endregion
 
-        private void Button_CaptureDeviceSCAN_Click(object sender, RoutedEventArgs e)
+        void Button_CaptureDeviceSCAN_Click(object sender, RoutedEventArgs e)
         {
             Thread t = new Thread(Scan);
             t.Start();
         }
 
-        private void Scan()
+        void Scan()
         {
             camera_pos_high_switch = false;
             camera_pos_low_switch = false;
@@ -1195,6 +1206,15 @@ namespace OpenCVSharpJJ
             frame.mat = new Mat(lbx_files.SelectedValue.ToString());
 
             ComputePicture();
+        }
+        #endregion
+
+        #region Graphique
+        void AddPoint(DateTime t, float valeur)
+        {
+            //LiveChartsCore.Series<DateTime, float>
+            //var s = chart.Series.First();//.Series[0];
+            //s.Points.Add(new Point(t, valeur));
         }
         #endregion
     }

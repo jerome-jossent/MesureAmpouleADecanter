@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenCVSharpJJ"
         
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         xmlns:cmd ="http://www.galasoft.ch/mvvmlight"
         
         mc:Ignorable="d"
@@ -41,6 +42,9 @@
             <ColumnDefinition Width="auto"/>
             <!--splitter-->
             <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="auto"/>
+            <!--splitter-->
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!--ARDUINO-->
@@ -103,7 +107,6 @@
             X2="2" Y2="10000"
             Stroke="Black" StrokeDashArray="2, 4"
             StrokeThickness="2" />
-
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" MouseEnter="gds_mouseenter" MouseLeave="gds_mouseleave" Background="#02FFFFFF"
                       ToolTip="Adjust view"/>
 
@@ -263,6 +266,20 @@
 
                 </Grid>
             </Grid>
+        </Grid>
+
+        <!--SPLITTER-->
+        <Line Grid.Column="3" Visibility="Hidden" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            X1="2" Y1="0"
+            X2="2" Y2="10000"
+            Stroke="Black" StrokeDashArray="2, 4"
+            StrokeThickness="2" />
+        <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" MouseEnter="gds_mouseenter" MouseLeave="gds_mouseleave" Background="#02FFFFFF"
+                      ToolTip="Adjust view"/>
+        
+        <!--GRAPH-->
+        <Grid Grid.Column="4">
+            <lvc:CartesianChart Name="chart"/>
         </Grid>
     </Grid>
 </Window>
