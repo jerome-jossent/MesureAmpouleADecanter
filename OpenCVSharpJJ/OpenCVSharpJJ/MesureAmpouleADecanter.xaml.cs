@@ -218,6 +218,20 @@ namespace OpenCVSharpJJ
             }
         }
         ObservableCollection<string> arduinoMessages = new ObservableCollection<string>();
+
+        public bool CameraDisplacement_Running
+        {
+            get
+            {
+                return cameraDisplacement_Running;
+            }
+            set
+            {
+                cameraDisplacement_Running = value;
+                OnPropertyChanged("CameraDisplacement_Running");
+            }
+        }
+        bool cameraDisplacement_Running = false;
         #endregion
 
         #region ENUMERATIONS
@@ -248,6 +262,7 @@ namespace OpenCVSharpJJ
             public NamedMat(ImageType imageType)
             {
                 this.imageType = imageType;
+                //  /!\     si erreur dll OpenCV : dans les propriétés du projet, décocher "Préférer 32 bits"
                 mat = new Mat();
             }
         }
@@ -310,7 +325,7 @@ namespace OpenCVSharpJJ
         bool camera_pos_low_switch, camera_pos_high_switch;
 
         OpenCvSharp.Window w;
-        bool display_in_OpenCVSharpWindow = false;
+        bool display_in_OpenCVSharpWindow = true;
         #endregion
 
         #region WINDOW MANAGEMENT
@@ -322,28 +337,25 @@ namespace OpenCVSharpJJ
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            cbx_rotation.Items.Add("Non");
-            cbx_rotation.Items.Add(RotateFlags.Rotate90Clockwise.ToString());
-            cbx_rotation.Items.Add(RotateFlags.Rotate180.ToString());
-            cbx_rotation.Items.Add(RotateFlags.Rotate90Counterclockwise.ToString());
-
-            cbx_rotation.SelectedIndex = 3;
-
             Camera_Init();
             Arduino_Init();
             ImageProcessing_Init();
+            CameraDisplacement_Init();
 
-            threadCommandeArduino = new Thread(CameraDisplacement);
-            threadCommandeArduino.Start();
+            //PRESETS
+            cbx_rotation.SelectedIndex = 3;
+
+            cbx_device.SelectedIndex = 1;
+            cbx_deviceFormat.SelectedIndex = 0;
+            Capture_Start();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            threadCommandeArduino?.Abort();
-            threadCommandeArduino = null;
+            CameraDisplacement_Stop();
 
             isRunning = false;
-            CaptureCameraStop();
+            CaptureCamera_Stop();
             cs?.PortCom_OFF();
         }
 
@@ -362,9 +374,6 @@ namespace OpenCVSharpJJ
         private void Camera_Init()
         {
             ListDevices();
-            cbx_device.SelectedIndex = 1;
-            cbx_deviceFormat.SelectedIndex = 0;
-            Capture_Start();
         }
 
         private void Button_ListDevices_Click(object sender, MouseButtonEventArgs e)
@@ -398,7 +407,7 @@ namespace OpenCVSharpJJ
             }
             else
             {
-                CaptureCameraStop();
+                CaptureCamera_Stop();
                 Button_CaptureDevicePlay.Visibility = Visibility.Visible;
                 Button_CaptureDeviceStop.Visibility = Visibility.Collapsed;
             }
@@ -413,7 +422,8 @@ namespace OpenCVSharpJJ
 
         private void Combobox_CaptureDeviceFormat_Change(object sender, SelectionChangedEventArgs e)
         {
-            format = formats[cbx_deviceFormat.SelectedValue as string];
+            if (cbx_deviceFormat.SelectedValue != null)
+                format = formats[cbx_deviceFormat.SelectedValue as string];
         }
 
         #endregion
@@ -431,7 +441,7 @@ namespace OpenCVSharpJJ
             thread.Start();
         }
 
-        void CaptureCameraStop()
+        void CaptureCamera_Stop()
         {
             thread?.Abort();
             first = true;
@@ -480,15 +490,17 @@ namespace OpenCVSharpJJ
                     //Viewer debug
                     if (display_in_OpenCVSharpWindow)
                     {
-                        if (frame.mat.Empty())
+                        if (w != null && frame.mat.Empty())
                             Cv2.DestroyWindow(w.Name);
                         else
                         {
-                            if (w == null)
-                                w = new OpenCvSharp.Window();
-
-                            w.ShowImage(frame.mat);
-                            Cv2.WaitKey(1);
+                            if (!frame.mat.Empty())
+                            {
+                                if (w == null)
+                                    w = new OpenCvSharp.Window();
+                                w.ShowImage(frame.mat);
+                                Cv2.WaitKey(1);
+                            }
                         }
                     }
 
@@ -511,6 +523,11 @@ namespace OpenCVSharpJJ
         #region IMAGE PROCESSINGS
         void ImageProcessing_Init()
         {
+            cbx_rotation.Items.Add("Non");
+            cbx_rotation.Items.Add(RotateFlags.Rotate90Clockwise.ToString());
+            cbx_rotation.Items.Add(RotateFlags.Rotate180.ToString());
+            cbx_rotation.Items.Add(RotateFlags.Rotate90Counterclockwise.ToString());
+
             MatNamesToMats_Reset();
 
             i1._UpdateCombobox(NMs);
@@ -615,15 +632,27 @@ namespace OpenCVSharpJJ
 
         void FrameProcessing1()
         {
+            //filtre gaussien
+            //Savitzky-Golay filter     https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_filter.html
+
+
+
             //resize
             rotated.mat = Resize(frame.mat);
 
             rotated.mat = Rotation(rotated.mat);
 
-            if (roi.Width > 0)
+            Mat I = rotated.mat;
+
+            if (roi.Width > 0 &&
+                    I.Height - roi.Y > 0 &&
+                    I.Width - roi.X > 0 &&
+                    I.Height - (roi.Y + roi.Height) > 0 &&
+                    I.Width - (roi.X + roi.Width) > 0)
                 ROI1.mat = new Mat(rotated.mat, roi);
             else
                 ROI1.mat = rotated.mat;
+
 
             //gris
             frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
@@ -682,52 +711,52 @@ namespace OpenCVSharpJJ
 
                 distancepixel = milieuhauteur - (p + roi.Y);
 
-                Cv2.PutText(rotated.mat, distancepixel.ToString(), new OpenCvSharp.Point(0,rotated.mat.Height), HersheyFonts.HersheyTriplex, 5, new Scalar(255, 255, 255), thickness:4);
+                Cv2.PutText(rotated.mat, distancepixel.ToString(), new OpenCvSharp.Point(0, rotated.mat.Height), HersheyFonts.HersheyTriplex, 5, new Scalar(255, 255, 255), thickness: 4);
             }
+        }
 
-            void FrameProcessing2(Mat rotated)
-            {
-                if (roi.Width > 0)
-                    ROI1.mat = new Mat(rotated, roi);
-                else
-                    ROI1.mat = rotated;
+        void FrameProcessing2(Mat rotated)
+        {
+            if (roi.Width > 0)
+                ROI1.mat = new Mat(rotated, roi);
+            else
+                ROI1.mat = rotated;
 
-                frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
+            frameGray.mat = RGBToGray(ROI1.mat, grayProcessingType);
 
-                //NamedMat BW1 = NMs.Get(ImageType.bw1);
+            //NamedMat BW1 = NMs.Get(ImageType.bw1);
 
-                ////BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
-                //Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
-
-
-                //Cv2.Canny(frameGray.mat, cannymat.mat, 50, 200);
-
-                //bgr[0] = cannymat.mat;
-                //bgr[1] = new Mat(bgr[0].Size(), MatType.CV_8UC1);
-                //bgr[2] = bgr[1];
-
-                //Cv2.Merge(bgr, BGR.mat);
+            ////BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
+            //Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
 
 
-                //Cv2.Canny(ROI1.mat, cannymat.mat, 95, 100);
-                Cv2.Canny(ROI1.mat, cannymat.mat, Threshold1, Threshold2);
+            //Cv2.Canny(frameGray.mat, cannymat.mat, 50, 200);
 
-                //HoughLinesP
-                //LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
-                LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 2, 2, 30, 1);
+            //bgr[0] = cannymat.mat;
+            //bgr[1] = new Mat(bgr[0].Size(), MatType.CV_8UC1);
+            //bgr[2] = bgr[1];
 
-                //debug1.mat = ROI1.mat.EmptyClone();
+            //Cv2.Merge(bgr, BGR.mat);
 
-                bgr[0] = frameGray.mat;
-                bgr[1] = bgr[0];
-                bgr[2] = bgr[1];
-                Cv2.Merge(bgr, BGR.mat);
 
-                debug1.mat = BGR.mat.Clone();
+            //Cv2.Canny(ROI1.mat, cannymat.mat, 95, 100);
+            Cv2.Canny(ROI1.mat, cannymat.mat, Threshold1, Threshold2);
 
-                foreach (LineSegmentPoint s in segHoughP)
-                    debug1.mat.Line(s.P1, s.P2, Scalar.Red, 1, LineTypes.AntiAlias, 0);
-            }
+            //HoughLinesP
+            //LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
+            LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 2, 2, 30, 1);
+
+            //debug1.mat = ROI1.mat.EmptyClone();
+
+            bgr[0] = frameGray.mat;
+            bgr[1] = bgr[0];
+            bgr[2] = bgr[1];
+            Cv2.Merge(bgr, BGR.mat);
+
+            debug1.mat = BGR.mat.Clone();
+
+            foreach (LineSegmentPoint s in segHoughP)
+                debug1.mat.Line(s.P1, s.P2, Scalar.Red, 1, LineTypes.AntiAlias, 0);
         }
 
         #region COMMON IMAGE PROCESSING
@@ -992,30 +1021,47 @@ namespace OpenCVSharpJJ
         #endregion
 
         #region ARDUINO - MANAGE DEPLACEMENT
+
+        void CameraDisplacement_Init()
+        {
+            threadCommandeArduino = new Thread(CameraDisplacement);
+            threadCommandeArduino.Start();
+        }
+        void CameraDisplacement_Stop()
+        {
+
+            threadCommandeArduino?.Abort();
+            threadCommandeArduino = null;
+        }
+
         //thread qui suit la valeur "distancepixel"
         void CameraDisplacement()
         {
+            int delta = 5;
+
             while (true)
             {
-                int delta = 5;
-
-                if (Math.Abs(distancepixel) < delta)
+                if (CameraDisplacement_Running == true)
                 {
-                    //on est ok
-                }
-                else
-                {
-                    if (distancepixel > 0)
+                    if (Math.Abs(distancepixel) < delta)
                     {
-                        //on monte
-                        SendToArduino("h");
+                        //on est ok
                     }
                     else
                     {
-                        // on descend
-                        SendToArduino("b");
+                        if (distancepixel > 0)
+                        {
+                            //on monte
+                            SendToArduino("h");
+                        }
+                        else
+                        {
+                            // on descend
+                            SendToArduino("b");
+                        }
                     }
                 }
+                //temps d'action
                 Thread.Sleep(1000);
             }
         }
@@ -1151,6 +1197,5 @@ namespace OpenCVSharpJJ
             ComputePicture();
         }
         #endregion
-
     }
 }
