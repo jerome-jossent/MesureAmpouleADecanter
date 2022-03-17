@@ -340,7 +340,7 @@ namespace OpenCVSharpJJ
 
             //cbx_device.SelectedIndex = 1;
             //cbx_deviceFormat.SelectedIndex = 0;
-            Capture_Start();
+            //Capture_Start();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -651,7 +651,7 @@ namespace OpenCVSharpJJ
 
         Mat ROI_NewMat(Mat frame, OpenCvSharp.Rect roi)
         {
-            return ROI_NewMat(frame, roi).Clone();
+            return ROI(frame, roi).Clone();
         }
 
         void FrameProcessing1()
@@ -666,7 +666,7 @@ namespace OpenCVSharpJJ
             rotated.mat = ROI_NewMat(rotated.mat, roi);
 
             //gris
-            frameGray.mat = RGBToGray(ROI1.mat, Calque.all);
+            frameGray.mat = RGBToGray(rotated.mat, Calque.all);
 
             //seuillage
             bw1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
