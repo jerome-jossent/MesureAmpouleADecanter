@@ -1,7 +1,7 @@
 //shield CNC Driver v3 ============================================
 #define enPin 8         //enable
-#define stepYPin 3      //Y.STEP
-#define dirYPin 6       //Y.DIR
+#define stepYPin 4      //Z.STEP
+#define dirYPin 7       //Z.DIR
 #define y_limit_min 10  //End stop LOW
 #define y_limit_max 11  //End stop HIGH
 
@@ -31,6 +31,16 @@ AT24C256 eeprom = AT24C256();
 int Add_d = 0;
 int Add_dmax = 10;
 
+//Coder Manager
+#define pinA 2
+#define pinB 5
+#define pinZ 3
+long compteur = 0 ;
+long compteur_lastZ = 0 ;
+int delta_tour;
+bool z_init = true;
+int i_tour = 1000;
+
 union Float_Bytes{
   float f;
   byte by[4];
@@ -57,6 +67,14 @@ void setup() {
   d_abs_mm = Read_d(Add_dmax);
   PrintD();
   
+  //init coder
+  pinMode(pinA,INPUT_PULLUP);
+  pinMode(pinB,INPUT_PULLUP);
+  pinMode(pinZ,INPUT_PULLUP);
+  Serial.begin (9600);
+  attachInterrupt(digitalPinToInterrupt(pinA), changementA, RISING); //CHANGE
+  //attachInterrupt(digitalPinToInterrupt(pinZ), changementZ, RISING); //CHANGE
+
   Serial.println(F("CNC Shield Initialized"));
 }
 
@@ -78,8 +96,11 @@ void loop() {
       //356.5 mm entre d_min et d_max
       digitalWrite(enPin, HIGH);
       todo = arret;
-      break;
+      break;      
   }
+  
+  Serial.println(String("C") + String(compteur));
+  delay(20);
 }
 
 void InteractionManager(){
@@ -228,21 +249,21 @@ float Etalonnage(bool termineExtremiteHaute){
   if (termineExtremiteHaute)
   {  
     Deplacement_Min();
-    if (au) return;
+    if (au) return 0;
     d = 0;
     
     Deplacement_Max();
-    if (au) return;
+    if (au) return 0;
     d_abs_mm = d;
          
   }else{
     
     Deplacement_Max();
-    if (au) return;
+    if (au) return 0;
     d = 0;
     
     Deplacement_Min();
-    if (au) return;
+    if (au) return 0;
     d_abs_mm = -d;
     d = 0;
   }
@@ -329,3 +350,30 @@ void PrintD(){
   Serial.print(d_abs_mm);
   Serial.println("mm");  
 }
+
+//-----------------CODER-------------------
+void changementA(){
+  // Si B different de l'ancien état de A alors
+  if(digitalRead(pinB)){
+    compteur++;
+  }else{
+    compteur--;
+  }
+}
+// void changementZ(){
+//   if(z_init)
+//   {
+//     compteur_lastZ = compteur;
+//     z_init = false;
+//     return;
+//   }
+  
+//   delta_tour = compteur - compteur_lastZ;
+//   if (delta_tour > 0)
+//   {
+//     compteur = compteur_lastZ + 1000;
+//   }else{
+//     compteur = compteur_lastZ - 1000;     
+//   }
+//   compteur_lastZ = compteur;
+// }
