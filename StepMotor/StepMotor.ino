@@ -31,11 +31,17 @@ AT24C256 eeprom = AT24C256();
 int Add_d = 0;
 int Add_dmax = 10;
 
-//Coder Manager
+//Coder Manager ==================================================
+#include "Thread.h"
+Thread myThread = Thread();
+
 #define pinA 2
 #define pinB 5
 #define pinZ 3
 long compteur = 0 ;
+long compteur_last = 0 ;
+long compteur_updated = 0;
+ 
 long compteur_lastZ = 0 ;
 int delta_tour;
 bool z_init = true;
@@ -46,6 +52,8 @@ union Float_Bytes{
   byte by[4];
 };
 
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
   Serial.begin(9600);
   Serial.println(F("STARTING"));
@@ -75,10 +83,18 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(pinA), changementA, RISING); //CHANGE
   //attachInterrupt(digitalPinToInterrupt(pinZ), changementZ, RISING); //CHANGE
 
+	myThread.onRun(CoderCallback);
+	myThread.setInterval(100);
+
   Serial.println(F("CNC Shield Initialized"));
 }
 
 void loop() {  
+  if(myThread.shouldRun())
+  {
+		myThread.run();
+  }
+  
   InteractionManager();
   
   switch(todo){
@@ -97,10 +113,15 @@ void loop() {
       digitalWrite(enPin, HIGH);
       todo = arret;
       break;      
-  }
-  
-  Serial.println(String("C") + String(compteur));
+  }  
   delay(20);
+}
+
+void CoderCallback(){
+  if(compteur != compteur_last){
+    Serial.println(String("Codeur = ") + String(compteur));
+    compteur_last=compteur;
+  }
 }
 
 void InteractionManager(){
@@ -138,7 +159,7 @@ bool SerialManager() {
 void CommandManager(){
   float val; // à déclarer en dehors du switch !
   if (message[0] != 'a')
-      au = false; 
+      au = false;
   
   switch(message[0]){
     case 'e':
@@ -199,6 +220,7 @@ void CommandManager(){
       PrintD();
       break;
   }
+  Serial.println("waiting"); 
 }
 
 float GetVal(){ // retourne en float la suite du message
@@ -342,7 +364,7 @@ float Read_d(int Add){
 void PrintPosition(){
   Serial.print("Position = ");
   Serial.print(d);
-  Serial.println("mm");  
+  Serial.println("mm");   
 }
 
 void PrintD(){

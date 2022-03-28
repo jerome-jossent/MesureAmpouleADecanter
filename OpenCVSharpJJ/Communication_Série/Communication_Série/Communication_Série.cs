@@ -6,6 +6,8 @@ namespace Communication_Série
 {
     public class Communication_Série
     {
+        public string messageErreur;
+
         public static string[] _Separators_RetourchariotNewLine = new string[] { "\r\n" };
 
         #region "Parametres"
@@ -78,10 +80,12 @@ namespace Communication_Série
                 MySerialPort.DataReceived += new SerialDataReceivedEventHandler(_DataReceived);
                 //connection
                 MySerialPort.Open();
+                messageErreur = "";
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                messageErreur = ex.Message;
                 return false;            }
         }
 

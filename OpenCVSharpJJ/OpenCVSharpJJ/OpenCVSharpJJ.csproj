@@ -45,14 +45,11 @@
     <Reference Include="DirectShowLib, Version=2.1.0.1599, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DirectShowLib.1.0.0\lib\DirectShowLib.dll</HintPath>
     </Reference>
-    <Reference Include="LiveChartsCore, Version=2.0.0.0, Culture=neutral, PublicKeyToken=edb0c5bd8b9a3e82, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveChartsCore.2.0.0-beta.101\lib\net462\LiveChartsCore.dll</HintPath>
+    <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
     </Reference>
-    <Reference Include="LiveChartsCore.SkiaSharpView, Version=2.0.0.0, Culture=neutral, PublicKeyToken=edb0c5bd8b9a3e82, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveChartsCore.SkiaSharpView.2.0.0-beta.101\lib\net462\LiveChartsCore.SkiaSharpView.dll</HintPath>
-    </Reference>
-    <Reference Include="LiveChartsCore.SkiaSharpView.WPF, Version=2.0.0.0, Culture=neutral, PublicKeyToken=edb0c5bd8b9a3e82, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiveChartsCore.SkiaSharpView.WPF.2.0.0-beta.101\lib\net462\LiveChartsCore.SkiaSharpView.WPF.dll</HintPath>
+    <Reference Include="LiveCharts.Wpf, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiveCharts.Wpf.0.9.7\lib\net45\LiveCharts.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -155,6 +152,9 @@
     <Compile Include="CaptureVideo.xaml.cs">
       <DependentUpon>CaptureVideo.xaml</DependentUpon>
     </Compile>
+    <Compile Include="graph.xaml.cs">
+      <DependentUpon>graph.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ImageIHM_UC.xaml.cs">
       <DependentUpon>ImageIHM_UC.xaml</DependentUpon>
     </Compile>
@@ -179,6 +179,10 @@
     </Compile>
     <Compile Include="VideoInInfo.cs" />
     <Page Include="CaptureVideo.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="graph.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

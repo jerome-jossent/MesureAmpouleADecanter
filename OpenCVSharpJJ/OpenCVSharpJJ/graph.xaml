@@ -1,0 +1,41 @@
+﻿<UserControl x:Class="OpenCVSharpJJ.graph"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:local="clr-namespace:OpenCVSharpJJ"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+
+        <lvc:CartesianChart  LegendLocation="Right" Height="400" Name="chart"
+                                        DisableAnimations="True" Hoverable="False" DataTooltip="{x:Null}">
+            <lvc:CartesianChart.Series>
+                <lvc:ScatterSeries x:Name="_S_A" Title="AAA" Values="{Binding ValuesA}"/>
+                <lvc:ScatterSeries x:Name="_S_B" Title="BBB" Values="{Binding ValuesB}"/>
+                <lvc:ScatterSeries x:Name="_S_C" Title="CCC" Values="{Binding ValuesC}"/>
+                <lvc:ScatterSeries x:Name="_S_D" Title="DDD" Values="{Binding ValuesD}"/>
+                <lvc:ScatterSeries x:Name="_S_E" Title="EEE" Values="{Binding ValuesE}"/>
+                <lvc:ScatterSeries x:Name="_S_F" Title="FFF" Values="{Binding ValuesF}"/>
+                <lvc:ScatterSeries x:Name="_S_G" Title="GGG" Values="{Binding ValuesG}"/>
+                <lvc:ScatterSeries x:Name="_S_H" Title="HHH" Values="{Binding ValuesH}"/>
+                <lvc:ScatterSeries x:Name="_S_I" Title="III" Values="{Binding ValuesI}"/>
+                <lvc:ScatterSeries x:Name="_S_J" Title="JJJ" Values="{Binding ValuesJ}"/>
+                <lvc:ScatterSeries x:Name="_S_K" Title="KKK" Values="{Binding ValuesK}"/>
+                <lvc:ScatterSeries x:Name="_S_L" Title="LLL" Values="{Binding ValuesL}"/>
+                <lvc:ScatterSeries x:Name="_S_M" Title="MMM" Values="{Binding ValuesM}"/>
+                <lvc:ScatterSeries x:Name="_S_N" Title="NNN" Values="{Binding ValuesN}"/>
+                <lvc:ScatterSeries x:Name="_S_O" Title="OOO" Values="{Binding ValuesO}"/>
+                <lvc:ScatterSeries x:Name="_S_P" Title="PPP" Values="{Binding ValuesP}"/>
+                <lvc:ScatterSeries x:Name="_S_Q" Title="QQQ" Values="{Binding ValuesQ}"/>
+                <lvc:ScatterSeries x:Name="_S_R" Title="RRR" Values="{Binding ValuesR}"/>
+            </lvc:CartesianChart.Series>
+            <lvc:CartesianChart.AxisY>
+                <!--setting the axis unit improved the labels rounding rule-->
+                <lvc:Axis Unit="1"></lvc:Axis>
+            </lvc:CartesianChart.AxisY>
+        </lvc:CartesianChart>
+
+    </Grid>
+</UserControl>
