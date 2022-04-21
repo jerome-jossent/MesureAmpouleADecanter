@@ -351,7 +351,7 @@ namespace OpenCVSharpJJ
         Scalar rouge = new Scalar(0, 0, 255);
         Scalar vert = new Scalar(0, 255, 0);
         Scalar bleu = new Scalar(255, 100, 0);
-        Scalar blanc = new Scalar(255, 255, 255);
+        Scalar blanc = new Scalar(255, 255, 255,255);
         Scalar noir = new Scalar(0, 0, 0);
         #endregion
 
@@ -704,7 +704,7 @@ namespace OpenCVSharpJJ
             for (int i = 1; i < nbrLignes - 2; i++)
                 d1[i] = moyennesX[i + 1] - moyennesX[i - 1];
 
-            //derivée seconde (simplifié : car même pas /(x2-x1))
+            //derivée seconde simplifié : car /(x2-x1) => /1
             //et recherche des maximum et minimum
             float d2_min = 0;
             float d2_max = 0;
@@ -761,13 +761,7 @@ namespace OpenCVSharpJJ
             else
                 niveau_pixel = d2_max_index;
 
-            //centre caméra (mire+)
-            int milieuhauteur = rotated.mat.Height / 2;
-            int milieulargeur = rotated.mat.Width / 2;
-            Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, rouge, 2);
-            Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, rouge, 2);
-
-            //niveau
+            //tracé du niveau en ligne hachée sur l'image
             int morceaux = 10;
             int dashed_line_A = 0;
             int dashed_line_Z = ROI1.mat.Width - 1;
@@ -785,7 +779,13 @@ namespace OpenCVSharpJJ
 
             Cv2.Line(graph1.mat, 0, niveau_pixel, graph1.mat.Width - 1, niveau_pixel, bleu, epaisseur);
 
-            //graphique
+            //centre caméra (mire+)
+            int milieuhauteur = rotated.mat.Height / 2;
+            int milieulargeur = rotated.mat.Width / 2;
+            Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, rouge, 2);
+            Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, rouge, 2);
+
+            //graphique de l'image
             int largeur_graph = 300;
             graph1.mat = new Mat(nbrLignes, largeur_graph, type: MatType.CV_8UC3, noir);
 
@@ -832,31 +832,20 @@ namespace OpenCVSharpJJ
         void GraphTemporelle()
         {
             Scalar fond = noir;
-            int hauteur_graph = 300;
+            int hauteur_graph = ROI1.mat.Height;
             int largeur_graph = 300;
             Mat mat = new Mat(hauteur_graph, largeur_graph, type: MatType.CV_8UC3, fond);
 
-            //axes
-            //Cv2.Line(graph2.mat, y1, i - 1, y2, i, blanc, 1);
-            //Cv2.Line(graph2.mat, y1, i - 1, y2, i, blanc, 1);
-
-            //data  _points
-            //Ymin, Ymax, Yrange
-            //Xmin, Xmax, Xrange           
-
             //tracé
-            //for (int i = 1; i < nbrLignes; i++)
-            //{
-            //    int y1 = (int)(moyennesX[i - 1]);
-            //    int y2 = (int)(moyennesX[i]);
-            //    Cv2.Line(graph1.mat, y1, i - 1, y2, i, blanc, 1);
-            //}
+            for (int i = _points.Count - 300; i < _points.Count; i++)
+            {
+                int y1 = ROI1.mat.Height-(int)(_points[i - 1].v + ROI1.mat.Height/2);
+                int y2 = ROI1.mat.Height-(int)(_points[i].v + ROI1.mat.Height / 2);
+                Cv2.Line(mat, i - 1 - (_points.Count - 300), y1, i - (_points.Count - 300), y2, blanc, 1);
+            }
 
             graph2.mat = mat;
         }
-
-
-
 
         void FrameProcessing2(Mat rotated)
         {
@@ -1290,7 +1279,7 @@ namespace OpenCVSharpJJ
         int distancepixel;
 
         DateTime t_last;
-        TimeSpan t_vide = TimeSpan.FromSeconds(1);
+        TimeSpan t_vide = TimeSpan.FromSeconds(0.1);
 
 
         void NewDistancePixel(int d_pix)
@@ -1319,7 +1308,19 @@ namespace OpenCVSharpJJ
                         Application.Current.Dispatcher.Invoke(() => NewPoint(t));
                     }
                 }
+            }
 
+
+            //POUR TESTER GRAPH
+            camera_pos_mm = v;
+            DateTime ttest = DateTime.Now;
+            if (ttest.Subtract(t_last) > t_vide)
+            {
+                if (camera_pos_mm != null)
+                {
+                    t_last = ttest;
+                    Application.Current.Dispatcher.Invoke(() => NewPoint(ttest));
+                }
             }
         }
 
