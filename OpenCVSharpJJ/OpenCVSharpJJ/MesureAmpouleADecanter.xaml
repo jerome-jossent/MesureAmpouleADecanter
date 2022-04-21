@@ -16,24 +16,7 @@
 
 
     <Window.Resources>
-        <local:BitmapToBitmapImageConverter x:Name="binaryConverter" x:Key="bitmapConverter"/>
-        
-        <Style TargetType="{x:Type ToggleButton}"
-           x:Key="toggleButtonStyle">
-            <Setter Property="FontWeight" Value="Bold" />
-            <Style.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Content" Value="Drive by vision ON" />
-                    <Setter Property="Background" Value="Green" />
-                    <Setter Property="Foreground" Value="White" />
-                </Trigger>
-                <Trigger Property="IsChecked" Value="False">
-                    <Setter Property="Content" Value="Drive by vision OFF" />
-                    <Setter Property="Background" Value="Red" />
-                    <Setter Property="Foreground" Value="White" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+        <local:BitmapToBitmapImageConverter x:Name="binaryConverter" x:Key="bitmapConverter"/>        
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -83,7 +66,10 @@
             <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
                 <Button Margin="2" Content="STOP" Click="Button_ARRETURGENCE_Click" Background="Red" Foreground="#FFFFFA00"/>
                 <Button Margin="2" Content="Calibrate" Click="Button_Etalonnage_Click"/>
-                <ToggleButton Margin="2" Style="{StaticResource toggleButtonStyle}" IsChecked="{Binding CameraDisplacement_Running}" Width="125"/>
+                
+                <Button Margin="2" x:Name="Button_DriveByVisionPlay" Click="Button_DriveByVision_Click" Content="Drive by vision OFF" Background="Red" Foreground="White" Width="125"/>
+                <Button Margin="2" x:Name="Button_DriveByVisionStop" Click="Button_DriveByVision_Click" Content="Drive by vision ON" Background="Green" Foreground="White" Width="125"/>
+
                 <Button Margin="2" Content="Get Position" Click="Button_GetPosition_Click"/>
             </StackPanel>
 
@@ -224,6 +210,7 @@
                             <Button Margin="2" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
                             <Button Margin="2" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
                             <Button Margin="2" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>
+                            <Button Margin="2" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
                         </StackPanel>
 
                         <Label Grid.Row="2" Grid.Column="0" Content="Threshold BW" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
@@ -255,12 +242,37 @@
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <local:ImageIHM_UC Grid.Column="0" x:Name="i1" MinWidth="20"/>
-                        <local:ImageIHM_UC Grid.Column="1" x:Name="i2" MinWidth="20"/>
-                        <local:ImageIHM_UC Grid.Column="2" x:Name="i3" MinWidth="20"/>
-                        <local:ImageIHM_UC Grid.Column="3" x:Name="i4" MinWidth="20"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Foreground="Yellow"  Background="Gray" >
+                            <ItemsControl Margin="0, 0, 0, 0" ItemsSource="{Binding _points}" VerticalAlignment="Top" HorizontalAlignment="Left">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="1"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                            <Grid Margin="1,1,1,1" Height="20">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="150" />
+                                                    <ColumnDefinition Width="100" />
+                                                </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding t}" Margin="4, 0, 0, 0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding v}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+
+
+                        <local:ImageIHM_UC Grid.Column="1" x:Name="i1" MinWidth="20"/>
+                        <local:ImageIHM_UC Grid.Column="2" x:Name="i2" MinWidth="20"/>
+                        <local:ImageIHM_UC Grid.Column="3" x:Name="i3" MinWidth="20"/>
+                        <local:ImageIHM_UC Grid.Column="4" x:Name="i4" MinWidth="20"/>
                     </Grid>
 
                 </Grid>

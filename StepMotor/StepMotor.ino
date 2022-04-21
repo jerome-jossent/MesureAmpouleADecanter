@@ -1,4 +1,4 @@
-//shield CNC Driver v3 ============================================
+//STEP MOTOR ============================================
 #define enPin 8         //enable
 #define stepYPin 4      //Z.STEP
 #define dirYPin 7       //Z.DIR
@@ -11,54 +11,53 @@ int millisBtwnSteps = 1000;
 
 // 2 mm => 1 tour => 200 steps
 // 2 / 200 = 0,01 mm/step
+const float mm_p_tour = 2;
 const float d_step_mm = 0.01f;
-float d;
-float d_abs_mm;
 
 //Serial exchange =================================================
 const unsigned int MAX_MESSAGE_LENGTH = 12;
-//Create a place to hold the incoming message
-static char message[MAX_MESSAGE_LENGTH];
+static char message[MAX_MESSAGE_LENGTH]; //incoming message
 
 //System Manager ==================================================
-enum Action {arret, etalonnage, STOP};
-Action todo;
 bool au;
 
 //Memory Manager ==================================================
 #include <AT24C256.h>
 AT24C256 eeprom = AT24C256();
-int Add_d = 0;
-int Add_dmax = 10;
-
-//Coder Manager ==================================================
-#include "Thread.h"
-Thread myThread = Thread();
-
-#define pinA 2
-#define pinB 5
-#define pinZ 3
-long compteur = 0 ;
-long compteur_last = 0 ;
-long compteur_updated = 0;
- 
-long compteur_lastZ = 0 ;
-int delta_tour;
-bool z_init = true;
-int i_tour = 1000;
+int Add_coder = 0;
+int Add_codermax = 10;
 
 union Float_Bytes{
   float f;
   byte by[4];
 };
 
+//Coder Manager ==================================================
+#include "Thread.h"
+Thread coderThread = Thread();
+
+#define pinA 2
+#define pinB 5
+#define pinZ 3
+long coder = 0 ;
+long coder_last = 0 ;
+long coder_updated = 0;
+
+long coder_max;
+long coder_min;
+
+long coder_lastZ = 0 ;
+bool coder_last_dir;
+int delta_tour;
+bool z_init = true;
+int i_tour = 1000;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
   Serial.begin(9600);
-  Serial.println(F("STARTING"));
+  Serial.println(F("System Starting"));
   
-  // init CNC shield
+  //init STEP Motor
   pinMode(enPin, OUTPUT);
   digitalWrite(enPin, HIGH); //arrêt
   pinMode(stepYPin, OUTPUT);
@@ -66,73 +65,122 @@ void setup() {
   pinMode(y_limit_min, INPUT_PULLUP);
   pinMode(y_limit_max, INPUT_PULLUP);
   
-  todo = arret;
   au = false;
-    
-  d = Read_d(Add_d);
-  PrintPosition();
-    
-  d_abs_mm = Read_d(Add_dmax);
+  
+  //get coder saved values
+  coder = Read_d(Add_coder);
+  PrintPosition();    
+  coder_max = Read_d(Add_codermax);
   PrintD();
   
   //init coder
   pinMode(pinA,INPUT_PULLUP);
   pinMode(pinB,INPUT_PULLUP);
   pinMode(pinZ,INPUT_PULLUP);
-  Serial.begin (9600);
   attachInterrupt(digitalPinToInterrupt(pinA), changementA, RISING); //CHANGE
-  //attachInterrupt(digitalPinToInterrupt(pinZ), changementZ, RISING); //CHANGE
+  attachInterrupt(digitalPinToInterrupt(pinZ), changementZ, RISING); //CHANGE
 
-	myThread.onRun(CoderCallback);
-	myThread.setInterval(100);
-
-  Serial.println(F("CNC Shield Initialized"));
+	coderThread.onRun(CoderCallback);
+	coderThread.setInterval(100);
+  
+  Serial.println(F("System Initialized"));
 }
 
-void loop() {  
-  if(myThread.shouldRun())
-  {
-		myThread.run();
-  }
-  
-  InteractionManager();
-  
-  switch(todo){
-    case STOP:      
-      delay(20);
-      break;
-    
-    case arret:
-      delay(20);
-      break;
+void loop() {
+  if (coderThread.shouldRun())
+		coderThread.run();
 
-    case etalonnage:
-      digitalWrite(enPin, LOW);
-      DemandeEtalonnage(true, 10);
-      //356.5 mm entre d_min et d_max
-      digitalWrite(enPin, HIGH);
-      todo = arret;
-      break;      
-  }  
+  InteractionManager();
   delay(20);
 }
 
 void CoderCallback(){
-  if(compteur != compteur_last){
-    Serial.println(String("Codeur = ") + String(compteur));
-    compteur_last=compteur;
+  if (coder != coder_last){
+    Serial.println(String("Coder = ") + String(coder));
+    coder_last = coder;
   }
 }
 
 void InteractionManager(){
-  if(SerialManager()){
-    CommandManager();
+  if (!SerialManager()) return;
+
+  //Traitement du message reçu
+  
+  //à déclarer en dehors du switch, sinon CASSE le switch !
+  float val; 
+  bool terminEnHaut;
+  
+  //reset arrêt d'urgence (sauf si AU demandé)
+  if (message[0] != 'e')
+      au = false;
+  
+  switch (message[0]){
+    case 'c':
+      Serial.println("Calibration asked");        
+      terminEnHaut = true;
+      if(message[1] == '0') terminEnHaut = false;
+      if(message[1] == '1') terminEnHaut = true;
+      DemandeEtalonnage(terminEnHaut, 10);
+      break;
+      
+    case 'e':
+      Serial.println("Emergency Stop");
+      au = true;
+      digitalWrite(enPin, HIGH); //arrêt
+      break;
+      
+    case 'y':   
+      PrintD();
+      break;
+      
+    case 'p':
+      PrintPosition();
+      break;
+      
+    case 'd':
+      val = GetVal();
+      if (val == 0) val = -1;
+      if (val > 0)  val = -val;  
+      Serial.print("Go down asked : ");
+      Serial.println(String(val));
+      Deplacement(val);
+      Save_d(Add_coder, coder);
+      PrintPosition();
+      break;
+      
+    case 'u':
+      val = GetVal();
+      if (val == 0) val = 1;
+      if (val < 0)  val = -val;
+      Serial.print("Go up asked");
+      Serial.println(String(val));
+      Deplacement(val);
+      Save_d(Add_coder, coder);
+      PrintPosition();
+      break; 
+
+    case 'D':   
+      Deplacement_Min();
+      PrintPosition();
+      break;
+      
+    case 'U':   
+      Deplacement_Max();
+      PrintPosition();
+      PrintD();
+      break;
+      
+    default:
+      Serial.print("inconnu : ");
+      Serial.println(message);      
   }
+  Serial.println("Waiting");
 }
 
 bool SerialManager() {
   if (Serial.available()==0)
     return false;
+    
   while (Serial.available() > 0)
   {
     static unsigned int message_pos = 0;
@@ -146,7 +194,7 @@ bool SerialManager() {
       // Add the incoming byte to our message
       message[message_pos] = inByte;
       message_pos ++;
-    }else{// Full message received...
+    } else {// Full message received...
       // Add null character to string
       message[message_pos] = '\0';      
       // Reset for the next message
@@ -156,78 +204,11 @@ bool SerialManager() {
   return true;
 }
 
-void CommandManager(){
-  float val; // à déclarer en dehors du switch !
-  if (message[0] != 'a')
-      au = false;
-  
-  switch(message[0]){
-    case 'e':
-      Serial.println("Etalonnage demandé");
-      todo = etalonnage;
-      break;
-      
-    case 'a':
-      Serial.println("ARRET D'URGENCE");
-      au = true;
-      digitalWrite(enPin, HIGH); //arrêt
-      break;
-      
-    case 'd':   
-      PrintD();
-      break;
-      
-    case 'p':
-      PrintPosition();
-      break;
-      
-    case 'b':
-      Serial.println("descente demandée");
-      val = GetVal();
-      if (val == 0) val = -1;
-      if (val > 0)  val = -val;      
-      digitalWrite(enPin, LOW);
-      Deplacement(val);
-      digitalWrite(enPin, HIGH);
-      Save_d(Add_d, d);
-      PrintPosition();
-      break;
-      
-    case 'h':
-      Serial.println("monté demandée");
-      val = GetVal();
-      if (val == 0) val = 1;
-      if (val < 0)  val = -val;
-      digitalWrite(enPin, LOW);
-      Deplacement(val);
-      digitalWrite(enPin, HIGH);
-      Save_d(Add_d, d);
-      PrintPosition();
-      break; 
-
-    case 'B':   
-      digitalWrite(enPin, LOW);
-      Deplacement_Min();
-      digitalWrite(enPin, HIGH);
-      PrintPosition();
-      break;
-      
-    case 'H':   
-      digitalWrite(enPin, LOW);
-      Deplacement_Max();
-      digitalWrite(enPin, HIGH);
-      PrintPosition();
-      PrintD();
-      break;
-  }
-  Serial.println("waiting"); 
-}
-
 float GetVal(){ // retourne en float la suite du message
   return String(message).substring(1).toFloat();
 }
 
-void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
+void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){ 
   Etalonnage(termineExtremiteHaute);
   if (au) return;
   
@@ -239,98 +220,103 @@ void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
     if (termineExtremiteHaute)
       Deplacement(-degagement);    
     else
-      Deplacement(degagement);    
-    Save_d(Add_d, d);
+      Deplacement(degagement);
+      
+    Save_d(Add_coder, coder);
   }
   PrintPosition();
 }
 
 void Deplacement_Max(){
-  Serial.println("position max demandée");
-  // on remonte jusqu'à Y max  
-  while(Deplacement(10) && !au){}
-  Save_d(Add_d, d);
-  d_abs_mm = d;
-  Save_d(Add_dmax, d_abs_mm);
+  Serial.println("Up max asked");
+  // on monte par pas de 10mm jusqu'au fin de course
+  while (Deplacement(10) && !au) {}
   if (au) return;
-  Serial.println("position max atteinte");
+  coder_max = coder;
+  Save_d(Add_coder, coder);
+  Save_d(Add_codermax, coder_max);
 }
 
 void Deplacement_Min(){
-  Serial.println("position min demandée");
-  // on descend jusqu'à Y min par pas de 10mm
-  while(Deplacement(-10) && !au){}
-  d = 0;
-  Save_d(Add_d, d);
+  Serial.println("Down min asked");
+  // on descend par pas de 10mm jusqu'au fin de course
+  while (Deplacement(-10) && !au) {}
   if (au) return;
-  Serial.println("position min atteinte");
+  coder = 0;
+  coder_min = coder;
+  Save_d(Add_coder, coder);
 }
 
-float Etalonnage(bool termineExtremiteHaute){
-  Serial.println("Etalonnage démarré");
+void Etalonnage(bool termineExtremiteHaute){
+  Serial.println("Calibration start");
   if (termineExtremiteHaute)
   {  
     Deplacement_Min();
-    if (au) return 0;
-    d = 0;
+    if (au) return;
+    Deplacement_Max();
+    if (au) return;         
+  } else {
     
     Deplacement_Max();
-    if (au) return 0;
-    d_abs_mm = d;
-         
-  }else{
-    
-    Deplacement_Max();
-    if (au) return 0;
-    d = 0;
-    
+    if (au) return;    
     Deplacement_Min();
-    if (au) return 0;
-    d_abs_mm = -d;
-    d = 0;
+    if (au) return;
   }
-  Save_d(Add_dmax, d_abs_mm);
+  
+  coder_max = coder_max - coder_min;
+  coder_min = 0;
+
+  Save_d(Add_codermax, coder_max);
   PrintD();
-  Serial.println("Etalonnage terminé");
+  
+  Serial.print("coder max : ");
+  Serial.println(coder_max);
+
+  Serial.println("Calibration end");
 }
 
 bool Deplacement(float d_rel_mm){
-  float d_step_mm_signed;  
   int steps;
-  
+  digitalWrite(enPin, LOW);
+      
   if (d_rel_mm > 0){
     //on monte
     digitalWrite(dirYPin, HIGH);
     steps = d_rel_mm / d_step_mm;
-    d_step_mm_signed = d_step_mm;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_max) == LOW) {
-        Serial.println("Y max atteint");
+        Serial.println("Up max reached !");
+        digitalWrite(enPin, HIGH); 
         return false;
       }
       Move1Step();
-      if (au) return false;
-      d += d_step_mm_signed;
+      if (au) {
+        digitalWrite(enPin, HIGH); 
+        return false;
+        }
     }
-  }
-  else{
+  } else {
     //on descend
     digitalWrite(dirYPin, LOW);
     steps = - d_rel_mm / d_step_mm;
-    d_step_mm_signed = -d_step_mm;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_min) == LOW) 
       {
-        Serial.println("Y min atteint");
+        Serial.println("Down min reached !");
+        digitalWrite(enPin, HIGH); 
         return false;
       }
       Move1Step();
-      if (au) return false;
-      d += d_step_mm_signed;
+      if (au) {
+        digitalWrite(enPin, HIGH); 
+        return false;
+      }
     }
   }
+
+  digitalWrite(enPin, HIGH); 
   return true;
 }
 
@@ -363,39 +349,81 @@ float Read_d(int Add){
 
 void PrintPosition(){
   Serial.print("Position = ");
-  Serial.print(d);
+  Serial.print(Distance_mmFromCoderValue(coder));
   Serial.println("mm");   
 }
 
 void PrintD(){
   Serial.print("D max = ");
-  Serial.print(d_abs_mm);
+  Serial.print(Distance_mmFromCoderValue(coder_max));
   Serial.println("mm");  
+}
+
+float Distance_mmFromCoderValue(long coderval){
+  //i_tour [int] = 1000 i / tour
+  //mm_p_tour [float] = 2 mm / tour
+  return mm_p_tour * coderval / i_tour;
 }
 
 //-----------------CODER-------------------
 void changementA(){
   // Si B different de l'ancien état de A alors
-  if(digitalRead(pinB)){
-    compteur++;
-  }else{
-    compteur--;
+  if (digitalRead(pinB))
+    coder ++;
+  else
+    coder --;  
+}
+
+void changementZ(){
+  if (z_init)
+  {
+    coder_lastZ = coder;
+    coder_last_dir = dirYPin;
+    z_init = false;
+  } else {    
+    if (coder_last_dir == dirYPin){
+      delta_tour = coder - coder_lastZ;      
+      if (delta_tour > 0)      
+        coder = coder_lastZ + i_tour;
+      else
+        coder = coder_lastZ - i_tour;            
+    }
+    
+    coder_lastZ = coder;
+    coder_last_dir = dirYPin;
   }
 }
-// void changementZ(){
-//   if(z_init)
-//   {
-//     compteur_lastZ = compteur;
-//     z_init = false;
-//     return;
-//   }
-  
-//   delta_tour = compteur - compteur_lastZ;
-//   if (delta_tour > 0)
-//   {
-//     compteur = compteur_lastZ + 1000;
-//   }else{
-//     compteur = compteur_lastZ - 1000;     
-//   }
-//   compteur_lastZ = compteur;
-// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
