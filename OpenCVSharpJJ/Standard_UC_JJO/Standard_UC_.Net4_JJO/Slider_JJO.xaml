@@ -1,0 +1,23 @@
+﻿<UserControl x:Class="Standard_UC_JJO.Slider_INT_JJO"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Standard_UC_JJO"
+             mc:Ignorable="d" 
+             d:DesignHeight="50" d:DesignWidth="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Label Grid.Column="0" Content="{Binding _label_title}" VerticalAlignment="Center" />
+        <Label Grid.Column="1" Content="{Binding _label_value}"  VerticalAlignment="Center"/>
+        <Slider Grid.Column="2" x:Name="sld" Value="{Binding _value}" VerticalAlignment="Center"
+                    Minimum="{Binding _value_min}"  Maximum="{Binding _value_max}" IsSnapToTickEnabled="True" 
+                    Width="200" MaxWidth="200" HorizontalAlignment="Left"
+        ValueChanged="Slider_ValueChanged"/>
+    </Grid>
+</UserControl>

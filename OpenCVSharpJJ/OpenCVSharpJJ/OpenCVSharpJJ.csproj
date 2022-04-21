@@ -301,6 +301,10 @@
       <Project>{6b67fd91-af94-4f24-b934-43cbf1d56927}</Project>
       <Name>Communication_Série</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Standard_UC_JJO\Standard_UC_.Net4_JJO\Standard_UC_JJO.csproj">
+      <Project>{24BDEB06-738E-4392-A78D-163185A26329}</Project>
+      <Name>Standard_UC_JJO</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="images\files.png" />

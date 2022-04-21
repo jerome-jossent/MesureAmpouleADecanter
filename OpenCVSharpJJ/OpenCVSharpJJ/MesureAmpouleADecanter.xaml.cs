@@ -48,6 +48,19 @@ namespace OpenCVSharpJJ
         }
         string title = "Mesure décantation";
 
+        public string _SavedImageFolder
+        {
+            get { return SavedImageFolder; }
+            set
+            {
+                if (SavedImageFolder == value)
+                    return;
+                SavedImageFolder = value;
+                OnPropertyChanged("_SavedImageFolder");
+            }
+        }
+        string SavedImageFolder = @"D:\DATA\decantation";
+
         public string _fps
         {
             get { return fps; }
@@ -60,6 +73,18 @@ namespace OpenCVSharpJJ
             }
         }
         string fps;
+        public bool? _SaveFrame
+        {
+            get { return SaveFrame; }
+            set
+            {
+                if (SaveFrame == value)
+                    return;
+                SaveFrame = value;
+                OnPropertyChanged("_SaveFrame");
+            }
+        }
+        bool? SaveFrame;
 
         public int Threshold1
         {
@@ -351,7 +376,7 @@ namespace OpenCVSharpJJ
         Scalar rouge = new Scalar(0, 0, 255);
         Scalar vert = new Scalar(0, 255, 0);
         Scalar bleu = new Scalar(255, 100, 0);
-        Scalar blanc = new Scalar(255, 255, 255,255);
+        Scalar blanc = new Scalar(255, 255, 255, 255);
         Scalar noir = new Scalar(0, 0, 0);
         #endregion
 
@@ -549,11 +574,33 @@ namespace OpenCVSharpJJ
         void ComputePicture(Mat image)
         {
             if (!image.Empty())
-                FrameProcessing1(image);
+            {
+                NamedMat imageToSave = FrameProcessing1(image);
+                if (SaveFrame == true)
+                    Save(imageToSave);
+            }
 
             UpdateDisplayImages();
 
             DisplayFPS();
+        }
+
+
+        DateTime t_last_save;
+        TimeSpan t_vide_save = TimeSpan.FromSeconds(1);
+
+
+        void Save(NamedMat image)
+        {
+            DateTime t = DateTime.Now;
+            if (t.Subtract(t_last_save) > t_vide_save)
+            {
+                t_last_save = t;
+                string filename = SavedImageFolder + "//" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + ".jpg";
+                image.mat.SaveImage(filename);
+            }
+
+
         }
 
         #region IMAGE PROCESSINGS
@@ -666,7 +713,7 @@ namespace OpenCVSharpJJ
         float[] d1; //derivée première
         float[] d2; //derivée seconde
 
-        void FrameProcessing1(Mat image)
+        NamedMat FrameProcessing1(Mat image)
         {
             //filtre gaussien
             //Savitzky-Golay filter     https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_filter.html
@@ -827,6 +874,8 @@ namespace OpenCVSharpJJ
                         5,
                         blanc,
                         thickness: 4);
+
+            return ROI1;
         }
 
         void GraphTemporelle()
@@ -836,11 +885,14 @@ namespace OpenCVSharpJJ
             int largeur_graph = 300;
             Mat mat = new Mat(hauteur_graph, largeur_graph, type: MatType.CV_8UC3, fond);
 
+            if (_points.Count < 300)
+                return;
+
             //tracé
             for (int i = _points.Count - 300; i < _points.Count; i++)
             {
-                int y1 = ROI1.mat.Height-(int)(_points[i - 1].v + ROI1.mat.Height/2);
-                int y2 = ROI1.mat.Height-(int)(_points[i].v + ROI1.mat.Height / 2);
+                int y1 = ROI1.mat.Height - (int)(_points[i - 1].v + ROI1.mat.Height / 2);
+                int y2 = ROI1.mat.Height - (int)(_points[i].v + ROI1.mat.Height / 2);
                 Cv2.Line(mat, i - 1 - (_points.Count - 300), y1, i - (_points.Count - 300), y2, blanc, 1);
             }
 
