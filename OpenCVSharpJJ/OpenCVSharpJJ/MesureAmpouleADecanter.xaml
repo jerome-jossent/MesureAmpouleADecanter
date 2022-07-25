@@ -211,10 +211,13 @@
                         
                         <Label Grid.Row="1" Grid.Column="0" Content="ROI" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
                         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-                            <Button Margin="2" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
-                            <Button Margin="2" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
-                            <Button Margin="2" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>
-                            <Button Margin="2" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
+                            <Button Margin="2" Padding="5" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
+                            <Button Margin="2" Padding="5" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
+
+                            <TextBox Margin="2" Name="tbx_roi" MinWidth="60" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                            <Button Margin="2" Padding="5" Content="Set" Click="Button_SetROI_Click"/>
+                            <Button Margin="2" Padding="5" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
+                            <Button Margin="2" Padding="5" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>
                         </StackPanel>
 
                         <Label Grid.Row="2" Grid.Column="0" Content="Threshold BW" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
@@ -249,7 +252,7 @@
                             <ColumnDefinition Width="auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Foreground="Yellow"  Background="Gray" >
+                        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Foreground="Yellow"  Background="Gray" >
                             <ItemsControl Margin="0, 0, 0, 0" ItemsSource="{Binding _points}" VerticalAlignment="Top" HorizontalAlignment="Left">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -270,6 +273,13 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
+                        <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Right">
+                            <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3"
+                                   MouseDown="Button_SaveData_ToDisk_Click" />
+
+                        </StackPanel>
+                        <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" 
+                       VerticalAlignment="Bottom" HorizontalAlignment="Right" MouseDown="Button_Clear_Click" ToolTip="Clear"/>
 
 
 

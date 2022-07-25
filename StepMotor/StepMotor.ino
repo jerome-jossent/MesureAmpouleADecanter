@@ -22,15 +22,15 @@ static char message[MAX_MESSAGE_LENGTH]; //incoming message
 bool au;
 
 //Memory Manager ==================================================
-#include <AT24C256.h>
-AT24C256 eeprom = AT24C256();
-int Add_coder = 0;
-int Add_codermax = 10;
-
-union Float_Bytes{
-  float f;
-  byte by[4];
-};
+//#include <AT24C256.h>
+//AT24C256 eeprom = AT24C256();
+//int Add_coder = 0;
+//int Add_codermax = 10;
+//
+//union Float_Bytes{
+//  float f;
+//  byte by[4];
+//};
 
 //Coder Manager ==================================================
 #include "Thread.h"
@@ -55,7 +55,7 @@ int i_tour = 1000;
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
   Serial.begin(9600);
-  Serial.println(F("System Starting"));
+  Serial.println("System Starting");
   
   //init STEP Motor
   pinMode(enPin, OUTPUT);
@@ -66,12 +66,14 @@ void setup() {
   pinMode(y_limit_max, INPUT_PULLUP);
   
   au = false;
+  Serial.println("STEP Motor OK");
   
   //get coder saved values
-  coder = Read_d(Add_coder);
-  PrintPosition();    
-  coder_max = Read_d(Add_codermax);
-  PrintD();
+//coder = Read_d(Add_coder);
+//PrintPosition();    
+//coder_max = Read_d(Add_codermax);
+//PrintD();
+//Serial.println("Memory OK");
   
   //init coder
   pinMode(pinA,INPUT_PULLUP);
@@ -79,17 +81,21 @@ void setup() {
   pinMode(pinZ,INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(pinA), changementA, RISING); //CHANGE
   attachInterrupt(digitalPinToInterrupt(pinZ), changementZ, RISING); //CHANGE
+  Serial.println("Coder OK");
 
-	coderThread.onRun(CoderCallback);
-	coderThread.setInterval(100);
+  coderThread.enabled = true; // Default enabled value is true
+  coderThread.setInterval(10); // Setts the wanted interval to be 10ms
+  coderThread.onRun(CoderCallback);
+  Serial.println("Coder Thread OK");
   
-  Serial.println(F("System Initialized"));
+  Serial.println("System Initialized");
 }
 
 void loop() {
-  if (coderThread.shouldRun())
+  if (coderThread.shouldRun()){
 		coderThread.run();
-
+  }
+  
   InteractionManager();
   delay(20);
 }
@@ -144,7 +150,7 @@ void InteractionManager(){
       Serial.print("Go down asked : ");
       Serial.println(String(val));
       Deplacement(val);
-      Save_d(Add_coder, coder);
+      //Save_d(Add_coder, coder);
       PrintPosition();
       break;
       
@@ -155,7 +161,7 @@ void InteractionManager(){
       Serial.print("Go up asked");
       Serial.println(String(val));
       Deplacement(val);
-      Save_d(Add_coder, coder);
+      //Save_d(Add_coder, coder);
       PrintPosition();
       break; 
 
@@ -222,7 +228,7 @@ void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
     else
       Deplacement(degagement);
       
-    Save_d(Add_coder, coder);
+    //Save_d(Add_coder, coder);
   }
   PrintPosition();
 }
@@ -233,8 +239,8 @@ void Deplacement_Max(){
   while (Deplacement(10) && !au) {}
   if (au) return;
   coder_max = coder;
-  Save_d(Add_coder, coder);
-  Save_d(Add_codermax, coder_max);
+  //Save_d(Add_coder, coder);
+  //Save_d(Add_codermax, coder_max);
 }
 
 void Deplacement_Min(){
@@ -244,7 +250,7 @@ void Deplacement_Min(){
   if (au) return;
   coder = 0;
   coder_min = coder;
-  Save_d(Add_coder, coder);
+  //Save_d(Add_coder, coder);
 }
 
 void Etalonnage(bool termineExtremiteHaute){
@@ -266,7 +272,7 @@ void Etalonnage(bool termineExtremiteHaute){
   coder_max = coder_max - coder_min;
   coder_min = 0;
 
-  Save_d(Add_codermax, coder_max);
+  //Save_d(Add_codermax, coder_max);
   PrintD();
   
   Serial.print("coder max : ");
@@ -329,23 +335,23 @@ void Move1Step(){
   delayMicroseconds(millisBtwnSteps); 
 }
 
-void Save_d(int Add, float val){
-  Float_Bytes D;
-  D.f = val;
-  eeprom.write(D.by[0], Add);
-  eeprom.write(D.by[1], Add + 1);
-  eeprom.write(D.by[2], Add + 2);
-  eeprom.write(D.by[3], Add + 3);
-}
+//void Save_d(int Add, float val){
+//  Float_Bytes D;
+//  D.f = val;
+//  eeprom.write(D.by[0], Add);
+//  eeprom.write(D.by[1], Add + 1);
+//  eeprom.write(D.by[2], Add + 2);
+//  eeprom.write(D.by[3], Add + 3);
+//}
 
-float Read_d(int Add){
-  Float_Bytes D;
-  D.by[0] = eeprom.read(Add);
-  D.by[1] = eeprom.read(Add + 1);
-  D.by[2] = eeprom.read(Add + 2);
-  D.by[3] = eeprom.read(Add + 3);
-  return D.f;
-}
+//float Read_d(int Add){
+//  Float_Bytes D;
+//  D.by[0] = eeprom.read(Add);
+//  D.by[1] = eeprom.read(Add + 1);
+//  D.by[2] = eeprom.read(Add + 2);
+//  D.by[3] = eeprom.read(Add + 3);
+//  return D.f;
+//}
 
 void PrintPosition(){
   Serial.print("Position = ");

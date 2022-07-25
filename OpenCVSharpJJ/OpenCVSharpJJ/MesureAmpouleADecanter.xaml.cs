@@ -59,7 +59,7 @@ namespace OpenCVSharpJJ
                 OnPropertyChanged("_SavedImageFolder");
             }
         }
-        string SavedImageFolder = @"D:\DATA\decantation";
+        string SavedImageFolder = @"C:\DATA\decantation";
 
         public string _fps
         {
@@ -84,7 +84,7 @@ namespace OpenCVSharpJJ
                 OnPropertyChanged("_SaveFrame");
             }
         }
-        bool? SaveFrame;
+        bool? SaveFrame = false;
 
         public int Threshold1
         {
@@ -245,6 +245,7 @@ namespace OpenCVSharpJJ
 
         public ObservableCollection<PointsJJ> _points { get => points; set => points = value; }
         ObservableCollection<PointsJJ> points = new ObservableCollection<PointsJJ>();
+        public int _pointsMax { get; set; }
 
         ObservableCollection<string> arduinoMessages = new ObservableCollection<string>();
 
@@ -576,8 +577,6 @@ namespace OpenCVSharpJJ
             if (!image.Empty())
             {
                 NamedMat imageToSave = FrameProcessing1(image);
-                if (SaveFrame == true)
-                    Save(imageToSave);
             }
 
             UpdateDisplayImages();
@@ -620,13 +619,13 @@ namespace OpenCVSharpJJ
 
             int i = 1;
             i1.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-            i1.matName = ImageType.rotated;
+            i1.matName = ImageType.graph1;
             i2.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-            i2.matName = ImageType.roi1;
+            i2.matName = ImageType.rotated;
             i3.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-            i3.matName = ImageType.gray1;
+            i3.matName = ImageType.roi1;
             i4.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-            i4.matName = ImageType.graph1;
+            i4.matName = ImageType.none;
         }
 
         void MatNamesToMats_Reset()
@@ -662,13 +661,19 @@ namespace OpenCVSharpJJ
 
             OpenCvSharp.Rect newroi = Cv2.SelectROI(window_name, rotated.mat, true);
             roi = newroi;
+            tbx_roi.Text = ROIToString();
             _title = roi.ToString();
             Cv2.DestroyWindow(window_name);
         }
 
+        string ROIToString()
+        {
+            return roi.X + "|" + roi.Y + "|" + roi.Width + "|" + roi.Height + "|";
+        }
+
         void Button_CaptureDeviceROI_Save_Click(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.roi = roi.X + "|" + roi.Y + "|" + roi.Width + "|" + roi.Height + "|";
+            Properties.Settings.Default.roi = ROIToString();
             Properties.Settings.Default.Save();
         }
 
@@ -681,11 +686,32 @@ namespace OpenCVSharpJJ
             int h = int.Parse(param[3]);
 
             roi = new OpenCvSharp.Rect(x, y, w, h);
+            tbx_roi.Text = ROIToString();
+        }
+
+        private void Button_SetROI_Click(object sender, RoutedEventArgs e)
+        {
+            string roi_s = tbx_roi.Text;
+            try
+            {
+                string[] param = roi_s.Split('|');
+                int x = int.Parse(param[0]);
+                int y = int.Parse(param[1]);
+                int w = int.Parse(param[2]);
+                int h = int.Parse(param[3]);
+
+                roi = new OpenCvSharp.Rect(x, y, w, h);
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
         void Button_CaptureDeviceROI_None_Click(object sender, RoutedEventArgs e)
         {
             roi = new OpenCvSharp.Rect(0, 0, 0, 0);
+            tbx_roi.Text = ROIToString();
         }
 
         void FrameProcessing_InitData(Mat mat)
@@ -787,7 +813,7 @@ namespace OpenCVSharpJJ
             {
                 int index_prec = d2_max_index;
                 int index = index_prec - 1;
-                while ((d2[index]) > 0)
+                while (d2[index] > 0)
                 {
                     index_prec = index;
                     index = index_prec - 1;
@@ -798,7 +824,7 @@ namespace OpenCVSharpJJ
             {
                 int index_prec = d2_max_index;
                 int index = index_prec + 1;
-                while ((d2[index]) < 0)
+                while (d2[index] < 0)
                 {
                     index_prec = index;
                     index = index_prec + 1;
@@ -807,6 +833,9 @@ namespace OpenCVSharpJJ
             }
             else
                 niveau_pixel = d2_max_index;
+
+            if (SaveFrame == true)
+                Save(ROI1);
 
             //tracé du niveau en ligne hachée sur l'image
             int morceaux = 10;
@@ -839,8 +868,8 @@ namespace OpenCVSharpJJ
             //série "moyennes des pixels par ligne"
             for (int i = 1; i < nbrLignes; i++)
             {
-                int y1 = (int)(moyennesX[i - 1]);
-                int y2 = (int)(moyennesX[i]);
+                int y1 = (int)moyennesX[i - 1];
+                int y2 = (int)moyennesX[i];
                 Cv2.Line(graph1.mat, y1, i - 1, y2, i, blanc, 1);
             }
 
@@ -888,12 +917,22 @@ namespace OpenCVSharpJJ
             if (_points.Count < 300)
                 return;
 
+            while (_points.Count > 300)
+                _points.RemoveAt(0);
+
             //tracé
-            for (int i = _points.Count - 300; i < _points.Count; i++)
+            try
             {
-                int y1 = ROI1.mat.Height - (int)(_points[i - 1].v + ROI1.mat.Height / 2);
-                int y2 = ROI1.mat.Height - (int)(_points[i].v + ROI1.mat.Height / 2);
-                Cv2.Line(mat, i - 1 - (_points.Count - 300), y1, i - (_points.Count - 300), y2, blanc, 1);
+                for (int i = _points.Count - 300; i < _points.Count; i++)
+                {
+                    int y1 = ROI1.mat.Height - (int)(_points[i - 1].v + ROI1.mat.Height / 2);
+                    int y2 = ROI1.mat.Height - (int)(_points[i].v + ROI1.mat.Height / 2);
+                    Cv2.Line(mat, i - 1 - (_points.Count - 300), y1, i - (_points.Count - 300), y2, blanc, 1);
+                }
+            }
+            catch (Exception ex)
+            {
+                //
             }
 
             graph2.mat = mat;
@@ -1561,6 +1600,12 @@ namespace OpenCVSharpJJ
 
             ComputePicture(frame.mat);
         }
+
+        private void Button_SaveData_ToDisk_Click(object sender, MouseButtonEventArgs e)
+        {
+
+        }
+
         #endregion
 
         #region Graphique
