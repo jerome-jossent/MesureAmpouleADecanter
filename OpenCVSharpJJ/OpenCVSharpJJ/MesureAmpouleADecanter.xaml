@@ -292,51 +292,5 @@
                 </Grid>
             </Grid>
         </Grid>
-
-        <!--SPLITTER--><!--
-        <Line Grid.Column="3" Visibility="Hidden" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-            X1="2" Y1="0"
-            X2="2" Y2="10000"
-            Stroke="Black" StrokeDashArray="2, 4"
-            StrokeThickness="2" />
-        <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" MouseEnter="gds_mouseenter" MouseLeave="gds_mouseleave" Background="#02FFFFFF"
-                      ToolTip="Adjust view"/>-->
-        
-        <!--GRAPH-->
-        <!--<Grid Grid.Column="4">
-            <local:graph x:Name="graph"/>
-            
-            --><!--<lvc:CartesianChart Name="chart"/>-->
-
-            <!--<lvc:CartesianChart LegendLocation="Right" Height="400" Name="graph"                                        DisableAnimations="True" Hoverable="False" DataTooltip="{x:Null}">
-                <lvc:CartesianChart.Series>
-                    <lvc:ScatterSeries x:Name="_S_A" Title="AAA" Values="{Binding ValuesA}"/>
-                    <lvc:ScatterSeries x:Name="_S_B" Title="BBB" Values="{Binding ValuesB}"/>
-                    <lvc:ScatterSeries x:Name="_S_C" Title="CCC" Values="{Binding ValuesC}"/>
-                    <lvc:ScatterSeries x:Name="_S_D" Title="DDD" Values="{Binding ValuesD}"/>
-                    <lvc:ScatterSeries x:Name="_S_E" Title="EEE" Values="{Binding ValuesE}"/>
-                    <lvc:ScatterSeries x:Name="_S_F" Title="FFF" Values="{Binding ValuesF}"/>
-                    <lvc:ScatterSeries x:Name="_S_G" Title="GGG" Values="{Binding ValuesG}"/>
-                    <lvc:ScatterSeries x:Name="_S_H" Title="HHH" Values="{Binding ValuesH}"/>
-                    <lvc:ScatterSeries x:Name="_S_I" Title="III" Values="{Binding ValuesI}"/>
-                    <lvc:ScatterSeries x:Name="_S_J" Title="JJJ" Values="{Binding ValuesJ}"/>
-                    <lvc:ScatterSeries x:Name="_S_K" Title="KKK" Values="{Binding ValuesK}"/>
-                    <lvc:ScatterSeries x:Name="_S_L" Title="LLL" Values="{Binding ValuesL}"/>
-                    <lvc:ScatterSeries x:Name="_S_M" Title="MMM" Values="{Binding ValuesM}"/>
-                    <lvc:ScatterSeries x:Name="_S_N" Title="NNN" Values="{Binding ValuesN}"/>
-                    <lvc:ScatterSeries x:Name="_S_O" Title="OOO" Values="{Binding ValuesO}"/>
-                    <lvc:ScatterSeries x:Name="_S_P" Title="PPP" Values="{Binding ValuesP}"/>
-                    <lvc:ScatterSeries x:Name="_S_Q" Title="QQQ" Values="{Binding ValuesQ}"/>
-                    <lvc:ScatterSeries x:Name="_S_R" Title="RRR" Values="{Binding ValuesR}"/>
-                </lvc:CartesianChart.Series>
-                <lvc:CartesianChart.AxisY>
-                    --><!--setting the axis unit improved the labels rounding rule--><!--
-                    <lvc:Axis Unit="1"></lvc:Axis>
-                </lvc:CartesianChart.AxisY>
-            </lvc:CartesianChart>--><!--
-
-            
-            
-        </Grid>-->
     </Grid>
 </Window>

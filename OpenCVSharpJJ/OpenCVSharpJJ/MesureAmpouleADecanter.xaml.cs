@@ -375,9 +375,12 @@ namespace OpenCVSharpJJ
 
         #region CONSTANTES
         Scalar rouge = new Scalar(0, 0, 255);
+        Scalar magenta = new Scalar(255, 0, 150);
         Scalar vert = new Scalar(0, 255, 0);
+        Scalar turquoise = new Scalar(255, 255, 0);
         Scalar bleu = new Scalar(255, 100, 0);
         Scalar blanc = new Scalar(255, 255, 255, 255);
+        Scalar gris = new Scalar(128, 128, 128);
         Scalar noir = new Scalar(0, 0, 0);
         #endregion
 
@@ -689,7 +692,7 @@ namespace OpenCVSharpJJ
             tbx_roi.Text = ROIToString();
         }
 
-        private void Button_SetROI_Click(object sender, RoutedEventArgs e)
+        void Button_SetROI_Click(object sender, RoutedEventArgs e)
         {
             string roi_s = tbx_roi.Text;
             try
@@ -731,6 +734,7 @@ namespace OpenCVSharpJJ
                 nbrLignes_prec = nbrLignes;
             }
         }
+
         int nbrLignes;
         int nbrPixel_par_ligne;
         int nbrLignes_prec;
@@ -760,10 +764,10 @@ namespace OpenCVSharpJJ
             FrameProcessing_InitData(ROI1.mat);
 
             //trouve niveau :
+
+            #region moyenne pixel par ligne
             Mat<byte> mat3 = new Mat<byte>(frameGray.mat);
             MatIndexer<byte> indexer = mat3.GetIndexer();
-
-            //somme par ligne
             for (int y = 0; y < nbrLignes; y++)
             {
                 moyennesX[y] = 0;
@@ -772,12 +776,44 @@ namespace OpenCVSharpJJ
 
                 moyennesX[y] /= nbrPixel_par_ligne;
             }
+            #endregion
 
-            //derivée primaire (simplifié : car même pas /(x2-x1))
+            #region filtre médian
+            int fenetre = 200; // nbr valeurs
+            float[] medianesX = Medianes(moyennesX, fenetre);
+            #endregion
+
+            //moyennesX = medianesX;
+
+            #region derivée primaire (simplifié : car même pas /(x2-x1))
+            float d1_min = 0;
+            float d1_max = 0;
+            int d1_max_index = 0;
             for (int i = 1; i < nbrLignes - 2; i++)
+            {
                 d1[i] = moyennesX[i + 1] - moyennesX[i - 1];
 
-            //derivée seconde simplifié : car /(x2-x1) => /1
+                if (i == 1)
+                {
+                    d1_min = d1[i];
+                    d1_max = d1[i];
+                    d1_max_index = i;
+                }
+                else
+                {
+                    if (d1[i] < d1_min)
+                        d1_min = d1[i];
+
+                    if (d1[i] > d1_max)
+                    {
+                        d1_max = d1[i];
+                        d1_max_index = i;
+                    }
+                }
+            }
+            #endregion
+
+            #region derivée seconde simplifié : car /(x2-x1) => /1
             //et recherche des maximum et minimum
             float d2_min = 0;
             float d2_max = 0;
@@ -804,40 +840,83 @@ namespace OpenCVSharpJJ
                     }
                 }
             }
+            #endregion
 
-            //intersections à 0 entre le minmum et le maximum de la zone d'intérêt
-            //détection de la zone d'intérêt
+
+            //TODO 2022/07/25 => quand le blanc/gris coupe le magenta (mediane pixels, coupe la mediane des derivées secondaires)
+
+            # region détection de la zone d'intérêt
+            //intersections à 0 entre le minimum et le maximum de la zone d'intérêt
             int niveau_pixel;
-            float n_val = d2[d2_max_index];
-            if (n_val > 0)
+            int index_prec;
+            int index;
+            float n_val;
+            string ds = "d1";
+
+            if (ds == "d1")
             {
-                int index_prec = d2_max_index;
-                int index = index_prec - 1;
-                while (d2[index] > 0)
+                n_val = d1[d1_max_index];
+                if (n_val < 0)
                 {
-                    index_prec = index;
+                    index_prec = d1_max_index;
                     index = index_prec - 1;
+                    while (d1[index] > 0)
+                    {
+                        index_prec = index;
+                        index = index_prec - 1;
+                    }
+                    niveau_pixel = index_prec;
                 }
-                niveau_pixel = index_prec;
-            }
-            else if (n_val < 0)
-            {
-                int index_prec = d2_max_index;
-                int index = index_prec + 1;
-                while (d2[index] < 0)
+                else if (n_val > 0)
                 {
-                    index_prec = index;
+                    index_prec = d1_max_index;
                     index = index_prec + 1;
+                    while (d1[index] < 0)
+                    {
+                        index_prec = index;
+                        index = index_prec + 1;
+                    }
+                    niveau_pixel = index_prec;
                 }
-                niveau_pixel = index_prec;
+                else
+                    niveau_pixel = d1_max_index;
             }
             else
-                niveau_pixel = d2_max_index;
+            {
+                n_val = d2[d2_max_index];
+                if (n_val > 0)
+                {
+                    index_prec = d2_max_index;
+                    index = index_prec - 1;
+                    while (d2[index] > 0)
+                    {
+                        index_prec = index;
+                        index = index_prec - 1;
+                    }
+                    niveau_pixel = index_prec;
+                }
+                else if (n_val < 0)
+                {
+                    index_prec = d2_max_index;
+                    index = index_prec + 1;
+                    while (d2[index] < 0)
+                    {
+                        index_prec = index;
+                        index = index_prec + 1;
+                    }
+                    niveau_pixel = index_prec;
+                }
+                else
+                    niveau_pixel = d2_max_index;
+            }
+            #endregion
 
+            #region SAVE
             if (SaveFrame == true)
                 Save(ROI1);
+            #endregion
 
-            //tracé du niveau en ligne hachée sur l'image
+            #region TRACE tracé du niveau en ligne hachée sur l'image
             int morceaux = 10;
             int dashed_line_A = 0;
             int dashed_line_Z = ROI1.mat.Width - 1;
@@ -852,45 +931,66 @@ namespace OpenCVSharpJJ
                 Cv2.Line(ROI1.mat, x1, niveau_pixel, x2, niveau_pixel, bleu, epaisseur);
                 Cv2.Line(frameGray.mat, x1, niveau_pixel, x2, niveau_pixel, bleu, epaisseur);
             }
+            #endregion
 
             Cv2.Line(graph1.mat, 0, niveau_pixel, graph1.mat.Width - 1, niveau_pixel, bleu, epaisseur);
 
-            //centre caméra (mire+)
+
+            #region TRACE centre caméra (mire+)
             int milieuhauteur = rotated.mat.Height / 2;
             int milieulargeur = rotated.mat.Width / 2;
             Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, rouge, 2);
             Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, rouge, 2);
+            #endregion
 
-            //graphique de l'image
+            #region GRAPH INIT de l'image
             int largeur_graph = 300;
             graph1.mat = new Mat(nbrLignes, largeur_graph, type: MatType.CV_8UC3, noir);
+            #endregion
 
-            //série "moyennes des pixels par ligne"
-            for (int i = 1; i < nbrLignes; i++)
-            {
-                int y1 = (int)moyennesX[i - 1];
-                int y2 = (int)moyennesX[i];
-                Cv2.Line(graph1.mat, y1, i - 1, y2, i, blanc, 1);
-            }
+            #region GRAPH BLEU CLAIR
+            int y0 = (int)(-d1_min * (float)largeur_graph / (d1_max - d1_min));
+            Cv2.Line(graph1.mat, y0, 0, y0, nbrLignes - 1, turquoise, 2);
 
-            ////série "d1"
-            //for (int i = 1; i < nbrLignes; i++)
-            //{
-            //    int y1 = (int)((d1[i - 1] - min) * (float)nbrPixel_par_ligne / (max - min));
-            //    int y2 = (int)((d1[i] - min) * (float)nbrPixel_par_ligne / (max - min));
-            //    Cv2.Line(graph1.mat, y1, i - 1, y2, i, vert, 1);
-            //}
+            int y00 = (int)(-d2_min * (float)largeur_graph / (d2_max - d2_min));
+            Cv2.Line(graph1.mat, y00, 0, y00, nbrLignes - 1, magenta, 2);
+            #endregion
 
-            //série "d2"
+            #region GRAPH ROUGE série "d2"
             for (int i = 1; i < nbrLignes; i++)
             {
                 int y1 = (int)((d2[i - 1] - d2_min) * (float)largeur_graph / (d2_max - d2_min));
                 int y2 = (int)((d2[i] - d2_min) * (float)largeur_graph / (d2_max - d2_min));
                 Cv2.Line(graph1.mat, y1, i - 1, y2, i, rouge, 1);
             }
+            #endregion
 
-            int y0 = (int)(-d2_min * (float)largeur_graph / (d2_max - d2_min));
-            Cv2.Line(graph1.mat, y0, 0, y0, nbrLignes - 1, vert, 1);
+            #region GRAPH BLEU série "d1"
+            for (int i = 1; i < nbrLignes; i++)
+            {
+                int y1 = (int)((d1[i - 1] - d1_min) * (float)largeur_graph / (d1_max - d1_min));
+                int y2 = (int)((d1[i] - d1_min) * (float)largeur_graph / (d1_max - d1_min));
+                Cv2.Line(graph1.mat, y1, i - 1, y2, i, bleu, 1);
+            }
+            #endregion
+
+            #region GRAPH BLANC série "moyennes des pixels par ligne"
+            for (int i = 1; i < nbrLignes; i++)
+            {
+                int y1 = (int)moyennesX[i - 1];
+                int y2 = (int)moyennesX[i];
+                Cv2.Line(graph1.mat, y1, i - 1, y2, i, blanc, 2);
+            }
+            #endregion
+
+            #region GRAPH GRIS série "médianes des pixels par ligne"
+            for (int i = 1; i < nbrLignes; i++)
+            {
+                int y1 = (int)medianesX[i - 1];
+                int y2 = (int)medianesX[i];
+                Cv2.Line(graph1.mat, y1, i - 1, y2, i, gris, 1);
+            }
+            #endregion
 
             int distancepixel = milieuhauteur - (niveau_pixel + roi.Y);
 
@@ -905,6 +1005,24 @@ namespace OpenCVSharpJJ
                         thickness: 4);
 
             return ROI1;
+        }
+
+        float[] Medianes(float[] valeurs, int fenetre)
+        {
+            float[] medianes = new float[valeurs.Length];
+
+            for (int i = 0; i < medianes.Length; i++)
+            {
+                int index_a = i - fenetre;
+                if (index_a < 0) index_a = 0;
+                int index_z = i + fenetre;
+                if (index_z > valeurs.Length - 1) index_z = valeurs.Length - 1;
+
+                List<float> valeurs_fentre = valeurs.Skip(index_a).Take(index_z - index_a).OrderBy(n => n).Select(s => s).ToList<float>();
+                medianes[i] = valeurs_fentre[valeurs_fentre.Count / 2];
+            }
+
+            return medianes;
         }
 
         void GraphTemporelle()
