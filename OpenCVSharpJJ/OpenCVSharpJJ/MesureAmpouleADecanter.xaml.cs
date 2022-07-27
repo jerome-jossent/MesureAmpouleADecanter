@@ -764,10 +764,12 @@ namespace OpenCVSharpJJ
             FrameProcessing_InitData(ROI1.mat);
 
             //trouve niveau :
+            int niveau_pixel;
 
             #region moyenne pixel par ligne
             Mat<byte> mat3 = new Mat<byte>(frameGray.mat);
             MatIndexer<byte> indexer = mat3.GetIndexer();
+            float valmax = 0;
             for (int y = 0; y < nbrLignes; y++)
             {
                 moyennesX[y] = 0;
@@ -775,140 +777,181 @@ namespace OpenCVSharpJJ
                     moyennesX[y] += indexer[y, x];
 
                 moyennesX[y] /= nbrPixel_par_ligne;
+
+                if (y == 0)
+                    valmax = moyennesX[y];
+                if (moyennesX[y] > valmax)
+                    valmax = moyennesX[y];
             }
             #endregion
 
-            #region filtre médian
-            int fenetre = 200; // nbr valeurs
-            float[] medianesX = Medianes(moyennesX, fenetre);
+            #region filtre gaussien ?
+            //https://stackoverflow.com/questions/59263100/how-to-easily-apply-a-gauss-filter-to-a-list-array-of-doubles
             #endregion
 
-            //moyennesX = medianesX;
+            #region recherche dépassements de seuil
+            //on recherche (à partir de l'intensité max) ()en partant du haut la PREMIERE ligne pour laquelle on perd X% d'intensité
+            float x_perte = 0.5f;
+            float seuil = (1 - x_perte) * valmax;
+            int niveau_pixel_debut = -1;
 
-            #region derivée primaire (simplifié : car même pas /(x2-x1))
-            float d1_min = 0;
-            float d1_max = 0;
-            int d1_max_index = 0;
-            for (int i = 1; i < nbrLignes - 2; i++)
-            {
-                d1[i] = moyennesX[i + 1] - moyennesX[i - 1];
-
-                if (i == 1)
+            for (int y = 0; y < moyennesX.Length; y++)
+                if (moyennesX[y] < seuil)
                 {
-                    d1_min = d1[i];
-                    d1_max = d1[i];
-                    d1_max_index = i;
+                    niveau_pixel_debut = y;
+                    break;
                 }
-                else
-                {
-                    if (d1[i] < d1_min)
-                        d1_min = d1[i];
 
-                    if (d1[i] > d1_max)
-                    {
-                        d1_max = d1[i];
-                        d1_max_index = i;
-                    }
+            //on recherche (à partir de l'intensité max) ()en partant du bas la PREMIERE ligne pour laquelle on atteint X% d'intensité
+            int niveau_pixel_fin = -1;
+
+            for (int y = moyennesX.Length - 1; y >= 0; y--)
+                if (moyennesX[y] > seuil)
+                {
+                    niveau_pixel_fin = y;
+                    break;
                 }
-            }
+            #endregion
+            // moyenne entre niveau_pixel_debut et niveau_pixel_fin ???????????????
+            niveau_pixel = niveau_pixel_debut;
+
+            #region commente
+            /*
+                        if (false)
+                        {
+
+                            #region filtre médian
+                            int fenetre = 200; // nbr valeurs
+                            float[] medianesX = Medianes(moyennesX, fenetre);
+                            #endregion
+
+                            //moyennesX = medianesX;
+
+                            #region derivée primaire (simplifié : car même pas /(x2-x1))
+                            float d1_min = 0;
+                            float d1_max = 0;
+                            int d1_max_index = 0;
+                            for (int i = 1; i < nbrLignes - 2; i++)
+                            {
+                                d1[i] = moyennesX[i + 1] - moyennesX[i - 1];
+
+                                if (i == 1)
+                                {
+                                    d1_min = d1[i];
+                                    d1_max = d1[i];
+                                    d1_max_index = i;
+                                }
+                                else
+                                {
+                                    if (d1[i] < d1_min)
+                                        d1_min = d1[i];
+
+                                    if (d1[i] > d1_max)
+                                    {
+                                        d1_max = d1[i];
+                                        d1_max_index = i;
+                                    }
+                                }
+                            }
+                            #endregion
+
+                            #region derivée seconde simplifié : car /(x2-x1) => /1
+                            //et recherche des maximum et minimum
+                            float d2_min = 0;
+                            float d2_max = 0;
+                            int d2_max_index = 0;
+                            for (int i = 2; i < nbrLignes - 4; i++)
+                            {
+                                d2[i] = d1[i + 1] - d1[i - 1];
+
+                                if (i == 2)
+                                {
+                                    d2_min = d2[i];
+                                    d2_max = d2[i];
+                                    d2_max_index = i;
+                                }
+                                else
+                                {
+                                    if (d2[i] < d2_min)
+                                        d2_min = d2[i];
+
+                                    if (d2[i] > d2_max)
+                                    {
+                                        d2_max = d2[i];
+                                        d2_max_index = i;
+                                    }
+                                }
+                            }
+                            #endregion
+
+
+                        }
+            */
             #endregion
 
-            #region derivée seconde simplifié : car /(x2-x1) => /1
-            //et recherche des maximum et minimum
-            float d2_min = 0;
-            float d2_max = 0;
-            int d2_max_index = 0;
-            for (int i = 2; i < nbrLignes - 4; i++)
-            {
-                d2[i] = d1[i + 1] - d1[i - 1];
+            #region détection de la zone d'intérêt
+            ////intersections à 0 entre le minimum et le maximum de la zone d'intérêt
+            //int index_prec;
+            //int index;
+            //float n_val;
+            //string ds = "d1";
 
-                if (i == 2)
-                {
-                    d2_min = d2[i];
-                    d2_max = d2[i];
-                    d2_max_index = i;
-                }
-                else
-                {
-                    if (d2[i] < d2_min)
-                        d2_min = d2[i];
-
-                    if (d2[i] > d2_max)
-                    {
-                        d2_max = d2[i];
-                        d2_max_index = i;
-                    }
-                }
-            }
-            #endregion
-
-
-            //TODO 2022/07/25 => quand le blanc/gris coupe le magenta (mediane pixels, coupe la mediane des derivées secondaires)
-
-            # region détection de la zone d'intérêt
-            //intersections à 0 entre le minimum et le maximum de la zone d'intérêt
-            int niveau_pixel;
-            int index_prec;
-            int index;
-            float n_val;
-            string ds = "d1";
-
-            if (ds == "d1")
-            {
-                n_val = d1[d1_max_index];
-                if (n_val < 0)
-                {
-                    index_prec = d1_max_index;
-                    index = index_prec - 1;
-                    while (d1[index] > 0)
-                    {
-                        index_prec = index;
-                        index = index_prec - 1;
-                    }
-                    niveau_pixel = index_prec;
-                }
-                else if (n_val > 0)
-                {
-                    index_prec = d1_max_index;
-                    index = index_prec + 1;
-                    while (d1[index] < 0)
-                    {
-                        index_prec = index;
-                        index = index_prec + 1;
-                    }
-                    niveau_pixel = index_prec;
-                }
-                else
-                    niveau_pixel = d1_max_index;
-            }
-            else
-            {
-                n_val = d2[d2_max_index];
-                if (n_val > 0)
-                {
-                    index_prec = d2_max_index;
-                    index = index_prec - 1;
-                    while (d2[index] > 0)
-                    {
-                        index_prec = index;
-                        index = index_prec - 1;
-                    }
-                    niveau_pixel = index_prec;
-                }
-                else if (n_val < 0)
-                {
-                    index_prec = d2_max_index;
-                    index = index_prec + 1;
-                    while (d2[index] < 0)
-                    {
-                        index_prec = index;
-                        index = index_prec + 1;
-                    }
-                    niveau_pixel = index_prec;
-                }
-                else
-                    niveau_pixel = d2_max_index;
-            }
+            //if (ds == "d1")
+            //{
+            //    n_val = d1[d1_max_index];
+            //    if (n_val < 0)
+            //    {
+            //        index_prec = d1_max_index;
+            //        index = index_prec - 1;
+            //        while (d1[index] > 0)
+            //        {
+            //            index_prec = index;
+            //            index = index_prec - 1;
+            //        }
+            //        niveau_pixel = index_prec;
+            //    }
+            //    else if (n_val > 0)
+            //    {
+            //        index_prec = d1_max_index;
+            //        index = index_prec + 1;
+            //        while (d1[index] < 0)
+            //        {
+            //            index_prec = index;
+            //            index = index_prec + 1;
+            //        }
+            //        niveau_pixel = index_prec;
+            //    }
+            //    else
+            //        niveau_pixel = d1_max_index;
+            //}
+            //else
+            //{
+            //    n_val = d2[d2_max_index];
+            //    if (n_val > 0)
+            //    {
+            //        index_prec = d2_max_index;
+            //        index = index_prec - 1;
+            //        while (d2[index] > 0)
+            //        {
+            //            index_prec = index;
+            //            index = index_prec - 1;
+            //        }
+            //        niveau_pixel = index_prec;
+            //    }
+            //    else if (n_val < 0)
+            //    {
+            //        index_prec = d2_max_index;
+            //        index = index_prec + 1;
+            //        while (d2[index] < 0)
+            //        {
+            //            index_prec = index;
+            //            index = index_prec + 1;
+            //        }
+            //        niveau_pixel = index_prec;
+            //    }
+            //    else
+            //        niveau_pixel = d2_max_index;
+            //}
             #endregion
 
             #region SAVE
@@ -935,7 +978,6 @@ namespace OpenCVSharpJJ
 
             Cv2.Line(graph1.mat, 0, niveau_pixel, graph1.mat.Width - 1, niveau_pixel, bleu, epaisseur);
 
-
             #region TRACE centre caméra (mire+)
             int milieuhauteur = rotated.mat.Height / 2;
             int milieulargeur = rotated.mat.Width / 2;
@@ -948,30 +990,30 @@ namespace OpenCVSharpJJ
             graph1.mat = new Mat(nbrLignes, largeur_graph, type: MatType.CV_8UC3, noir);
             #endregion
 
-            #region GRAPH BLEU CLAIR
-            int y0 = (int)(-d1_min * (float)largeur_graph / (d1_max - d1_min));
-            Cv2.Line(graph1.mat, y0, 0, y0, nbrLignes - 1, turquoise, 2);
+            #region // GRAPH BLEU CLAIR
+            //int y0 = (int)(-d1_min * (float)largeur_graph / (d1_max - d1_min));
+            //Cv2.Line(graph1.mat, y0, 0, y0, nbrLignes - 1, turquoise, 2);
 
-            int y00 = (int)(-d2_min * (float)largeur_graph / (d2_max - d2_min));
-            Cv2.Line(graph1.mat, y00, 0, y00, nbrLignes - 1, magenta, 2);
+            //int y00 = (int)(-d2_min * (float)largeur_graph / (d2_max - d2_min));
+            //Cv2.Line(graph1.mat, y00, 0, y00, nbrLignes - 1, magenta, 2);
             #endregion
 
-            #region GRAPH ROUGE série "d2"
-            for (int i = 1; i < nbrLignes; i++)
-            {
-                int y1 = (int)((d2[i - 1] - d2_min) * (float)largeur_graph / (d2_max - d2_min));
-                int y2 = (int)((d2[i] - d2_min) * (float)largeur_graph / (d2_max - d2_min));
-                Cv2.Line(graph1.mat, y1, i - 1, y2, i, rouge, 1);
-            }
+            #region // GRAPH ROUGE série "d2"
+            //for (int i = 1; i < nbrLignes; i++)
+            //{
+            //    int y1 = (int)((d2[i - 1] - d2_min) * (float)largeur_graph / (d2_max - d2_min));
+            //    int y2 = (int)((d2[i] - d2_min) * (float)largeur_graph / (d2_max - d2_min));
+            //    Cv2.Line(graph1.mat, y1, i - 1, y2, i, rouge, 1);
+            //}
             #endregion
 
-            #region GRAPH BLEU série "d1"
-            for (int i = 1; i < nbrLignes; i++)
-            {
-                int y1 = (int)((d1[i - 1] - d1_min) * (float)largeur_graph / (d1_max - d1_min));
-                int y2 = (int)((d1[i] - d1_min) * (float)largeur_graph / (d1_max - d1_min));
-                Cv2.Line(graph1.mat, y1, i - 1, y2, i, bleu, 1);
-            }
+            #region // GRAPH BLEU série "d1"
+            //for (int i = 1; i < nbrLignes; i++)
+            //{
+            //    int y1 = (int)((d1[i - 1] - d1_min) * (float)largeur_graph / (d1_max - d1_min));
+            //    int y2 = (int)((d1[i] - d1_min) * (float)largeur_graph / (d1_max - d1_min));
+            //    Cv2.Line(graph1.mat, y1, i - 1, y2, i, bleu, 1);
+            //}
             #endregion
 
             #region GRAPH BLANC série "moyennes des pixels par ligne"
@@ -983,13 +1025,13 @@ namespace OpenCVSharpJJ
             }
             #endregion
 
-            #region GRAPH GRIS série "médianes des pixels par ligne"
-            for (int i = 1; i < nbrLignes; i++)
-            {
-                int y1 = (int)medianesX[i - 1];
-                int y2 = (int)medianesX[i];
-                Cv2.Line(graph1.mat, y1, i - 1, y2, i, gris, 1);
-            }
+            #region // GRAPH GRIS série "médianes des pixels par ligne"
+            //for (int i = 1; i < nbrLignes; i++)
+            //{
+            //    int y1 = (int)medianesX[i - 1];
+            //    int y2 = (int)medianesX[i];
+            //    Cv2.Line(graph1.mat, y1, i - 1, y2, i, gris, 1);
+            //}
             #endregion
 
             int distancepixel = milieuhauteur - (niveau_pixel + roi.Y);
@@ -1519,7 +1561,6 @@ namespace OpenCVSharpJJ
                 }
             }
 
-
             //POUR TESTER GRAPH
             camera_pos_mm = v;
             DateTime ttest = DateTime.Now;
@@ -1545,6 +1586,12 @@ namespace OpenCVSharpJJ
             listToSort.Sort();
             return listToSort[listToSort.Count / 2];
         }
+        static int Clamp(int value, int min, int max)
+        {
+            if (value < min) return min;
+            if (value > max) return max;
+            return value;
+        }
 
         void CameraDisplacement()
         {
@@ -1560,9 +1607,9 @@ namespace OpenCVSharpJJ
                     arduinoWaiting = false;
                     camera_pos_precedent = camera_pos_mm;
                     distancepixel_target = distancepixel;
-                    d_mm = (int)(distancepixel * ratio_mm_pix);
+                    d_mm = (int)(distancepixel * ratio_mm_pix / ((float)resizeFactor / 100));
 
-                    d_mm /= 2;//par petit pas
+                    d_mm = Clamp(d_mm, -10, 10); //par petit pas (maxi +/-10 mm)
 
                     if (distancepixel > 0)
                     {
