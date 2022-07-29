@@ -73,6 +73,7 @@ namespace OpenCVSharpJJ
             }
         }
         string fps;
+
         public bool? _SaveFrame
         {
             get { return SaveFrame; }
@@ -85,6 +86,72 @@ namespace OpenCVSharpJJ
             }
         }
         bool? SaveFrame = false;
+
+
+        public bool? _DisplayGrids
+        {
+            get { return DisplayGrids; }
+            set
+            {
+                if (DisplayGrids == value)
+                    return;
+                DisplayGrids = value;
+                OnPropertyChanged("_DisplayGrids");
+            }
+        }
+        bool? DisplayGrids = false;
+
+        public bool? _DisplayROI
+        {
+            get { return DisplayROI; }
+            set
+            {
+                if (DisplayROI == value)
+                    return;
+                DisplayROI = value;
+                OnPropertyChanged("_DisplayROI");
+            }
+        }
+        bool? DisplayROI = false;
+
+        public bool? _DisplayCenter
+        {
+            get { return DisplayCenter; }
+            set
+            {
+                if (DisplayCenter == value)
+                    return;
+                DisplayCenter = value;
+                OnPropertyChanged("_DisplayCenter");
+            }
+        }
+        bool? DisplayCenter = true;
+
+        public int _bande_morte_pix
+        {
+            get { return bande_morte_pix; }
+            set
+            {
+                if (bande_morte_pix == value)
+                    return;
+                bande_morte_pix = value;
+                OnPropertyChanged("_bande_morte_pix");
+            }
+        }
+        int bande_morte_pix = 5;
+
+        public double? _ratio_mm_pix
+        {
+            get { return ratio_mm_pix; }
+            set
+            {
+                if (ratio_mm_pix == value)
+                    return;
+                ratio_mm_pix = value;
+                OnPropertyChanged("_ratio_mm_pix");
+            }
+        }
+        double? ratio_mm_pix = 0.2;
 
         public int Threshold1
         {
@@ -320,8 +387,6 @@ namespace OpenCVSharpJJ
         #endregion
 
         #region PARAMETERS
-        int bande_morte_pix = 5;
-        float ratio_mm_pix = 0.2f;
         bool arduinoWaiting;
 
         RotateFlags? rotation;
@@ -587,10 +652,8 @@ namespace OpenCVSharpJJ
             DisplayFPS();
         }
 
-
         DateTime t_last_save;
         TimeSpan t_vide_save = TimeSpan.FromSeconds(1);
-
 
         void Save(NamedMat image)
         {
@@ -598,11 +661,13 @@ namespace OpenCVSharpJJ
             if (t.Subtract(t_last_save) > t_vide_save)
             {
                 t_last_save = t;
-                string filename = SavedImageFolder + "//" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + ".jpg";
-                image.mat.SaveImage(filename);
+                string filename;
+                if (camera_pos_mm == null)
+                    filename = SavedImageFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + ".jpg";
+                else
+                    filename = SavedImageFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + (int)camera_pos_mm + ".jpg";
+                bool res = image.mat.SaveImage(filename);
             }
-
-
         }
 
         #region IMAGE PROCESSINGS
@@ -624,9 +689,9 @@ namespace OpenCVSharpJJ
             i1.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
             i1.matName = ImageType.graph1;
             i2.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-            i2.matName = ImageType.rotated;
+            i2.matName = ImageType.roi1;
             i3.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
-            i3.matName = ImageType.roi1;
+            i3.matName = ImageType.rotated;
             i4.matName = NMs.MatNamesToMats.ElementAt(i++).Key;
             i4.matName = ImageType.none;
         }
@@ -769,6 +834,7 @@ namespace OpenCVSharpJJ
             #region moyenne pixel par ligne
             Mat<byte> mat3 = new Mat<byte>(frameGray.mat);
             MatIndexer<byte> indexer = mat3.GetIndexer();
+            float valmin = 0;
             float valmax = 0;
             for (int y = 0; y < nbrLignes; y++)
             {
@@ -779,20 +845,24 @@ namespace OpenCVSharpJJ
                 moyennesX[y] /= nbrPixel_par_ligne;
 
                 if (y == 0)
+                {
+                    valmin = moyennesX[y];
                     valmax = moyennesX[y];
-                if (moyennesX[y] > valmax)
-                    valmax = moyennesX[y];
+                }
+                if (moyennesX[y] > valmax) valmax = moyennesX[y];
+                if (moyennesX[y] < valmin) valmin = moyennesX[y];
             }
             #endregion
 
-            #region filtre gaussien ?
+            #region // filtre gaussien TODO ?
             //https://stackoverflow.com/questions/59263100/how-to-easily-apply-a-gauss-filter-to-a-list-array-of-doubles
             #endregion
 
             #region recherche dépassements de seuil
             //on recherche (à partir de l'intensité max) ()en partant du haut la PREMIERE ligne pour laquelle on perd X% d'intensité
             float x_perte = 0.5f;
-            float seuil = (1 - x_perte) * valmax;
+            float x_range = valmax - valmin;
+            float seuil = (1 - x_perte) * x_range + valmin;
             int niveau_pixel_debut = -1;
 
             for (int y = 0; y < moyennesX.Length; y++)
@@ -815,81 +885,70 @@ namespace OpenCVSharpJJ
             // moyenne entre niveau_pixel_debut et niveau_pixel_fin ???????????????
             niveau_pixel = niveau_pixel_debut;
 
-            #region commente
-            /*
-                        if (false)
-                        {
-
-                            #region filtre médian
-                            int fenetre = 200; // nbr valeurs
-                            float[] medianesX = Medianes(moyennesX, fenetre);
-                            #endregion
-
-                            //moyennesX = medianesX;
-
-                            #region derivée primaire (simplifié : car même pas /(x2-x1))
-                            float d1_min = 0;
-                            float d1_max = 0;
-                            int d1_max_index = 0;
-                            for (int i = 1; i < nbrLignes - 2; i++)
-                            {
-                                d1[i] = moyennesX[i + 1] - moyennesX[i - 1];
-
-                                if (i == 1)
-                                {
-                                    d1_min = d1[i];
-                                    d1_max = d1[i];
-                                    d1_max_index = i;
-                                }
-                                else
-                                {
-                                    if (d1[i] < d1_min)
-                                        d1_min = d1[i];
-
-                                    if (d1[i] > d1_max)
-                                    {
-                                        d1_max = d1[i];
-                                        d1_max_index = i;
-                                    }
-                                }
-                            }
-                            #endregion
-
-                            #region derivée seconde simplifié : car /(x2-x1) => /1
-                            //et recherche des maximum et minimum
-                            float d2_min = 0;
-                            float d2_max = 0;
-                            int d2_max_index = 0;
-                            for (int i = 2; i < nbrLignes - 4; i++)
-                            {
-                                d2[i] = d1[i + 1] - d1[i - 1];
-
-                                if (i == 2)
-                                {
-                                    d2_min = d2[i];
-                                    d2_max = d2[i];
-                                    d2_max_index = i;
-                                }
-                                else
-                                {
-                                    if (d2[i] < d2_min)
-                                        d2_min = d2[i];
-
-                                    if (d2[i] > d2_max)
-                                    {
-                                        d2_max = d2[i];
-                                        d2_max_index = i;
-                                    }
-                                }
-                            }
-                            #endregion
-
-
-                        }
-            */
+            #region // filtre médian
+            //int fenetre = 200; // nbr valeurs
+            //float[] medianesX = Medianes(moyennesX, fenetre);
+            //moyennesX = medianesX;
             #endregion
 
-            #region détection de la zone d'intérêt
+            #region // derivée primaire (simplifié : car même pas /(x2-x1))
+            //float d1_min = 0;
+            //float d1_max = 0;
+            //int d1_max_index = 0;
+            //for (int i = 1; i < nbrLignes - 2; i++)
+            //{
+            //    d1[i] = moyennesX[i + 1] - moyennesX[i - 1];
+
+            //    if (i == 1)
+            //    {
+            //        d1_min = d1[i];
+            //        d1_max = d1[i];
+            //        d1_max_index = i;
+            //    }
+            //    else
+            //    {
+            //        if (d1[i] < d1_min)
+            //            d1_min = d1[i];
+
+            //        if (d1[i] > d1_max)
+            //        {
+            //            d1_max = d1[i];
+            //            d1_max_index = i;
+            //        }
+            //    }
+            //}
+            #endregion
+
+            #region //derivée seconde simplifié : car /(x2-x1) => /1
+            ////et recherche des maximum et minimum
+            //float d2_min = 0;
+            //float d2_max = 0;
+            //int d2_max_index = 0;
+            //for (int i = 2; i < nbrLignes - 4; i++)
+            //{
+            //    d2[i] = d1[i + 1] - d1[i - 1];
+
+            //    if (i == 2)
+            //    {
+            //        d2_min = d2[i];
+            //        d2_max = d2[i];
+            //        d2_max_index = i;
+            //    }
+            //    else
+            //    {
+            //        if (d2[i] < d2_min)
+            //            d2_min = d2[i];
+
+            //        if (d2[i] > d2_max)
+            //        {
+            //            d2_max = d2[i];
+            //            d2_max_index = i;
+            //        }
+            //    }
+            //}
+            #endregion
+
+            #region // détection de la zone d'intérêt
             ////intersections à 0 entre le minimum et le maximum de la zone d'intérêt
             //int index_prec;
             //int index;
@@ -959,12 +1018,12 @@ namespace OpenCVSharpJJ
                 Save(ROI1);
             #endregion
 
-            #region TRACE tracé du niveau en ligne hachée sur l'image
+            #region TRACE niveau en ligne hachée sur l'image
             int morceaux = 10;
             int dashed_line_A = 0;
             int dashed_line_Z = ROI1.mat.Width - 1;
             int dashed_line_total_length = dashed_line_Z - dashed_line_A;
-            float dashed_line_length = dashed_line_total_length / (morceaux * 2 - 1);
+            float dashed_line_length = (float)dashed_line_total_length / (morceaux * 2 - 1);
             int epaisseur = (int)(0.4 * nbrLignes / 100);
             if (epaisseur < 1) epaisseur = 1;
             for (int i = 0; i < morceaux * 2 - 1; i += 2)
@@ -1034,6 +1093,36 @@ namespace OpenCVSharpJJ
             //}
             #endregion
 
+            #region dessine des lignes de repères
+            if (_DisplayGrids == true)
+            {
+                //horizontales
+                int n_h = 10;
+                for (int i = 0; i < n_h; i++)
+                {
+                    int y_ = (i + 1) * rotated.mat.Rows / n_h;
+                    Cv2.Line(rotated.mat, 0, y_, rotated.mat.Cols - 1, y_, blanc, 1);
+                }
+                //verticales
+                int n_v = 10;
+                for (int i = 0; i < n_v; i++)
+                {
+                    int x_ = (i + 1) * rotated.mat.Cols / n_v;
+                    Cv2.Line(rotated.mat, x_, 0, x_, rotated.mat.Rows - 1, blanc, 1);
+                }
+            }
+            #endregion
+
+            #region dessine roi sur rotated
+            if (_DisplayROI == true)
+                Cv2.Rectangle(rotated.mat, roi, bleu, 1);
+            #endregion
+
+            #region dessine centre sur roi
+            if (_DisplayCenter == true)
+                Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y, ROI1.mat.Cols - 1, milieuhauteur - roi.Y, rouge, 1);
+            #endregion
+
             int distancepixel = milieuhauteur - (niveau_pixel + roi.Y);
 
             NewDistancePixel(distancepixel);
@@ -1076,9 +1165,6 @@ namespace OpenCVSharpJJ
 
             if (_points.Count < 300)
                 return;
-
-            while (_points.Count > 300)
-                _points.RemoveAt(0);
 
             //tracé
             try
@@ -1543,7 +1629,7 @@ namespace OpenCVSharpJJ
 
             int v = Mediane(ds_pix.ToArray());
 
-            if (Math.Abs(v) > bande_morte_pix)
+            if (Math.Abs(v) > _bande_morte_pix)
             {
                 distancepixel = v;
                 newTarget = true;
@@ -1561,22 +1647,31 @@ namespace OpenCVSharpJJ
                 }
             }
 
-            //POUR TESTER GRAPH
-            camera_pos_mm = v;
-            DateTime ttest = DateTime.Now;
-            if (ttest.Subtract(t_last) > t_vide)
-            {
-                if (camera_pos_mm != null)
-                {
-                    t_last = ttest;
-                    Application.Current.Dispatcher.Invoke(() => NewPoint(ttest));
-                }
-            }
+            ////POUR TESTER GRAPH
+            //camera_pos_mm = v;
+            //DateTime ttest = DateTime.Now;
+            //if (ttest.Subtract(t_last) > t_vide)
+            //{
+            //    if (camera_pos_mm != null)
+            //    {
+            //        t_last = ttest;
+            //        Application.Current.Dispatcher.Invoke(() => NewPoint(ttest));
+            //    }
+            //}
         }
 
         void NewPoint(DateTime t)
         {
-            _points.Add(new PointsJJ(t, (float)camera_pos_mm));
+            if (camera_pos_mm == null)
+                return;
+
+            //_points.Add(new PointsJJ(t, (float)camera_pos_mm));
+            _points.Insert(0, new PointsJJ(t, (float)camera_pos_mm));
+
+            while (_points.Count > 300)
+                //_points.RemoveAt(0);
+                _points.RemoveAt(_points.Count - 1);
+
             GraphTemporelle();
         }
 
@@ -1607,7 +1702,7 @@ namespace OpenCVSharpJJ
                     arduinoWaiting = false;
                     camera_pos_precedent = camera_pos_mm;
                     distancepixel_target = distancepixel;
-                    d_mm = (int)(distancepixel * ratio_mm_pix / ((float)resizeFactor / 100));
+                    d_mm = (int)(distancepixel * _ratio_mm_pix / ((double)resizeFactor / 100));
 
                     d_mm = Clamp(d_mm, -10, 10); //par petit pas (maxi +/-10 mm)
 
@@ -1626,16 +1721,16 @@ namespace OpenCVSharpJJ
                     while (!arduinoWaiting)
                         Thread.Sleep(10);
 
-                    //adjust ratio
-                    if (camera_pos_precedent != null)
-                    {
-                        int delta_pixel = (distancepixel - distancepixel_target);
-                        if (delta_pixel != 0)
-                            ratio_mm_pix = (float)Math.Abs((float)camera_pos_precedent - (float)camera_pos_mm) / delta_pixel;
+                    ////adjust ratio
+                    //if (camera_pos_precedent != null)
+                    //{
+                    //    int delta_pixel = (distancepixel - distancepixel_target);
+                    //    if (delta_pixel != 0)
+                    //        _ratio_mm_pix = (double)Math.Abs((float)camera_pos_precedent - (float)camera_pos_mm) / delta_pixel;
 
-                        //ratio_mm_pix = 1;
-                        //ratio_mm_pix /= 2;
-                    }
+                    //    //ratio_mm_pix = 1;
+                    //    //ratio_mm_pix /= 2;
+                    //}
                 }
                 Thread.Sleep(10);
             }
