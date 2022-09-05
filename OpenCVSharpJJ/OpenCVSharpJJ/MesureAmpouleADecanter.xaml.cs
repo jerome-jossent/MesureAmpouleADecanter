@@ -48,18 +48,18 @@ namespace OpenCVSharpJJ
         }
         string title = "Mesure décantation";
 
-        public string _SavedImageFolder
+        public string _SavedFolder
         {
-            get { return SavedImageFolder; }
+            get { return SavedFolder; }
             set
             {
-                if (SavedImageFolder == value)
+                if (SavedFolder == value)
                     return;
-                SavedImageFolder = value;
-                OnPropertyChanged("_SavedImageFolder");
+                SavedFolder = value;
+                OnPropertyChanged("_SavedFolder");
             }
         }
-        string SavedImageFolder = @"C:\DATA\decantation";
+        string SavedFolder = @"C:\DATA\decantation";
 
         public string _fps
         {
@@ -86,7 +86,6 @@ namespace OpenCVSharpJJ
             }
         }
         bool? SaveFrame = false;
-
 
         public bool? _DisplayGrids
         {
@@ -167,6 +166,7 @@ namespace OpenCVSharpJJ
             }
         }
         int threshold1 = 150;
+
         public int Threshold2
         {
             get { return threshold2; }
@@ -240,6 +240,7 @@ namespace OpenCVSharpJJ
             }
         }
         System.Drawing.Bitmap imageCalque;
+
         public System.Drawing.Bitmap _image1
         {
             get
@@ -310,12 +311,31 @@ namespace OpenCVSharpJJ
             }
         }
 
-        public ObservableCollection<PointsJJ> _points { get => points; set => points = value; }
-        ObservableCollection<PointsJJ> points = new ObservableCollection<PointsJJ>();
-        public int _pointsMax { get; set; }
+        public ObservableCollection<PointJJ> _points { get => points; set => points = value; }
+        ObservableCollection<PointJJ> points = new ObservableCollection<PointJJ>();
 
         ObservableCollection<string> arduinoMessages = new ObservableCollection<string>();
+        #endregion
 
+        #region VARIABLES GLOBALES
+        public int _pointsMax { get; set; }
+        int nbrLignes;
+        int nbrPixel_par_ligne;
+        int nbrLignes_prec;
+        int nbrPixel_par_ligne_prec;
+        float[] moyennesX;
+        float[] d1; //derivée première
+        float[] d2; //derivée seconde
+
+        List<int> ds_pix = new List<int>();
+        int ds_pix_nbr = 9;
+        bool newTarget = false;
+        int distancepixel;
+        int distancepixel_2;
+        DateTime t_last;
+        TimeSpan t_vide = TimeSpan.FromSeconds(0.1);
+        PointJJ lastPoint;
+        string session; //nom essai qui servira lors de l'enregistrement de données
         #endregion
 
         #region ENUMERATIONS
@@ -360,28 +380,37 @@ namespace OpenCVSharpJJ
             }
         }
 
-        public class PointsJJ
+        public class PointJJ
         {
             public DateTime T { get; set; }
             public string t
             {
                 get
                 {
-                    string chaine = T.ToString("G");
+                    string chaine = T.ToString("yyyy/MM/dd HH:mm:ss,fff");
                     return chaine;
                 }
             }
-            public float v { get; set; }
+            public float z_mm { get; set; }
 
-            public PointsJJ(DateTime t, float v)
+            public int erreur_pixel { get; set; }
+
+            public PointJJ(DateTime t, float z_mm, int erreur_pixel)
             {
                 T = t;
-                this.v = v;
+                this.z_mm = z_mm;
+                this.erreur_pixel = erreur_pixel;
             }
-            public PointsJJ(float v)
+            public PointJJ(float z_mm, int erreur_pixel)
             {
                 T = DateTime.Now;
-                this.v = v;
+                this.z_mm = z_mm;
+                this.erreur_pixel = erreur_pixel;
+            }
+
+            public override string ToString()
+            {
+                return t + " [" + z_mm + "] " + erreur_pixel.ToString() + " pix";
             }
         }
         #endregion
@@ -462,6 +491,15 @@ namespace OpenCVSharpJJ
             Arduino_Init();
             ImageProcessing_Init();
             CameraDisplacement_Init();
+
+            _pointsMax = 1000;
+            DateTime T = DateTime.Now;
+            session = T.Year + "_"
+                    + T.Month + "_"
+                    + T.Day + " - "
+                    + T.Hour + "_"
+                    + T.Minute + "_"
+                    + T.Second;
 
             //PRESETS
             cbx_rotation.SelectedIndex = 3;
@@ -663,9 +701,9 @@ namespace OpenCVSharpJJ
                 t_last_save = t;
                 string filename;
                 if (camera_pos_mm == null)
-                    filename = SavedImageFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + ".jpg";
+                    filename = SavedFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + ".jpg";
                 else
-                    filename = SavedImageFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + (int)camera_pos_mm + ".jpg";
+                    filename = SavedFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + (int)camera_pos_mm + ".jpg";
                 bool res = image.mat.SaveImage(filename);
             }
         }
@@ -799,14 +837,6 @@ namespace OpenCVSharpJJ
                 nbrLignes_prec = nbrLignes;
             }
         }
-
-        int nbrLignes;
-        int nbrPixel_par_ligne;
-        int nbrLignes_prec;
-        int nbrPixel_par_ligne_prec;
-        float[] moyennesX;
-        float[] d1; //derivée première
-        float[] d2; //derivée seconde
 
         NamedMat FrameProcessing1(Mat image)
         {
@@ -1045,7 +1075,7 @@ namespace OpenCVSharpJJ
             #endregion
 
             #region GRAPH INIT de l'image
-            int largeur_graph = 300;
+            int largeur_graph = _pointsMax;
             graph1.mat = new Mat(nbrLignes, largeur_graph, type: MatType.CV_8UC3, noir);
             #endregion
 
@@ -1123,12 +1153,12 @@ namespace OpenCVSharpJJ
                 Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y, ROI1.mat.Cols - 1, milieuhauteur - roi.Y, rouge, 1);
             #endregion
 
-            int distancepixel = milieuhauteur - (niveau_pixel + roi.Y);
+            distancepixel_2 = milieuhauteur - (niveau_pixel + roi.Y);
 
-            NewDistancePixel(distancepixel);
+            NewDistancePixel(distancepixel_2);
 
             Cv2.PutText(rotated.mat,
-                        distancepixel.ToString(),
+                        distancepixel_2.ToString(),
                         new OpenCvSharp.Point(0, rotated.mat.Height),
                         HersheyFonts.HersheyTriplex,
                         5,
@@ -1160,20 +1190,20 @@ namespace OpenCVSharpJJ
         {
             Scalar fond = noir;
             int hauteur_graph = ROI1.mat.Height;
-            int largeur_graph = 300;
+            int largeur_graph = _pointsMax;
             Mat mat = new Mat(hauteur_graph, largeur_graph, type: MatType.CV_8UC3, fond);
 
-            if (_points.Count < 300)
+            if (_points.Count < _pointsMax)
                 return;
 
             //tracé
             try
             {
-                for (int i = _points.Count - 300; i < _points.Count; i++)
+                for (int i = _points.Count - _pointsMax; i < _points.Count; i++)
                 {
-                    int y1 = ROI1.mat.Height - (int)(_points[i - 1].v + ROI1.mat.Height / 2);
-                    int y2 = ROI1.mat.Height - (int)(_points[i].v + ROI1.mat.Height / 2);
-                    Cv2.Line(mat, i - 1 - (_points.Count - 300), y1, i - (_points.Count - 300), y2, blanc, 1);
+                    int y1 = ROI1.mat.Height - (int)(_points[i - 1].z_mm + ROI1.mat.Height / 2);
+                    int y2 = ROI1.mat.Height - (int)(_points[i].z_mm + ROI1.mat.Height / 2);
+                    Cv2.Line(mat, i - 1 - (_points.Count - _pointsMax), y1, i - (_points.Count - _pointsMax), y2, blanc, 1);
                 }
             }
             catch (Exception ex)
@@ -1610,13 +1640,6 @@ namespace OpenCVSharpJJ
             threadCommandeArduino = null;
         }
 
-        List<int> ds_pix = new List<int>();
-        int ds_pix_nbr = 9;
-        bool newTarget = false;
-        int distancepixel;
-
-        DateTime t_last;
-        TimeSpan t_vide = TimeSpan.FromSeconds(0.1);
 
 
         void NewDistancePixel(int d_pix)
@@ -1660,17 +1683,53 @@ namespace OpenCVSharpJJ
             //}
         }
 
+
+
         void NewPoint(DateTime t)
         {
             if (camera_pos_mm == null)
                 return;
 
-            //_points.Add(new PointsJJ(t, (float)camera_pos_mm));
-            _points.Insert(0, new PointsJJ(t, (float)camera_pos_mm));
+            if (lastPoint == null)
+            {
+                lastPoint = new PointJJ(t, (float)camera_pos_mm, distancepixel_2);
+                _points.Insert(0, lastPoint);
+            }
 
-            while (_points.Count > 300)
+            PointJJ newPoint = new PointJJ(t, (float)camera_pos_mm, distancepixel_2);
+
+            if (newPoint.z_mm == lastPoint.z_mm)
+            {
+                if (Math.Abs(newPoint.erreur_pixel) < Math.Abs(lastPoint.erreur_pixel))
+                {
+                    //le point est meilleur : on enlève l'ancien et on met le nouveau
+                    _points.Remove(lastPoint);
+                    _points.Insert(0, newPoint);
+                    lastPoint = newPoint;
+                }
+            }
+            else
+            {
+                _points.Insert(0, newPoint);
+                lastPoint = newPoint;
+            }
+
+            while (_points.Count > _pointsMax)
                 //_points.RemoveAt(0);
                 _points.RemoveAt(_points.Count - 1);
+
+            //nettoyage
+            List<int> pointstoremove = new List<int>();
+            for (int i = 0; i < _points.Count; i++)
+            {
+                if (i > 1 && i < _points.Count)
+                {
+                    if (_points[i].erreur_pixel > 1)
+                        pointstoremove.Add(i);
+                }
+            }
+            for (int i = pointstoremove.Count-1; i >= 0; i--)
+                _points.RemoveAt(pointstoremove[i]);
 
             GraphTemporelle();
         }
@@ -1863,7 +1922,31 @@ namespace OpenCVSharpJJ
 
         private void Button_SaveData_ToDisk_Click(object sender, MouseButtonEventArgs e)
         {
+            string cheminDossier = _SavedFolder + "\\DATA\\";
+            string cheminFichier = cheminDossier + "decantation [" + session + "].csv";
+            string lignes = "";
 
+            //du premier point (situé à la dernière place) au dernier point
+            for (int i = _points.Count - 1; i >= 0; i--)
+            {
+                PointJJ TX = _points[i];
+                lignes += TX.t + ";" + TX.z_mm.ToString() + ";" + TX.erreur_pixel + "\n";
+            }
+
+            try
+            {
+                Directory.CreateDirectory(cheminDossier);
+                File.WriteAllText(cheminFichier, lignes);
+            }
+            catch (Exception ex)
+            {
+                //erreur lors de l'enregistrement
+            }
+        }
+
+        void Button_DATA_Clear_Click(object sender, MouseButtonEventArgs e)
+        {
+            _points.Clear();
         }
 
         #endregion

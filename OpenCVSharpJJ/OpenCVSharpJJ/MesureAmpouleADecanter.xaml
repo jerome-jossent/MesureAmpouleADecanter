@@ -283,11 +283,13 @@
                                     <DataTemplate>
                                         <Grid Margin="1,1,1,1" Height="20">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="150" />
-                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0" Text="{Binding t}" Margin="4, 0, 0, 0" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding v}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding z_mm}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding erreur_pixel}" Margin="20,0,0,0" VerticalAlignment="Center"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -299,7 +301,7 @@
 
                         </StackPanel>
                         <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" 
-                       VerticalAlignment="Bottom" HorizontalAlignment="Right" MouseDown="Button_Clear_Click" ToolTip="Clear"/>
+                       VerticalAlignment="Bottom" HorizontalAlignment="Right" MouseDown="Button_DATA_Clear_Click" ToolTip="Clear"/>
 
 
 
