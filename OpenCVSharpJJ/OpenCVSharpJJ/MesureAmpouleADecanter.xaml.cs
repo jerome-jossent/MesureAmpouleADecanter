@@ -87,7 +87,6 @@ namespace OpenCVSharpJJ
         }
         bool? SaveFrame = false;
 
-
         public bool? _DisplayGrids
         {
             get { return DisplayGrids; }
@@ -151,7 +150,7 @@ namespace OpenCVSharpJJ
                 OnPropertyChanged("_ratio_mm_pix");
             }
         }
-        double? ratio_mm_pix = 0.2;
+        double? ratio_mm_pix = 0.204; // pour 1920 pixel !!!
 
         public int Threshold1
         {
@@ -161,12 +160,15 @@ namespace OpenCVSharpJJ
                 if (threshold1 == value)
                     return;
                 threshold1 = value;
+
+                ROI_AutoAdjustH(value);
+
                 OnPropertyChanged("Threshold1");
                 if (!captureVideoIsRunning)
                     ComputePicture(frame.mat);
             }
         }
-        int threshold1 = 150;
+        int threshold1 = 350;
         public int Threshold2
         {
             get { return threshold2; }
@@ -640,6 +642,52 @@ namespace OpenCVSharpJJ
         }
         #endregion
 
+
+        void ROI_AutoAdjustH(int hauteur_camera_mm)     // 2022/07/30 Dmax = 334.58mm
+        {
+            float d_cam_objet_mm = 200;
+            double fov = 85 * Math.PI / 180;
+            float alpha = (float)fov / 2;
+
+            //int hauteur_camera_mm = 237; //exemple (position live)
+            int hauteur_camera_mm_max = 490; //exemple (calibration)
+            int hauteur_camera_mm_min = 150; //exemple (calibration)
+
+            //int keepX = roi.X;
+            //int keepW = roi.Width;
+
+            //en fonction de la hauteur on va retirer de la ROI les zones extrêmes
+            float d_cam_bordimage_mm = d_cam_objet_mm * (float)Math.Tan(alpha);
+
+            if (hauteur_camera_mm + d_cam_bordimage_mm > hauteur_camera_mm_max)
+            {
+                //on doit rogner le haut : Y
+                float d_mm = hauteur_camera_mm + d_cam_bordimage_mm - hauteur_camera_mm_max;
+                int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
+
+                roi.Y = d_pix;
+            }
+            else
+            {
+                //on rogne pas
+                roi.Y = 0;
+            }
+
+            if (hauteur_camera_mm - d_cam_bordimage_mm < hauteur_camera_mm_min)
+            {
+                //on doit rogner le bas : Height
+                float d_mm = hauteur_camera_mm_min - (hauteur_camera_mm - d_cam_bordimage_mm);
+                int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
+
+                roi.Height = rotated.mat.Height - d_pix;
+            }
+            else
+            {
+                //on rogne pas
+                roi.Height = rotated.mat.Height;
+            }
+        }
+
         void ComputePicture(Mat image)
         {
             if (!image.Empty())
@@ -729,6 +777,7 @@ namespace OpenCVSharpJJ
 
             OpenCvSharp.Rect newroi = Cv2.SelectROI(window_name, rotated.mat, true);
             roi = newroi;
+
             tbx_roi.Text = ROIToString();
             _title = roi.ToString();
             Cv2.DestroyWindow(window_name);
@@ -754,6 +803,7 @@ namespace OpenCVSharpJJ
             int h = int.Parse(param[3]);
 
             roi = new OpenCvSharp.Rect(x, y, w, h);
+
             tbx_roi.Text = ROIToString();
         }
 
@@ -1526,6 +1576,12 @@ namespace OpenCVSharpJJ
             OnPropertyChanged("ArduinoMessages");
         }
 
+
+        private void Button_Points_Clear_Click(object sender, MouseButtonEventArgs e)
+        {
+            points.Clear();
+        }
+
         bool etalonnage_fin_haut;
         void Button_Etalonnage_Click(object sender, RoutedEventArgs e)
         {
@@ -1865,6 +1921,7 @@ namespace OpenCVSharpJJ
         {
 
         }
+
 
         #endregion
 
