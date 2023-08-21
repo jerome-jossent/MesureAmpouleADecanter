@@ -193,7 +193,6 @@
                         <Standard_UC_JJO:PickFolder_JJO Grid.Row="1" _folder="{Binding _SavedImageFolder, 
                            UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
 
-
                         <Label Grid.Row="2" Grid.Column="0" Content="Resize Factor" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
                         <Slider Grid.Row="2" Grid.Column="1" Margin="5" Minimum="10" Maximum="100" Value="{Binding ResizeFactor, UpdateSourceTrigger=PropertyChanged}"/>
                         <Label Grid.Row="2" Grid.Column="2" Content="{Binding ResizeFactorString, UpdateSourceTrigger=PropertyChanged}"/>
@@ -310,9 +309,7 @@
 
                 </Grid>
 
-
                 <GridSplitter Grid.Row="1" Height="4" Margin="5" Background="LightGray"/>
-
 
                 <!--PROCESS & IMAGES-->
                 <Grid Grid.Row="2">
