@@ -16,6 +16,15 @@
 
     <Window.Resources>
         <local:BitmapToBitmapImageConverter x:Name="binaryConverter" x:Key="bitmapConverter"/>
+
+        <Style x:Key="HorizontalStackPanel" TargetType="{x:Type StackPanel}">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="FrameworkElement.VerticalAlignment"  Value="Center" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -178,9 +187,11 @@
                             <RowDefinition Height="30"/>
                         </Grid.RowDefinitions>
 
-                        <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Save frame to disk" VerticalAlignment="Center" IsChecked="{Binding _SaveFrame}" />
+                        <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Save frame to disk" 
+                                  VerticalAlignment="Center" IsChecked="{Binding _SaveFrame}" />
 
-                        <Standard_UC_JJO:PickFolder_JJO Grid.Row="1" _folder="{Binding _SavedImageFolder}" />
+                        <Standard_UC_JJO:PickFolder_JJO Grid.Row="1" _folder="{Binding _SavedImageFolder, 
+                           UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
 
 
                         <Label Grid.Row="2" Grid.Column="0" Content="Resize Factor" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
@@ -220,33 +231,81 @@
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="auto"/>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
+                        <!--<Label Grid.Row="0" Grid.Column="0" Content="Rotation" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1" SelectionChanged="cbx_rotation_Changed" x:Name="cbx_rotation" VerticalContentAlignment="Center"/>-->
                         <Label Grid.Row="0" Grid.Column="0" Content="Rotation" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <ComboBox Grid.Row="0" Grid.Column="1" SelectionChanged="cbx_rotation_Changed" x:Name="cbx_rotation" VerticalContentAlignment="Center"/>
+                        <Slider Grid.Row="0" Grid.Column="1" Margin="5" Minimum="0" Maximum="360" Value="{Binding rotation_angle, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding rotation_angle, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="40"/>
 
-                        <Label Grid.Row="1" Grid.Column="0" Content="ROI" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-                            <Button Margin="2" Padding="5" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
-                            <Button Margin="2" Padding="5" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
+                        <Label Grid.Row="1" Grid.Column="0" Content="ROI" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
 
-                            <TextBox Margin="2" Name="tbx_roi" MinWidth="60" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-                            <Button Margin="2" Padding="5" Content="Set" Click="Button_SetROI_Click"/>
-                            <Button Margin="2" Padding="5" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
-                            <Button Margin="2" Padding="5" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>
+                        <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <xctk:RangeSlider x:Name="sld_roi_Y" Step="1" 
+
+                                              Orientation="Vertical" Width="30"
+                                              LowerValue="{Binding roi_y, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                              HigherValue="{Binding roi_yh, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                              Minimum="1"
+                                              Maximum="{Binding rotatedframe_height, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                              RenderTransformOrigin="0.5,0.5"
+                                              >
+                                <xctk:RangeSlider.RenderTransform>
+                                    <RotateTransform Angle="180"/>
+                                </xctk:RangeSlider.RenderTransform>
+                            </xctk:RangeSlider>
+
+                            <StackPanel Grid.Column="1"  VerticalAlignment="Center">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Margin="2" Name="tbx_roi" MinWidth="60" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                                    <Button Grid.Column="1" Margin="2" Padding="5" Content="Set" Click="Button_SetROI_Click"/>
+                                </Grid>
+
+                                <xctk:RangeSlider x:Name="sld_roi_X" Step="1"
+                                              Orientation="Horizontal" 
+                                              HigherValue="{Binding roi_xw, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                              LowerValue="{Binding roi_x, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"                                                
+                                              Minimum="0" 
+                                              Maximum="{Binding rotatedframe_width, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                              />
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Margin="2" Padding="5" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
+                                    <Button Margin="2" Padding="5" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
+                                    <Button Margin="2" Padding="5" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
+                                    <Button Margin="2" Padding="5" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <Label IsEnabled="False" Grid.Row="2" Grid.Column="0" Content="BW" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                        <Slider IsEnabled="False" Grid.Row="2" Grid.Column="1" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label IsEnabled="False" Grid.Row="2" Grid.Column="2" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+                        <Label IsEnabled="False" Grid.Row="3" Grid.Column="0" Content="Line" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                        <Slider IsEnabled="False" Grid.Row="3" Grid.Column="1" Margin="5" Minimum="0" Maximum="100" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label IsEnabled="False" Grid.Row="3" Grid.Column="2" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+                        <StackPanel Grid.Row="4" >
+                            <Label Content="{Binding distancepixel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                            <Label Grid.Row="4" Content="{Binding deplacement_mm_commande, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
                         </StackPanel>
 
-                        <Label Grid.Row="2" Grid.Column="0" Content="Threshold BW" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <Slider Grid.Row="2" Grid.Column="1" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Label Grid.Row="2" Grid.Column="2" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-
-                        <Label Grid.Row="3" Grid.Column="0" Content="Threshold Line" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <Slider Grid.Row="3" Grid.Column="1" Margin="5" Minimum="0" Maximum="100" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Label Grid.Row="3" Grid.Column="2" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
                     </Grid>
 
                 </Grid>

@@ -22,6 +22,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using OpenCVSharpJJ.Processing;
 using Newtonsoft.Json;
+using System.Runtime.CompilerServices;
 
 namespace OpenCVSharpJJ
 {
@@ -30,7 +31,11 @@ namespace OpenCVSharpJJ
         #region BINDINGS IHM
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged(string name = null)
+        //protected void OnPropertyChanged(string name = null)
+        //{
+        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        //}
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
@@ -203,6 +208,138 @@ namespace OpenCVSharpJJ
             get { return resizeFactor.ToString() + " %"; }
         }
 
+        public int rotatedframe_width
+        {
+            get
+            {
+                return rotated.mat.Width;
+            }
+        }
+
+        public int rotatedframe_height
+        {
+            get
+            {
+                return rotated.mat.Height;
+            }
+        }
+
+        public int roi_x
+        {
+            get { return _roi_x; }
+            set
+            {
+                if (_roi_x == value)
+                    return;
+                _roi_x = value;
+                OnPropertyChanged();
+                ROI_Change();
+                if (!captureVideoIsRunning)
+                    ComputePicture(frame.mat);
+            }
+        }
+        int _roi_x;
+
+        public int roi_y
+        {
+            get { return _roi_y; }
+            set
+            {
+                if (_roi_y == value)
+                    return;
+                _roi_y = value;
+                OnPropertyChanged();
+                ROI_Change();
+                if (!captureVideoIsRunning)
+                    ComputePicture(frame.mat);
+            }
+        }
+        int _roi_y;
+
+        public int roi_w
+        {
+            get { return _roi_w; }
+            set
+            {
+                if (_roi_w == value)
+                    return;
+                _roi_w = value;
+                OnPropertyChanged();
+                ROI_Change();
+                if (!captureVideoIsRunning)
+                    ComputePicture(frame.mat);
+            }
+        }
+        int _roi_w;
+
+        public int roi_h
+        {
+            get { return _roi_h; }
+            set
+            {
+                if (_roi_h == value)
+                    return;
+                _roi_h = value;
+                OnPropertyChanged();
+                ROI_Change();
+                if (!captureVideoIsRunning)
+                    ComputePicture(frame.mat);
+            }
+        }
+        int _roi_h;
+
+        public int roi_xw
+        {
+            get { return _roi_xw; }
+            set
+            {
+                if (_roi_xw == value)
+                    return;
+                _roi_xw = value;
+                OnPropertyChanged();
+                ROI_Change();
+                if (!captureVideoIsRunning)
+                    ComputePicture(frame.mat);
+            }
+        }
+        int _roi_xw;
+
+        public int roi_yh
+        {
+            get { return _roi_yh; }
+            set
+            {
+                if (_roi_yh == value)
+                    return;
+                _roi_yh = value;
+                OnPropertyChanged();
+                ROI_Change();
+                if (!captureVideoIsRunning)
+                    ComputePicture(frame.mat);
+            }
+        }
+        int _roi_yh;
+
+        public float rotation_angle
+        {
+            get { return _rotation_angle; }
+            set
+            {
+                if (_rotation_angle == value)
+                    return;
+                _rotation_angle = value;
+                OnPropertyChanged();
+                ROI_Change();
+                if (!captureVideoIsRunning)
+                    ComputePicture(frame.mat);
+            }
+        }
+        float _rotation_angle;
+
+
+
+
+
         public System.Drawing.Bitmap _imageSource
         {
             get
@@ -330,7 +467,41 @@ namespace OpenCVSharpJJ
         List<int> ds_pix = new List<int>();
         int ds_pix_nbr = 9;
         bool newTarget = false;
-        int distancepixel;
+
+
+
+        public int distancepixel
+        {
+            get { return _distancepixel; }
+            set
+            {
+                if (_distancepixel == value)
+                    return;
+                _distancepixel = value;
+                OnPropertyChanged();
+            }
+        }
+        int _distancepixel = -234;
+
+
+        public int deplacement_mm_commande
+        {
+            get { return _deplacement_mm_commande; }
+            set
+            {
+                if (_deplacement_mm_commande == value)
+                    return;
+                _deplacement_mm_commande = value;
+                OnPropertyChanged();
+            }
+        }
+        int _deplacement_mm_commande = 123;
+
+
+
+
+
+
         int distancepixel_2;
         DateTime t_last;
         TimeSpan t_vide = TimeSpan.FromSeconds(0.1);
@@ -343,6 +514,7 @@ namespace OpenCVSharpJJ
         {
             none,
             original,
+            resized,
             rotated,
             roi1, roi2,
             gray1, gray2,
@@ -424,6 +596,7 @@ namespace OpenCVSharpJJ
         NamedMats NMs;
         NamedMat none = new NamedMat(ImageType.none);
         NamedMat frame = new NamedMat(ImageType.original);
+        NamedMat resized = new NamedMat(ImageType.resized);
         NamedMat rotated = new NamedMat(ImageType.rotated);
         NamedMat frameGray = new NamedMat(ImageType.gray1);
         NamedMat cannymat = new NamedMat(ImageType.canny);
@@ -467,6 +640,9 @@ namespace OpenCVSharpJJ
         //bool display_in_OpenCVSharpWindow = false;
         #endregion
 
+        DateTime t_last_save;
+        TimeSpan t_vide_save = TimeSpan.FromSeconds(1);
+
         #region CONSTANTES
         Scalar rouge = new Scalar(0, 0, 255);
         Scalar magenta = new Scalar(255, 0, 150);
@@ -502,7 +678,7 @@ namespace OpenCVSharpJJ
                     + T.Second;
 
             //PRESETS
-            cbx_rotation.SelectedIndex = 3;
+            //cbx_rotation.SelectedIndex = 3;
         }
 
         void Window_Closing(object sender, CancelEventArgs e)
@@ -648,10 +824,38 @@ namespace OpenCVSharpJJ
                         MatNamesToMats_Reset();
                         roi = new OpenCvSharp.Rect();
                         first = false;
+
+                        for (int i = 0; i < 3; i++)
+                            capture.Read(frame.mat);
                     }
 
                     //captation de l'image
                     capture.Read(frame.mat);
+
+
+
+
+
+
+
+
+
+
+
+                    OnPropertyChanged("rotatedframe_width");
+                    OnPropertyChanged("rotatedframe_height");
+
+
+
+
+
+
+
+
+
+
+
+
 
                     //traitement de l'image
                     ComputePicture(frame.mat);
@@ -690,9 +894,6 @@ namespace OpenCVSharpJJ
             DisplayFPS();
         }
 
-        DateTime t_last_save;
-        TimeSpan t_vide_save = TimeSpan.FromSeconds(1);
-
         void Save(NamedMat image)
         {
             DateTime t = DateTime.Now;
@@ -701,9 +902,9 @@ namespace OpenCVSharpJJ
                 t_last_save = t;
                 string filename;
                 if (camera_pos_mm == null)
-                    filename = SavedFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + ".jpg";
+                    filename = _SavedFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + ".jpg";
                 else
-                    filename = SavedFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + (int)camera_pos_mm + ".jpg";
+                    filename = _SavedFolder + "\\" + DateTime.Now.ToString("yyyy-MM-dd HHmmss-fff") + "_" + (int)camera_pos_mm + ".jpg";
                 bool res = image.mat.SaveImage(filename);
             }
         }
@@ -711,10 +912,10 @@ namespace OpenCVSharpJJ
         #region IMAGE PROCESSINGS
         void ImageProcessing_Init()
         {
-            cbx_rotation.Items.Add("Non");
-            cbx_rotation.Items.Add(RotateFlags.Rotate90Clockwise.ToString());
-            cbx_rotation.Items.Add(RotateFlags.Rotate180.ToString());
-            cbx_rotation.Items.Add(RotateFlags.Rotate90Counterclockwise.ToString());
+            //    cbx_rotation.Items.Add("Non");
+            //    cbx_rotation.Items.Add(RotateFlags.Rotate90Clockwise.ToString());
+            //    cbx_rotation.Items.Add(RotateFlags.Rotate180.ToString());
+            //    cbx_rotation.Items.Add(RotateFlags.Rotate90Counterclockwise.ToString());
 
             MatNamesToMats_Reset();
 
@@ -739,14 +940,15 @@ namespace OpenCVSharpJJ
             NMs = new NamedMats();
             NMs.MatNamesToMats.Add(ImageType.none, none);
             NMs.MatNamesToMats.Add(ImageType.original, frame);
+            NMs.MatNamesToMats.Add(ImageType.resized, resized);
             NMs.MatNamesToMats.Add(ImageType.rotated, rotated);
+            NMs.MatNamesToMats.Add(ImageType.roi1, ROI1);
+            NMs.MatNamesToMats.Add(ImageType.roi2, ROI2);
             NMs.MatNamesToMats.Add(ImageType.gray1, frameGray);
             NMs.MatNamesToMats.Add(ImageType.canny, cannymat);
             NMs.MatNamesToMats.Add(ImageType.bw1, bw1);
             NMs.MatNamesToMats.Add(ImageType.bw2, bw2);
             NMs.MatNamesToMats.Add(ImageType.bgr1, BGR);
-            NMs.MatNamesToMats.Add(ImageType.roi1, ROI1);
-            NMs.MatNamesToMats.Add(ImageType.roi2, ROI2);
             NMs.MatNamesToMats.Add(ImageType.debug1, debug1);
             NMs.MatNamesToMats.Add(ImageType.debug2, debug2);
             NMs.MatNamesToMats.Add(ImageType.debug3, debug3);
@@ -762,14 +964,41 @@ namespace OpenCVSharpJJ
             if (frame.mat.Empty())
                 return;
 
-            rotated.mat = Resize(frame.mat);
-            rotated.mat = Rotation(rotated.mat, rotation);
+            resized.mat = Resize(frame.mat);
+            rotated.mat = Rotation(resized.mat, rotation_angle);
 
-            OpenCvSharp.Rect newroi = Cv2.SelectROI(window_name, rotated.mat, true);
+            OpenCvSharp.Rect newroi;
+            newroi = Cv2.SelectROI(window_name, rotated.mat, true);
+            //newroi = new OpenCvSharp.Rect(884,81,66,884);
+
             roi = newroi;
             tbx_roi.Text = ROIToString();
             _title = roi.ToString();
             Cv2.DestroyWindow(window_name);
+        }
+
+        void ROI_Change()
+        {
+            int x, y, w, h;
+            y = roi_y;
+            h = roi_yh - y;
+
+            x = roi_x;
+            w = roi_xw - x;
+
+
+            //double x_rel = sld_roi_X.LowerValue;
+            //double y_rel = sld_roi_Y.HigherValue;
+            //double w_rel = sld_roi_X.HigherValue - sld_roi_X.LowerValue;
+            //double h_rel = sld_roi_X.HigherValue - sld_roi_X.LowerValue;
+
+            //int x = (int)(rotated.mat.Width * x_rel);
+            //int w = (int)(rotated.mat.Width * w_rel);
+            //int h = (int)(rotated.mat.Height * h_rel);
+            //int y = (int)(rotated.mat.Height * y_rel);
+
+            roi = new OpenCvSharp.Rect(x, y, w, h);
+            tbx_roi.Text = ROIToString();
         }
 
         string ROIToString()
@@ -785,14 +1014,25 @@ namespace OpenCVSharpJJ
 
         void Button_CaptureDeviceROI_Load_Click(object sender, RoutedEventArgs e)
         {
+            if (Properties.Settings.Default.roi == string.Empty) return;
+
             string[] param = Properties.Settings.Default.roi.Split('|');
             int x = int.Parse(param[0]);
             int y = int.Parse(param[1]);
             int w = int.Parse(param[2]);
             int h = int.Parse(param[3]);
 
-            roi = new OpenCvSharp.Rect(x, y, w, h);
-            tbx_roi.Text = ROIToString();
+            roi_x = 0;
+            roi_xw = 0;
+            roi_y = 0;
+            roi_yh = 0;
+
+            roi_xw = x+ w;
+            roi_x = x; 
+            roi_yh = y+h;
+            roi_y = y;
+            //roi = new OpenCvSharp.Rect(x, y, w, h);
+            //tbx_roi.Text = ROIToString();
         }
 
         void Button_SetROI_Click(object sender, RoutedEventArgs e)
@@ -806,7 +1046,16 @@ namespace OpenCVSharpJJ
                 int w = int.Parse(param[2]);
                 int h = int.Parse(param[3]);
 
-                roi = new OpenCvSharp.Rect(x, y, w, h);
+                roi_x = 0;
+                roi_xw = 0;
+                roi_y = 0;
+                roi_yh = 0;
+
+                roi_xw = x + w;
+                roi_x = x;
+                roi_yh = y + h;
+                roi_y = y;
+               // roi = new OpenCvSharp.Rect(x, y, w, h);
             }
             catch (Exception ex)
             {
@@ -816,8 +1065,12 @@ namespace OpenCVSharpJJ
 
         void Button_CaptureDeviceROI_None_Click(object sender, RoutedEventArgs e)
         {
-            roi = new OpenCvSharp.Rect(0, 0, 0, 0);
-            tbx_roi.Text = ROIToString();
+            roi_x = 0;
+            roi_xw = rotatedframe_width;
+            roi_y = 0;
+            roi_yh = rotatedframe_height;
+            //roi = new OpenCvSharp.Rect(0, 0, 0, 0);
+            //tbx_roi.Text = ROIToString();
         }
 
         void FrameProcessing_InitData(Mat mat)
@@ -843,14 +1096,21 @@ namespace OpenCVSharpJJ
             //filtre gaussien
             //Savitzky-Golay filter     https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_filter.html
 
-            rotated.mat = Resize(image);
+            DateTime t0 = DateTime.Now;
 
-            rotated.mat = Rotation(rotated.mat, rotation);
+            resized.mat = Resize(image);
+
+            rotated.mat = Rotation(resized.mat, rotation_angle);
 
             ROI1.mat = ROI_NewMat(rotated.mat, roi);
 
+            //Display_debug(ROI1.mat);
+
             //gris
             frameGray.mat = RGBToGray(ROI1.mat, Calque.all);
+
+            DateTime t1 = DateTime.Now;
+            double d_preproc = (t1 - t0).TotalMilliseconds;
 
             //seuillage
             //frameGray.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
@@ -890,7 +1150,7 @@ namespace OpenCVSharpJJ
 
             #region recherche dépassements de seuil
             //on recherche (à partir de l'intensité max) ()en partant du haut la PREMIERE ligne pour laquelle on perd X% d'intensité
-            float x_perte = 0.5f;
+            float x_perte = 0.3f;
             float x_range = valmax - valmin;
             float seuil = (1 - x_perte) * x_range + valmin;
             int niveau_pixel_debut = -1;
@@ -1285,13 +1545,37 @@ namespace OpenCVSharpJJ
             return gris;
         }
 
+        #region Rotate
+        //avec ajout de noir (plutôt qu'image tronquée
+        Mat Rotation(Mat src, float angle)
+        {
+            if (angle == 0) return Rotation(src, null);
+            if (angle == 90) return Rotation(src, RotateFlags.Rotate90Clockwise);
+            if (angle == 180) return Rotation(src, RotateFlags.Rotate180);
+            if (angle == 270) return Rotation(src, RotateFlags.Rotate90Counterclockwise);
+
+            Point2f center = new Point2f((src.Width - 1) / 2f, (src.Height - 1) / 2f);
+            Mat rotationMat = Cv2.GetRotationMatrix2D(center, angle, 1);
+
+            Size2f imagesize = new Size2f(src.Width, src.Height);
+            Point2f c = new Point2f();
+            OpenCvSharp.Rect boundingRect = new RotatedRect(c, imagesize, angle).BoundingRect();
+            rotationMat.Set(0, 2, rotationMat.Get<double>(0, 2) + (boundingRect.Width / 2f) - (src.Width / 2f));
+            rotationMat.Set(1, 2, rotationMat.Get<double>(1, 2) + (boundingRect.Height / 2f) - (src.Height / 2f));
+
+            Mat rotatedSrc = new Mat();
+            Cv2.WarpAffine(src, rotatedSrc, rotationMat, boundingRect.Size);
+            return rotatedSrc;
+        }
+
         Mat Rotation(Mat frame, RotateFlags? rotation)
         {
             Mat _out = new Mat();
             switch (rotation)
             {
                 case null:
-                    return frame;
+                    _out = frame.Clone();
+                    break;
                 case RotateFlags.Rotate90Clockwise:
                     Cv2.Rotate(frame, _out, RotateFlags.Rotate90Clockwise);
                     break;
@@ -1304,27 +1588,47 @@ namespace OpenCVSharpJJ
             }
             return _out;
         }
+        #endregion
 
+        #region Resize
         Mat Resize(Mat frame)
         {
             if (ResizeFactor == 100)
                 return frame;
-
-            double facteur = (double)ResizeFactor / 100;
-            Mat _out = new Mat();
-            Cv2.Resize(frame, _out, new OpenCvSharp.Size(0, 0), facteur, facteur, InterpolationFlags.Cubic);
-
-            return _out;
+            return Resize(frame, ResizeFactor);
         }
 
+        Mat Resize(Mat frame, int ResizeFactor_sur_100)
+        {
+            double facteur = (double)ResizeFactor_sur_100 / 100;
+            return Resize(frame, facteur);
+        }
+
+        Mat Resize(Mat frame, double ResizeFactor)
+        {
+            if (ResizeFactor == 1)
+                return frame;
+
+            Mat _out = new Mat();
+            Cv2.Resize(frame, _out, new OpenCvSharp.Size(0, 0), ResizeFactor, ResizeFactor, InterpolationFlags.Cubic);
+            return _out;
+        }
+        #endregion
+
+        #region ROI : Region Of Interest
         Mat ROI(Mat frame, OpenCvSharp.Rect roi)
         {
-            Mat _out = new Mat();
-            if (roi.Width > 0 &&
-                    frame.Height - roi.Y > 0 &&
-                    frame.Width - roi.X > 0 &&
-                    frame.Height - (roi.Y + roi.Height) > 0 &&
-                    frame.Width - (roi.X + roi.Width) > 0)
+            Mat _out;
+            if (
+                roi.Width > 0 &&
+                roi.Height > 0 &&
+
+                frame.Height - roi.Y > 0 &&
+                frame.Width - roi.X > 0 &&
+
+                frame.Height - (roi.Y + roi.Height) >= 0 &&
+                frame.Width - (roi.X + roi.Width) >= 0
+                )
                 _out = new Mat(frame, roi);
             else
                 _out = frame;
@@ -1335,6 +1639,8 @@ namespace OpenCVSharpJJ
         {
             return ROI(frame, roi).Clone();
         }
+        #endregion
+
         #endregion
 
         #region DISPLAY IMAGE(S)
@@ -1360,6 +1666,21 @@ namespace OpenCVSharpJJ
             T0 = T;
             _fps = " [" + f.ToString("N1") + " fps]";
         }
+
+        OpenCvSharp.Window dislpay_debug;
+        void Display_debug(Mat mat)
+        {
+            if (dislpay_debug == null)
+                dislpay_debug = new OpenCvSharp.Window("dislpay_debug");
+
+            if (mat.Empty())
+                return;
+
+            dislpay_debug.ShowImage(mat);
+
+            Cv2.WaitKey(0);
+        }
+
         #endregion
 
         #region ARDUINO
@@ -1654,11 +1975,13 @@ namespace OpenCVSharpJJ
 
             if (Math.Abs(v) > _bande_morte_pix)
             {
+                //pas assez proche, rapprochons nous
                 distancepixel = v;
                 newTarget = true;
             }
             else
             {
+                //on est proche : on peut sauvegarder ce point !
                 DateTime t = DateTime.Now;
                 if (t.Subtract(t_last) > t_vide)
                 {
@@ -1728,7 +2051,7 @@ namespace OpenCVSharpJJ
                         pointstoremove.Add(i);
                 }
             }
-            for (int i = pointstoremove.Count-1; i >= 0; i--)
+            for (int i = pointstoremove.Count - 1; i >= 0; i--)
                 _points.RemoveAt(pointstoremove[i]);
 
             GraphTemporelle();
@@ -1749,49 +2072,103 @@ namespace OpenCVSharpJJ
 
         void CameraDisplacement()
         {
-            int d_mm;
-            float? camera_pos_precedent;
-            cameraDisplacement_Running = true;
-            int distancepixel_target;
+            //distancepixel : valeur significative de déplacement. Issu d'un test de bande morte, filtrée et écrite.
+            //newTarget     : booléen mis à 1 au moment où distancepixel est nouvellement calculé
+            bool first_commande = true;
+
+            int delta_pix;
+            int delta_pix_precedent = 0;
+
+            int deplacement_mm_commande_precedent = 0;
+
             while (cameraDisplacement_Running)
             {
-                if (newTarget)
+                //en attente d'ordre de déplacement
+                if (!newTarget)
                 {
-                    newTarget = false;
+                    Thread.Sleep(10);
+                    continue;
+                }
+
+                delta_pix = distancepixel;
+                bool monte = delta_pix > 0;
+
+                if (first_commande)
+                {
+                    first_commande = false;
+                    deplacement_mm_commande = 10; // arbitrairement, on prend 10mm pour le premier déplacement
+                }
+                else
+                {
+                    ratio_mm_pix = (float)deplacement_mm_commande_precedent / (delta_pix_precedent - delta_pix);
+                    float val = (float)ratio_mm_pix * delta_pix;
+                    deplacement_mm_commande = (int)Math.Round(val);
+                }
+
+                if (deplacement_mm_commande == 0)
+                {
+
+                }
+                else
+                {
+                    deplacement_mm_commande = Clamp(deplacement_mm_commande, -1, 1); //par petit pas (maxi +/-1 mm)
+                    delta_pix_precedent = delta_pix;
+                    deplacement_mm_commande_precedent = deplacement_mm_commande;
+                    string commandeArduino = (monte) ? "u" + deplacement_mm_commande.ToString() : "d" + (-deplacement_mm_commande).ToString();
+                    SendToArduino(commandeArduino);
+
+                    //temps d'action : attente que la commande soit terminée (Arduino dit "Waiting")
                     arduinoWaiting = false;
-                    camera_pos_precedent = camera_pos_mm;
-                    distancepixel_target = distancepixel;
-                    d_mm = (int)(distancepixel * _ratio_mm_pix / ((double)resizeFactor / 100));
-
-                    d_mm = Clamp(d_mm, -10, 10); //par petit pas (maxi +/-10 mm)
-
-                    if (distancepixel > 0)
-                    {
-                        //on monte
-                        SendToArduino("u" + d_mm);
-                    }
-                    else
-                    {
-                        //on descend
-                        SendToArduino("d" + d_mm);
-                    }
-
-                    //temps d'action
                     while (!arduinoWaiting)
                         Thread.Sleep(10);
-
-                    ////adjust ratio
-                    //if (camera_pos_precedent != null)
-                    //{
-                    //    int delta_pixel = (distancepixel - distancepixel_target);
-                    //    if (delta_pixel != 0)
-                    //        _ratio_mm_pix = (double)Math.Abs((float)camera_pos_precedent - (float)camera_pos_mm) / delta_pixel;
-
-                    //    //ratio_mm_pix = 1;
-                    //    //ratio_mm_pix /= 2;
-                    //}
                 }
-                Thread.Sleep(10);
+
+                Thread.Sleep(300);
+
+
+                //int d_mm;
+                //float? camera_pos_precedent;
+                //cameraDisplacement_Running = true;
+                //int distancepixel_target;
+                //while (cameraDisplacement_Running)
+                //{
+                //    if (newTarget)
+                //    {
+                //        newTarget = false;
+                //        arduinoWaiting = false;
+                //        camera_pos_precedent = camera_pos_mm;
+                //        distancepixel_target = distancepixel;
+                //        d_mm = (int)(distancepixel * _ratio_mm_pix / ((double)resizeFactor / 100));
+
+                //        d_mm = Clamp(d_mm, -10, 10); //par petit pas (maxi +/-10 mm)
+
+                //        if (distancepixel > 0)
+                //        {
+                //            //on monte
+                //            SendToArduino("u" + d_mm);
+                //        }
+                //        else
+                //        {
+                //            //on descend
+                //            SendToArduino("d" + d_mm);
+                //        }
+
+                //        //temps d'action
+                //        while (!arduinoWaiting)
+                //            Thread.Sleep(10);
+
+                //        ////adjust ratio
+                //        //if (camera_pos_precedent != null)
+                //        //{
+                //        //    int delta_pixel = (distancepixel - distancepixel_target);
+                //        //    if (delta_pixel != 0)
+                //        //        _ratio_mm_pix = (double)Math.Abs((float)camera_pos_precedent - (float)camera_pos_mm) / delta_pixel;
+
+                //        //    //ratio_mm_pix = 1;
+                //        //    //ratio_mm_pix /= 2;
+                //        //}
+                //    }
+                //    Thread.Sleep(10);
             }
         }
         #endregion
@@ -1885,25 +2262,6 @@ namespace OpenCVSharpJJ
             lbx_files.Items.Clear();
         }
 
-        void cbx_rotation_Changed(object sender, SelectionChangedEventArgs e)
-        {
-            switch (cbx_rotation.SelectedItem.ToString())
-            {
-                case "Non":
-                    rotation = null;
-                    break;
-                case "Rotate90Clockwise":
-                    rotation = RotateFlags.Rotate90Clockwise;
-                    break;
-                case "Rotate180":
-                    rotation = RotateFlags.Rotate180;
-                    break;
-                case "Rotate90Counterclockwise":
-                    rotation = RotateFlags.Rotate90Counterclockwise;
-                    break;
-            }
-        }
-
         void lbx_files_Change(object sender, SelectionChangedEventArgs e)
         {
             if (first)
@@ -1948,6 +2306,7 @@ namespace OpenCVSharpJJ
         {
             _points.Clear();
         }
+
 
         #endregion
 

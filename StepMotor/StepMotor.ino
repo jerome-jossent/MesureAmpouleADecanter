@@ -6,8 +6,8 @@
 #define y_limit_max 11  //End stop HIGH
 
 const int stepsPerRev = 200; // <=> 1.8° par step
-int pulseWidthMicros = 1000;  // microseconds //def 500
-int millisBtwnSteps = 1000;
+int pulseWidthMicros = 1000;  //1000
+int microsBtwnSteps = 1000;  //1000
 
 // 2 mm => 1 tour => 200 steps
 // 2 / 200 = 0,01 mm/step
@@ -87,7 +87,10 @@ void setup() {
   coderThread.setInterval(10); // Setts the wanted interval to be 10ms
   coderThread.onRun(CoderCallback);
   Serial.println("Coder Thread OK");
-  
+
+//INFOS
+  PrintInfos();
+
   Serial.println("System Initialized");
 }
 
@@ -121,6 +124,10 @@ void InteractionManager(){
       au = false;
   
   switch (message[0]){
+    case 'i':
+      PrintInfos();
+    break;
+    
     case 'c':
       Serial.println("Calibration asked");        
       terminEnHaut = true;
@@ -152,6 +159,20 @@ void InteractionManager(){
       Deplacement(val);
       //Save_d(Add_coder, coder);
       PrintPosition();
+      break;
+
+    case 'T':
+      //set temps pulseWidthMicros
+      val = GetVal();
+      pulseWidthMicros = (int)val;
+      PrintpulseWidthMicros();
+      break;
+
+    case 't':
+      //set temps microsBtwnSteps
+      val = GetVal();
+      microsBtwnSteps = (int)val;
+      PrintmicrosBtwnSteps();
       break;
       
     case 'u':
@@ -332,7 +353,7 @@ void Move1Step(){
   digitalWrite(stepYPin, HIGH);
   delayMicroseconds(pulseWidthMicros);
   digitalWrite(stepYPin, LOW);
-  delayMicroseconds(millisBtwnSteps); 
+  delayMicroseconds(microsBtwnSteps); 
 }
 
 //void Save_d(int Add, float val){
@@ -353,16 +374,42 @@ void Move1Step(){
 //  return D.f;
 //}
 
+void PrintInfos(){
+  Serial.println("-----INFOS-----" );
+  
+  PrintD();
+  PrintPosition();
+  PrintpulseWidthMicros();
+  PrintmicrosBtwnSteps();
+
+  Serial.println("\"Tx\" : set x pulseWidthMicros" );
+  Serial.println("\"tx\" : set x microsBtwnSteps" );
+
+  Serial.println("---------------" );
+}
+
 void PrintPosition(){
   Serial.print("Position = ");
   Serial.print(Distance_mmFromCoderValue(coder));
-  Serial.println("mm");   
+  Serial.println(" mm");   
 }
 
 void PrintD(){
   Serial.print("D max = ");
   Serial.print(Distance_mmFromCoderValue(coder_max));
-  Serial.println("mm");  
+  Serial.println(" mm");  
+}
+
+void PrintpulseWidthMicros(){
+  Serial.print("pulseWidthMicros : ");
+  Serial.print(String(pulseWidthMicros));
+  Serial.println(" µs");  
+}
+
+void PrintmicrosBtwnSteps(){
+  Serial.print("microsBtwnSteps : ");
+  Serial.print(String(microsBtwnSteps));
+  Serial.println(" µs");  
 }
 
 float Distance_mmFromCoderValue(long coderval){
@@ -399,37 +446,3 @@ void changementZ(){
     coder_last_dir = dirYPin;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

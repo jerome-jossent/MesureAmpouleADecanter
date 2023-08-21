@@ -15,8 +15,15 @@ using System.Windows.Shapes;
 
 namespace Standard_UC_JJO
 {
-    public partial class PickFolder_JJO : UserControl
+    public partial class PickFolder_JJO : UserControl, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
         public bool _ModeTBX
         {
             get => ModeTBX; set
@@ -42,12 +49,18 @@ namespace Standard_UC_JJO
         public PickFolder_JJO()
         {
             InitializeComponent();
+            DataContext = this;
         }
 
         public string _folder
         {
-            get { return (string)GetValue(FolderProperty); }
-            set { SetValue(FolderProperty, value); }
+            get { 
+                return (string)GetValue(FolderProperty); 
+            }
+            set {
+                SetValue(FolderProperty, value);
+                OnPropertyChanged("_folder");
+            }
         }
 
         public static readonly DependencyProperty FolderProperty =
