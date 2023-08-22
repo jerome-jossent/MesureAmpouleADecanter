@@ -5,370 +5,364 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenCVSharpJJ" 
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
+
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         Title="{Binding _title}" 
-        Height="450" Width="1200" 
+        Height="450" Width="1600" 
         Closing="Window_Closing" Loaded="Window_Loaded">
-
-    <!--xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"-->
-
 
     <Window.Resources>
         <local:BitmapToBitmapImageConverter x:Name="binaryConverter" x:Key="bitmapConverter"/>
-
-        <Style x:Key="HorizontalStackPanel" TargetType="{x:Type StackPanel}">
-            <Setter Property="Orientation" Value="Horizontal" />
-            <Style.Triggers>
-                <Trigger Property="Orientation" Value="Horizontal">
-                    <Setter Property="FrameworkElement.VerticalAlignment"  Value="Center" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
     </Window.Resources>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="auto" Name="grd_visu"/>
-            <ColumnDefinition Width="auto"/>
-            <!--splitter-->
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="auto"/>
-            <!--splitter-->
-            <!--<ColumnDefinition Width="*"/>-->
-        </Grid.ColumnDefinitions>
 
-        <!--ARDUINO-->
-        <Grid Grid.Column="0" Margin="5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="60"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="30"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/device.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_COM" Margin="2" VerticalContentAlignment="Center"/>
-            <Image Grid.Row="0" Grid.Column="2" x:Name="Button_COMRefresh" Margin="2" Source="images/refresh.png" 
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!--MENU-->
+        <Menu Grid.Row="0" Background="Transparent">
+            <MenuItem Header="Configuration">
+                <MenuItem Header="Save" Click="Configuration_Save_Click"/>
+                <MenuItem Header="Load" Click="Configuration_Load_Click"/>
+                <MenuItem Header="Load and Start" Click="Configuration_Load_Start_Click"/>
+            </MenuItem>
+
+            <MenuItem Header="Layout">
+                <MenuItem Header="Save" Click="LayoutSaveButton_Click"/>
+                <MenuItem Header="Load" Click="LayoutLoadButton_Click"/>
+            </MenuItem>
+
+            <MenuItem Header="About">
+                <MenuItem Header="VERI"/>
+                <MenuItem Header="Jérôme Jossent"/>
+            </MenuItem>
+
+            <MenuItem Header="Exit" Click="Exit_Click"/>
+        </Menu>
+
+        <!--VUES-->
+        <xcad:DockingManager Grid.Row="1" x:Name="DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
+            <!--UTILE ?????????????-->
+            <xcad:DockingManager.DocumentHeaderTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding IconSource}" Margin="0,0,4,0"/>
+                        <TextBlock Text="{Binding Title}" />
+                    </StackPanel>
+                </DataTemplate>
+            </xcad:DockingManager.DocumentHeaderTemplate>
+
+            <!--VUES DYNAMIQUES-->
+            <xcad:LayoutRoot x:Name="_layoutRoot">
+                <xcad:LayoutPanel Orientation="Horizontal">
+                    <xcad:LayoutDocumentPaneGroup >
+                        <xcad:LayoutDocumentPane x:Name="Views">
+
+                            <!--ARDUINO CONFIG-->
+                            <xcad:LayoutAnchorable ContentId="arduino" Title="Arduino" CanClose="False">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="30"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30"/>
+                                        <RowDefinition Height="30"/>
+                                        <RowDefinition Height="30"/>
+                                        <RowDefinition Height="30"/>
+                                        <!--<RowDefinition Height="*"/>-->
+                                    </Grid.RowDefinitions>
+                                    <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/device.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_COM" Margin="2" VerticalContentAlignment="Center"
+                      Text="{Binding configuration.deplacement_portCOM, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                      />
+                                    <Image Grid.Row="0" Grid.Column="2" x:Name="Button_COMRefresh" Margin="2" Source="images/refresh.png" 
                    Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_COMRefresh_Click"
                    ToolTip="Refresh COM list"/>
 
-            <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_bauds" Margin="2" VerticalContentAlignment="Center" />
+                                    <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_bauds" Margin="2" VerticalContentAlignment="Center"
+                      Text="{Binding configuration.deplacement_bauds, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
 
-            <Image Grid.Row="1" Grid.Column="2" x:Name="Button_DeviceConnect" Margin="2" Source="images/device_connect.png" Stretch="Uniform" 
+                                    <Image Grid.Row="1" Grid.Column="2" x:Name="Button_DeviceConnect" Margin="2" Source="images/device_connect.png" Stretch="Uniform" 
                    RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_Connexion_Click" Visibility="Collapsed"
                    ToolTip="Disconnect"/>
-            <Image Grid.Row="1" Grid.Column="2" x:Name="Button_DeviceDisconnect" Margin="2" Source="images/device_disconnect.png" Stretch="Uniform" 
+                                    <Image Grid.Row="1" Grid.Column="2" x:Name="Button_DeviceDisconnect" Margin="2" Source="images/device_disconnect.png" Stretch="Uniform" 
                    RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_Connexion_Click"
                    ToolTip="Connect"/>
 
-            <Image Grid.Row="2" Grid.Column="0" Margin="2" Source="images/arrow_up.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
+                                    <Image Grid.Row="2" Grid.Column="0" Margin="2" Source="images/arrow_up.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
                    MouseDown="Button_UP_Click" ToolTip="UP"/>
-            <Image Grid.Row="3" Grid.Column="0" Margin="2" Source="images/arrow_down.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
+                                    <Image Grid.Row="3" Grid.Column="0" Margin="2" Source="images/arrow_down.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
                    MouseDown="Button_DOWN_Click" ToolTip="DOWN"/>
 
-            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
-                <Button Margin="2" Content="STOP" Click="Button_ARRETURGENCE_Click" Background="Red" Foreground="#FFFFFA00"/>
-                <Button Margin="2" Content="Calibrate" Click="Button_Etalonnage_Click"/>
+                                    <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                        <Button Margin="2" Content="STOP" Click="Button_ARRETURGENCE_Click" Background="Red" Foreground="#FFFFFA00"/>
+                                        <Button Margin="2" Content="Calibrate" Click="Button_Etalonnage_Click"/>
 
-                <Button Margin="2" x:Name="Button_DriveByVisionPlay" Click="Button_DriveByVision_Click" Content="Drive by vision OFF" Background="Red" Foreground="White" Width="125"/>
-                <Button Margin="2" x:Name="Button_DriveByVisionStop" Click="Button_DriveByVision_Click" Content="Drive by vision ON" Background="Green" Foreground="White" Width="125"/>
+                                        <Button Margin="2" x:Name="Button_DriveByVisionPlay" Click="Button_DriveByVision_Click" Content="Drive by vision OFF" Background="Red" Foreground="White" Width="125"/>
+                                        <Button Margin="2" x:Name="Button_DriveByVisionStop" Click="Button_DriveByVision_Click" Content="Drive by vision ON" Background="Green" Foreground="White" Width="125"/>
 
-                <Button Margin="2" Content="Get Position" Click="Button_GetPosition_Click"/>
-            </StackPanel>
+                                        <Button Margin="2" Content="Get Position" Click="Button_GetPosition_Click"/>
+                                    </StackPanel>
 
-            <TextBox Grid.Row="3" Grid.Column="1" x:Name="tbx_txt_to_arduino" Margin="2" VerticalContentAlignment="Center" KeyDown="tbx_txt_to_arduino_KeyDown"/>
-            <Image Grid.Row="3" Grid.Column="2" Margin="2" Source="images/device_send_to_it.png" MouseDown="SendToArduino" 
+                                    <TextBox Grid.Row="3" Grid.Column="1" x:Name="tbx_txt_to_arduino" Margin="2" VerticalContentAlignment="Center" KeyDown="tbx_txt_to_arduino_KeyDown"/>
+                                    <Image Grid.Row="3" Grid.Column="2" Margin="2" Source="images/device_send_to_it.png" MouseDown="SendToArduino" 
                    RenderOptions.BitmapScalingMode="HighQuality" ToolTip="Send to Arduino"/>
+                                </Grid>
+                            </xcad:LayoutAnchorable>
 
-            <!--ARDUINO READ-->
-            <Grid Grid.Row="4" Grid.ColumnSpan="3">
-                <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding ArduinoMessages, UpdateSourceTrigger=PropertyChanged}" Foreground="#FF1A9B21" Background="Black"/>
-                <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right"/>
-                <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" 
-                       VerticalAlignment="Bottom" HorizontalAlignment="Right" MouseDown="Button_Clear_Click" ToolTip="Clear"/>
-            </Grid>
-        </Grid>
+                            <!--ARDUINO READ-->
+                            <xcad:LayoutAnchorable ContentId="deplacement" Title="Deplacement" CanClose="False">
+                                <Grid>
+                                    <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding ArduinoMessages, UpdateSourceTrigger=PropertyChanged}" Foreground="#FF1A9B21" Background="Black"/>
+                                    <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right"/>
+                                    <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" 
+                                           Width="30" Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right" 
+                                           MouseDown="Button_Clear_Click" ToolTip="Clear"/>
+                                </Grid>
+                            </xcad:LayoutAnchorable>
 
-        <!--SPLITTER-->
-        <Line Grid.Column="1" x:Name="dottedline" Visibility="Hidden" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-            X1="2" Y1="0"
-            X2="2" Y2="10000"
-            Stroke="Black" StrokeDashArray="2, 4"
-            StrokeThickness="2" />
-        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" MouseEnter="gds_mouseenter" MouseLeave="gds_mouseleave" Background="#02FFFFFF"
-                      ToolTip="Adjust view"/>
+                            <!--CAMERA CONFIG-->
+                            <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False">
+                                <StackPanel Orientation="Vertical">
+                                    <!--SELECT CAMERA AND RESOLUTION-->
+                                    <Grid >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="30"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="30"/>
+                                            <RowDefinition Height="30"/>
+                                            <RowDefinition Height="30"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
 
-        <!--SLIDER & CAPTURE-->
-        <Grid Grid.Column="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+                                        <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/camera.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
 
-            <!--SLIDER-->
-            <Slider x:Name="sld_camera_position_mm" Margin="0,0,0,5" Grid.Column="0" IsEnabled="False" Orientation="Vertical" Width="21" ToolTip="Camera Position" Foreground="Black"/>
-
-            <!--CAPTURE-->
-            <Grid Grid.Column="1" Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <!--MENU-->
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!--Caméra-->
-                    <Grid Grid.Column="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="60"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="30"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/camera.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                        <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_device" Margin="2" SelectionChanged="Combobox_CaptureDevice_Change" VerticalContentAlignment="Center"/>
-                        <Image Grid.Row="0" Grid.Column="2" x:Name="Button_ListDevices" Margin="2" Source="images/refresh.png" Stretch="Uniform" 
+                                        <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_device" Margin="2" SelectionChanged="Combobox_CaptureDevice_Change" VerticalContentAlignment="Center"/>
+                                        <Image Grid.Row="0" Grid.Column="2" x:Name="Button_ListDevices" Margin="2" Source="images/refresh.png" Stretch="Uniform" 
                        RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_ListDevices_Click" ToolTip="Refresh video device list"/>
 
-                        <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_deviceFormat" Margin="2" SelectionChanged="Combobox_CaptureDeviceFormat_Change" VerticalContentAlignment="Center"/>
-                        <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDevicePlay" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
+                                        <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_deviceFormat" Margin="2" SelectionChanged="Combobox_CaptureDeviceFormat_Change" VerticalContentAlignment="Center"/>
+                                        <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDevicePlay" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
                        RenderOptions.BitmapScalingMode="HighQuality" Source="images/Lecture.png" ToolTip="Start camera"/>
-                        <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDeviceStop" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
+                                        <Image Grid.Row="1" Grid.Column="2" x:Name="Button_CaptureDeviceStop" Margin="2" Width="30" MouseDown="Button_CaptureDevice_Click" 
                        RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>
+                                    </Grid>
 
+                                    <!--SAVE FRAME-->
+                                    <StackPanel Orientation="Vertical">
+                                        <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Save frame to disk" 
+                                                VerticalAlignment="Center" IsChecked="{Binding _SaveFrame}" />
 
-                        <Image Grid.Row="2" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/files.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
-                               MouseDown="Button_PickFiles_Click" ToolTip="Select new image files" VerticalAlignment="Top"/>
-                        <ListBox Grid.Row="2" Grid.Column="1" Grid.RowSpan="2" x:Name="lbx_files" SelectionChanged="lbx_files_Change" />
-                        <Image Grid.Row="2" Grid.Column="2" Margin="2" Source="images/croix.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
-                               MouseDown="Button_Files_Clear" ToolTip="Select image files"/>
-                        <Image Grid.Row="3" Grid.Column="2" Margin="2" Source="images/moins.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
-                               MouseDown="Button_PickFilesAdd_Click" ToolTip="Add image files" VerticalAlignment="Top"/>
+                                        <Standard_UC_JJO:PickFolder_JJO Grid.Row="1" _folder="{Binding _SavedImageFolder, 
+                                            UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                    </StackPanel>
 
-                    </Grid>
+                                </StackPanel>
+                            </xcad:LayoutAnchorable>
 
-                    <!--MARGE-->
-                    <GridSplitter Grid.Column="1" Width="4" Margin="5" Background="LightGray"/>
-
-                    <!--Réglages 1-->
-                    <Grid Grid.Column="2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                        </Grid.RowDefinitions>
-
-                        <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Save frame to disk" 
-                                  VerticalAlignment="Center" IsChecked="{Binding _SaveFrame}" />
-
-                        <Standard_UC_JJO:PickFolder_JJO Grid.Row="1" _folder="{Binding _SavedImageFolder, 
-                           UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
-
-                        <Label Grid.Row="2" Grid.Column="0" Content="Resize Factor" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <Slider Grid.Row="2" Grid.Column="1" Margin="5" Minimum="10" Maximum="100" Value="{Binding ResizeFactor, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Label Grid.Row="2" Grid.Column="2" Content="{Binding ResizeFactorString, UpdateSourceTrigger=PropertyChanged}"/>
-
-                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <CheckBox  Content="Grids" VerticalAlignment="Center" IsChecked="{Binding _DisplayGrids}" />
-                            <CheckBox Content="ROI" VerticalAlignment="Center" IsChecked="{Binding _DisplayROI}" />
-                            <CheckBox Content="Center" VerticalAlignment="Center" IsChecked="{Binding _DisplayCenter}" />
-                        </StackPanel>
-
-                        <!--ratio-->
-                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Label Content="Ratio (mm/px)"/>
-                            <xctk:DoubleUpDown Value="{Binding _ratio_mm_pix}" MinWidth="60" />
-                        </StackPanel>
-
-                        <!--bande morte sur erreur-->
-                        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Label Content="Bande morte (px)"/>
-                            <xctk:DoubleUpDown Value="{Binding _bande_morte_pix}" MinWidth="60" Minimum="0" />
-                        </StackPanel>
-
-
-                    </Grid>
-
-                    <!--MARGE-->
-                    <GridSplitter Grid.Column="3" Width="4" Margin="5" Background="LightGray"/>
-
-                    <!--Réglages 2-->
-                    <Grid Grid.Column="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="30"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <!--<Label Grid.Row="0" Grid.Column="0" Content="Rotation" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <ComboBox Grid.Row="0" Grid.Column="1" SelectionChanged="cbx_rotation_Changed" x:Name="cbx_rotation" VerticalContentAlignment="Center"/>-->
-                        <Label Grid.Row="0" Grid.Column="0" Content="Rotation" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <Slider Grid.Row="0" Grid.Column="1" Margin="5" Minimum="0" Maximum="360" Value="{Binding rotation_angle, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding rotation_angle, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="40"/>
-
-                        <Label Grid.Row="1" Grid.Column="0" Content="ROI" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
-
-                        <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" >
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <xctk:RangeSlider x:Name="sld_roi_Y" Step="1" 
-
-                                              Orientation="Vertical" Width="30"
-                                              LowerValue="{Binding roi_y, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
-                                              HigherValue="{Binding roi_yh, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
-                                              Minimum="1"
-                                              Maximum="{Binding rotatedframe_height, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
-                                              RenderTransformOrigin="0.5,0.5"
-                                              >
-                                <xctk:RangeSlider.RenderTransform>
-                                    <RotateTransform Angle="180"/>
-                                </xctk:RangeSlider.RenderTransform>
-                            </xctk:RangeSlider>
-
-                            <StackPanel Grid.Column="1"  VerticalAlignment="Center">
+                            <!--IMAGE PREPROCESS-->
+                            <xcad:LayoutAnchorable ContentId="preproc" Title="PreProcessing" CanClose="False">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="40"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox Margin="2" Name="tbx_roi" MinWidth="60" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-                                    <Button Grid.Column="1" Margin="2" Padding="5" Content="Set" Click="Button_SetROI_Click"/>
-                                </Grid>
 
-                                <xctk:RangeSlider x:Name="sld_roi_X" Step="1"
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30"/>
+                                        <RowDefinition Height="30"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="30"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Resize Factor" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                    <Slider Grid.Row="0" Grid.Column="1" Margin="5" Minimum="0.10" Maximum="1" Value="{Binding configuration.resize_factor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" LargeChange="0.1" SmallChange="0.01" TickFrequency="0.1"/>
+                                    <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding configuration.resize_factor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Rotation" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                    <Slider Grid.Row="1" Grid.Column="1" Margin="5" Minimum="0" Maximum="360" Value="{Binding configuration.rotation_angle, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding configuration.rotation_angle, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+
+                                    <Label Grid.Row="2" Grid.Column="0" Content="ROI" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
+                                    <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <xctk:RangeSlider x:Name="sld_roi_Y" Step="1" 
+                                                  Orientation="Vertical" Width="30"
+                                                  LowerValue="{Binding roi_y, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                                  HigherValue="{Binding roi_yh, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                                  Minimum="1"
+                                                  Maximum="{Binding rotatedframe_height, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                                  RenderTransformOrigin="0.5,0.5"
+                                                  >
+                                            <xctk:RangeSlider.RenderTransform>
+                                                <RotateTransform Angle="180"/>
+                                            </xctk:RangeSlider.RenderTransform>
+                                        </xctk:RangeSlider>
+
+                                        <Grid Grid.Column="1" Grid.ColumnSpan="2" >
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="1"  VerticalAlignment="Center">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Margin="2" Name="tbx_roi" MinWidth="60" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                    <Button Grid.Column="1" Margin="2" Padding="5" Content="Set" Click="Button_SetROI_Click"/>
+                                                </Grid>
+
+                                                <xctk:RangeSlider x:Name="sld_roi_X" Step="1"
                                               Orientation="Horizontal" 
                                               HigherValue="{Binding roi_xw, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
                                               LowerValue="{Binding roi_x, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"                                                
                                               Minimum="0" 
                                               Maximum="{Binding rotatedframe_width, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
                                               />
-
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button Margin="2" Padding="5" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
-                                    <Button Margin="2" Padding="5" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
-                                    <Button Margin="2" Padding="5" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
-                                    <Button Margin="2" Padding="5" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-
-                        <Label IsEnabled="False" Grid.Row="2" Grid.Column="0" Content="BW" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <Slider IsEnabled="False" Grid.Row="2" Grid.Column="1" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Label IsEnabled="False" Grid.Row="2" Grid.Column="2" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-
-                        <Label IsEnabled="False" Grid.Row="3" Grid.Column="0" Content="Line" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                        <Slider IsEnabled="False" Grid.Row="3" Grid.Column="1" Margin="5" Minimum="0" Maximum="100" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Label IsEnabled="False" Grid.Row="3" Grid.Column="2" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-
-                        <StackPanel Grid.Row="4" >
-                            <Label Content="{Binding distancepixel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-                            <Label Grid.Row="4" Content="{Binding deplacement_mm_commande, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-                        </StackPanel>
-
-                    </Grid>
-
-                </Grid>
-
-                <GridSplitter Grid.Row="1" Height="4" Margin="5" Background="LightGray"/>
-
-                <!--PROCESS & IMAGES-->
-                <Grid Grid.Row="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!--IMAGES-->
-                    <Grid Grid.Column="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Foreground="Yellow"  Background="Gray" >
-                            <ItemsControl Margin="0, 0, 0, 0" ItemsSource="{Binding _points}" VerticalAlignment="Top" HorizontalAlignment="Left">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <UniformGrid Columns="1"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="1,1,1,1" Height="20">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="auto" />
-                                                <ColumnDefinition Width="auto" />
-                                                <ColumnDefinition Width="auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding t}" Margin="4, 0, 0, 0" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding z_mm}" Margin="20,0,0,0" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding erreur_pixel}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                         </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                        <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Right">
-                            <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3"
-                                   MouseDown="Button_SaveData_ToDisk_Click" />
+                                    </Grid>
 
-                        </StackPanel>
-                        <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" 
-                       VerticalAlignment="Bottom" HorizontalAlignment="Right" MouseDown="Button_DATA_Clear_Click" ToolTip="Clear"/>
+                                    <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Margin="2" Padding="5" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
+                                        <Button Margin="2" Padding="5" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
+                                        <Button Margin="2" Padding="5" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
+                                        <Button Margin="2" Padding="5" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>
+                                    </StackPanel>
+                                </Grid>
+                            </xcad:LayoutAnchorable>
+
+                            <!--AFFICHAGE-->
+                            <xcad:LayoutAnchorable ContentId="affichage" Title="Affichage" CanClose="False">
+
+                                <StackPanel Orientation="Vertical">
+
+                                    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <CheckBox Content="Grids" VerticalAlignment="Center" IsChecked="{Binding _DisplayGrids}" />
+                                        <CheckBox Content="ROI" VerticalAlignment="Center" IsChecked="{Binding _DisplayROI}" />
+                                        <CheckBox Content="Center" VerticalAlignment="Center" IsChecked="{Binding _DisplayCenter}" />
+                                    </StackPanel>
 
 
 
-                        <local:ImageIHM_UC Grid.Column="1" x:Name="i1" MinWidth="20"/>
-                        <local:ImageIHM_UC Grid.Column="2" x:Name="i2" MinWidth="20"/>
-                        <local:ImageIHM_UC Grid.Column="3" x:Name="i3" MinWidth="20"/>
-                        <local:ImageIHM_UC Grid.Column="4" x:Name="i4" MinWidth="20"/>
-                    </Grid>
+                                    <Label IsEnabled="False" Grid.Row="2" Grid.Column="0" Content="BW" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                    <Slider IsEnabled="False" Grid.Row="2" Grid.Column="1" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <Label IsEnabled="False" Grid.Row="2" Grid.Column="2" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
 
-                </Grid>
-            </Grid>
-        </Grid>
+                                    <Label IsEnabled="False" Grid.Row="3" Grid.Column="0" Content="Line" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                    <Slider IsEnabled="False" Grid.Row="3" Grid.Column="1" Margin="5" Minimum="0" Maximum="100" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <Label IsEnabled="False" Grid.Row="3" Grid.Column="2" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+                                    <StackPanel Grid.Row="4" >
+                                        <Label Content="{Binding distancepixel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                                        <Label Grid.Row="4" Content="{Binding deplacement_mm_commande, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                                    </StackPanel>
+
+                                </StackPanel>
+                            </xcad:LayoutAnchorable>
+
+                            <!--DEBUG-->
+                            <xcad:LayoutAnchorable ContentId="debug" Title="Debug" CanClose="False">
+                                <StackPanel>
+
+
+
+
+                                    <!--ratio-->
+                                    <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Ratio (mm/px)"/>
+                                        <xctk:DoubleUpDown Value="{Binding _ratio_mm_pix}" MinWidth="60" />
+                                    </StackPanel>
+
+                                    <!--bande morte sur erreur-->
+                                    <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Bande morte (px)"/>
+                                        <xctk:DoubleUpDown Value="{Binding _bande_morte_pix}" MinWidth="60" Minimum="0" />
+                                    </StackPanel>
+
+                                </StackPanel>
+                            </xcad:LayoutAnchorable>
+
+
+
+                            <!--DATA Points-->
+                            <xcad:LayoutAnchorable ContentId="data" Title="Data" CanClose="False">
+                                <Grid>
+                                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Foreground="Yellow"  Background="Gray" >
+                                        <ItemsControl Margin="0, 0, 0, 0" ItemsSource="{Binding _points}" VerticalAlignment="Top" HorizontalAlignment="Left">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="1"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="1,1,1,1" Height="20">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="auto" />
+                                                            <ColumnDefinition Width="auto" />
+                                                            <ColumnDefinition Width="auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding t}" Margin="4, 0, 0, 0" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding z_mm}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding erreur_pixel}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                    <StackPanel Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Right">
+                                        <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" 
+                                               Width="30" Opacity="0.3" MouseDown="Button_SaveData_ToDisk_Click" />
+
+                                    </StackPanel>
+                                    <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30"
+                                           Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right" 
+                                           MouseDown="Button_DATA_Clear_Click" ToolTip="Clear"/>
+                                </Grid>
+                            </xcad:LayoutAnchorable>
+
+                            <!--Vue-->
+                            <xcad:LayoutAnchorable ContentId="vue1" Title="Vue1" CanClose="False">
+                                <local:ImageIHM_UC x:Name="i1" MinWidth="20"/>
+                            </xcad:LayoutAnchorable>
+
+                            <xcad:LayoutAnchorable ContentId="vue2" Title="Vue2" CanClose="False">
+                                <local:ImageIHM_UC x:Name="i2" MinWidth="20"/>
+                            </xcad:LayoutAnchorable>
+
+                            <xcad:LayoutAnchorable ContentId="vue3" Title="Vue3" CanClose="False">
+                                <local:ImageIHM_UC x:Name="i3" MinWidth="20"/>
+                            </xcad:LayoutAnchorable>
+
+                            <xcad:LayoutAnchorable ContentId="vue4" Title="Vue4" CanClose="False">
+                                <local:ImageIHM_UC x:Name="i4" MinWidth="20"/>
+                            </xcad:LayoutAnchorable>
+
+                        </xcad:LayoutDocumentPane>
+                    </xcad:LayoutDocumentPaneGroup >
+                </xcad:LayoutPanel>
+            </xcad:LayoutRoot>
+        </xcad:DockingManager>
     </Grid>
 </Window>

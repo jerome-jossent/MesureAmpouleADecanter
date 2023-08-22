@@ -11,7 +11,8 @@ namespace OpenCVSharpJJ
     {
         public class Format
         {
-            public int w, h;
+            public int w;
+            public int h;
             public float fr;
             public string format;
             public int index;

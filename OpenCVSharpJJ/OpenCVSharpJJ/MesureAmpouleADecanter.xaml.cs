@@ -23,6 +23,7 @@ using System.Windows.Threading;
 using OpenCVSharpJJ.Processing;
 using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace OpenCVSharpJJ
 {
@@ -190,26 +191,22 @@ namespace OpenCVSharpJJ
         }
         int threshold2 = 10;
 
-        public int ResizeFactor
-        {
-            get { return resizeFactor; }
-            set
-            {
-                if (resizeFactor == value)
-                    return;
-                resizeFactor = value;
-                OnPropertyChanged("ResizeFactor");
-                OnPropertyChanged("ResizeFactorString");
-                if (!captureVideoIsRunning)
-                    ComputePicture(frame.mat);
-            }
-        }
-        int resizeFactor = 100;
+        //public int ResizeFactor
+        //{
+        //    get { return resizeFactor; }
+        //    set
+        //    {
+        //        if (resizeFactor == value)
+        //            return;
+        //        resizeFactor = value;
+        //        OnPropertyChanged("ResizeFactor");
+        //        if (!captureVideoIsRunning)
+        //            ComputePicture(frame.mat);
+        //    }
+        //}
+        //int resizeFactor = 100;
 
-        public string ResizeFactorString
-        {
-            get { return resizeFactor.ToString() + " %"; }
-        }
+
 
         public int rotatedframe_width
         {
@@ -259,37 +256,37 @@ namespace OpenCVSharpJJ
         }
         int _roi_y;
 
-        public int roi_w
-        {
-            get { return _roi_w; }
-            set
-            {
-                if (_roi_w == value)
-                    return;
-                _roi_w = value;
-                OnPropertyChanged();
-                ROI_Change();
-                if (!captureVideoIsRunning)
-                    ComputePicture(frame.mat);
-            }
-        }
-        int _roi_w;
+        //public int roi_w
+        //{
+        //    get { return _roi_w; }
+        //    set
+        //    {
+        //        if (_roi_w == value)
+        //            return;
+        //        _roi_w = value;
+        //        OnPropertyChanged();
+        //        ROI_Change();
+        //        if (!captureVideoIsRunning)
+        //            ComputePicture(frame.mat);
+        //    }
+        //}
+        //int _roi_w;
 
-        public int roi_h
-        {
-            get { return _roi_h; }
-            set
-            {
-                if (_roi_h == value)
-                    return;
-                _roi_h = value;
-                OnPropertyChanged();
-                ROI_Change();
-                if (!captureVideoIsRunning)
-                    ComputePicture(frame.mat);
-            }
-        }
-        int _roi_h;
+        //public int roi_h
+        //{
+        //    get { return _roi_h; }
+        //    set
+        //    {
+        //        if (_roi_h == value)
+        //            return;
+        //        _roi_h = value;
+        //        OnPropertyChanged();
+        //        ROI_Change();
+        //        if (!captureVideoIsRunning)
+        //            ComputePicture(frame.mat);
+        //    }
+        //}
+        //int _roi_h;
 
         public int roi_xw
         {
@@ -323,21 +320,21 @@ namespace OpenCVSharpJJ
         }
         int _roi_yh;
 
-        public float rotation_angle
-        {
-            get { return _rotation_angle; }
-            set
-            {
-                if (_rotation_angle == value)
-                    return;
-                _rotation_angle = value;
-                OnPropertyChanged();
-                ROI_Change();
-                if (!captureVideoIsRunning)
-                    ComputePicture(frame.mat);
-            }
-        }
-        float _rotation_angle;
+        //public float rotation_angle
+        //{
+        //    get { return _rotation_angle; }
+        //    set
+        //    {
+        //        if (_rotation_angle == value)
+        //            return;
+        //        _rotation_angle = value;
+        //        OnPropertyChanged();
+        //        ROI_Change();
+        //        if (!captureVideoIsRunning)
+        //            ComputePicture(frame.mat);
+        //    }
+        //}
+        //float _rotation_angle;
 
 
 
@@ -591,9 +588,20 @@ namespace OpenCVSharpJJ
         #endregion
 
         #region PARAMETERS
-        bool arduinoWaiting;
+        public Configuration configuration
+        {
+            get { return _configuration; }
+            set
+            {
+                if (_configuration == value)
+                    return;
+                _configuration = value;
+                OnPropertyChanged();
+            }
+        }
+        Configuration _configuration = new Configuration();
 
-        RotateFlags? rotation;
+        bool arduinoWaiting;
 
         long T0;
         NamedMats NMs;
@@ -618,15 +626,29 @@ namespace OpenCVSharpJJ
 
         Thread threadCaptureVideo;
         Thread threadCommandeArduino;
-        int indexDevice;
-        VideoInInfo.Format format;
+
+        //VideoInInfo.Format format;
+
         Dictionary<string, VideoInInfo.Format> formats;
         VideoCapture capture;
         bool captureVideoIsRunning = false;
         bool first = true;
         System.Diagnostics.Stopwatch chrono = new System.Diagnostics.Stopwatch();
 
-        OpenCvSharp.Rect roi;
+        OpenCvSharp.Rect roi
+        {
+            get { return _roi; }
+            set
+            {
+                if (_roi == value)
+                    return;
+                _roi = value;
+                configuration.roi = new System.Windows.Rect(roi.X, roi.Y, roi.Width, roi.Height);
+                OnPropertyChanged();
+                ROI_Change();
+            }
+        }
+        OpenCvSharp.Rect _roi;
 
         Communication_Série.Communication_Série cs;
         string buffer;
@@ -680,8 +702,12 @@ namespace OpenCVSharpJJ
                     + T.Minute + "_"
                     + T.Second;
 
-            //PRESETS
-            //cbx_rotation.SelectedIndex = 3;
+            LayoutLoadButton_Click(null, null);
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
 
         void Window_Closing(object sender, CancelEventArgs e)
@@ -691,14 +717,70 @@ namespace OpenCVSharpJJ
             cs?.PortCom_OFF();
         }
 
-        void gds_mouseenter(object sender, MouseEventArgs e)
+        #region AVALONDOCK
+        void LayoutSaveButton_Click(object sender, RoutedEventArgs e)
         {
-            dottedline.Visibility = Visibility.Visible;
+            XmlLayoutSerializer layoutSerializer = new XmlLayoutSerializer(DManager);
+            using (var writer = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "docks.txt"))
+            {
+                layoutSerializer.Serialize(writer);
+            }
         }
 
-        void gds_mouseleave(object sender, MouseEventArgs e)
+        void LayoutLoadButton_Click(object sender, RoutedEventArgs e)
         {
-            dottedline.Visibility = Visibility.Hidden;
+            try
+            {
+                XmlLayoutSerializer layoutSerializer = new XmlLayoutSerializer(DManager);
+                using (var reader = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "docks.txt"))
+                {
+                    layoutSerializer.Deserialize(reader);
+                }
+            }
+            catch (System.IO.FileNotFoundException ex)
+            {
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+
+        #endregion
+        #endregion
+
+        #region CONFIGURATION
+        void Configuration_Save_Click(object sender, RoutedEventArgs e)
+        {
+            configuration.Save();
+        }
+
+        void Configuration_Load_Click(object sender, RoutedEventArgs e)
+        {
+            configuration = Configuration.Load();
+
+            try
+            {
+                cbx_COM.Text = configuration.deplacement_portCOM;
+                cbx_bauds.Text = configuration.deplacement_bauds;
+
+                cbx_device.SelectedIndex = configuration.camera_index;
+                cbx_deviceFormat.Text = configuration.camera_encodage_resolution.Name;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private void Configuration_Load_Start_Click(object sender, RoutedEventArgs e)
+        {
+            Configuration_Load_Click(null, null);
+
+            Capture_Start();
+            Arduino_Connexion();
         }
         #endregion
 
@@ -733,8 +815,8 @@ namespace OpenCVSharpJJ
 
             if (captureVideoIsRunning)
             {
-                indexDevice = cbx_device.SelectedIndex;
-                CaptureCamera(indexDevice);
+                configuration.camera_index = cbx_device.SelectedIndex;
+                CaptureCamera(configuration.camera_index);
             }
             else
             {
@@ -759,15 +841,15 @@ namespace OpenCVSharpJJ
 
         void Combobox_CaptureDevice_Change(object sender, SelectionChangedEventArgs e)
         {
-            indexDevice = cbx_device.SelectedIndex;
-            formats = VideoInInfo.EnumerateSupportedFormats_JJ(indexDevice);
+            configuration.camera_index = cbx_device.SelectedIndex;
+            formats = VideoInInfo.EnumerateSupportedFormats_JJ(configuration.camera_index);
             cbx_deviceFormat.ItemsSource = formats.OrderBy(f => f.Value.format).ThenByDescending(f => f.Value.w).Select(f => f.Key);
         }
 
         void Combobox_CaptureDeviceFormat_Change(object sender, SelectionChangedEventArgs e)
         {
             if (cbx_deviceFormat.SelectedValue != null)
-                format = formats[cbx_deviceFormat.SelectedValue as string];
+                configuration.camera_encodage_resolution = formats[cbx_deviceFormat.SelectedValue as string];
         }
         #endregion
 
@@ -779,7 +861,7 @@ namespace OpenCVSharpJJ
                 CaptureCamera_Stop();
                 Thread.Sleep(100);
             }
-            indexDevice = index;
+            configuration.camera_index = index;
             threadCaptureVideo = new Thread(new ThreadStart(CaptureCameraCallback));
             threadCaptureVideo.Start();
         }
@@ -795,30 +877,30 @@ namespace OpenCVSharpJJ
 
         void CaptureCameraCallback()
         {
-            int actualindexDevice = indexDevice;
+            int actualindexDevice = configuration.camera_index;
             frame.mat = new Mat();
-            capture = new VideoCapture(indexDevice);
-            capture.Open(indexDevice, VideoCaptureAPIs.DSHOW);
+            capture = new VideoCapture(configuration.camera_index);
+            capture.Open(configuration.camera_index, VideoCaptureAPIs.DSHOW);
 
             if (capture.IsOpened())
             {
                 while (captureVideoIsRunning)
                 {
                     //si changement de camera
-                    if (indexDevice != actualindexDevice)
+                    if (configuration.camera_index != actualindexDevice)
                     {
-                        capture.Open(indexDevice, VideoCaptureAPIs.DSHOW);
-                        actualindexDevice = indexDevice;
+                        capture.Open(configuration.camera_index, VideoCaptureAPIs.DSHOW);
+                        actualindexDevice = configuration.camera_index;
                     }
 
                     //si changement de format vidéo
-                    if (format != null)
+                    if (configuration.camera_encodage_resolution != null)
                     {
-                        capture.Set(VideoCaptureProperties.FrameWidth, format.w);
-                        capture.Set(VideoCaptureProperties.FrameHeight, format.h);
-                        capture.Set(VideoCaptureProperties.Fps, format.fr);
-                        capture.Set(VideoCaptureProperties.FourCC, FourCC.FromString(format.format));
-                        format = null;
+                        capture.Set(VideoCaptureProperties.FrameWidth, configuration.camera_encodage_resolution.w);
+                        capture.Set(VideoCaptureProperties.FrameHeight, configuration.camera_encodage_resolution.h);
+                        capture.Set(VideoCaptureProperties.Fps, configuration.camera_encodage_resolution.fr);
+                        capture.Set(VideoCaptureProperties.FourCC, FourCC.FromString(configuration.camera_encodage_resolution.format));
+                        configuration.camera_encodage_resolution = null;
                     }
 
                     if (first)
@@ -888,47 +970,47 @@ namespace OpenCVSharpJJ
 
         void ROI_AutoAdjustH(int hauteur_camera_mm)     // 2022/07/30 Dmax = 334.58mm
         {
-            float d_cam_objet_mm = 200;
-            double fov = 85 * Math.PI / 180;
-            float alpha = (float)fov / 2;
+            //float d_cam_objet_mm = 200;
+            //double fov = 85 * Math.PI / 180;
+            //float alpha = (float)fov / 2;
 
-            //int hauteur_camera_mm = 237; //exemple (position live)
-            int hauteur_camera_mm_max = 490; //exemple (calibration)
-            int hauteur_camera_mm_min = 150; //exemple (calibration)
+            ////int hauteur_camera_mm = 237; //exemple (position live)
+            //int hauteur_camera_mm_max = 490; //exemple (calibration)
+            //int hauteur_camera_mm_min = 150; //exemple (calibration)
 
-            //int keepX = roi.X;
-            //int keepW = roi.Width;
+            ////int keepX = roi.X;
+            ////int keepW = roi.Width;
 
-            //en fonction de la hauteur on va retirer de la ROI les zones extrêmes
-            float d_cam_bordimage_mm = d_cam_objet_mm * (float)Math.Tan(alpha);
+            ////en fonction de la hauteur on va retirer de la ROI les zones extrêmes
+            //float d_cam_bordimage_mm = d_cam_objet_mm * (float)Math.Tan(alpha);
 
-            if (hauteur_camera_mm + d_cam_bordimage_mm > hauteur_camera_mm_max)
-            {
-                //on doit rogner le haut : Y
-                float d_mm = hauteur_camera_mm + d_cam_bordimage_mm - hauteur_camera_mm_max;
-                int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
+            //if (hauteur_camera_mm + d_cam_bordimage_mm > hauteur_camera_mm_max)
+            //{
+            //    //on doit rogner le haut : Y
+            //    float d_mm = hauteur_camera_mm + d_cam_bordimage_mm - hauteur_camera_mm_max;
+            //    int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
 
-                roi.Y = d_pix;
-            }
-            else
-            {
-                //on rogne pas
-                roi.Y = 0;
-            }
+            //    roi.Y = d_pix;
+            //}
+            //else
+            //{
+            //    //on rogne pas
+            //    roi.Y = 0;
+            //}
 
-            if (hauteur_camera_mm - d_cam_bordimage_mm < hauteur_camera_mm_min)
-            {
-                //on doit rogner le bas : Height
-                float d_mm = hauteur_camera_mm_min - (hauteur_camera_mm - d_cam_bordimage_mm);
-                int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
+            //if (hauteur_camera_mm - d_cam_bordimage_mm < hauteur_camera_mm_min)
+            //{
+            //    //on doit rogner le bas : Height
+            //    float d_mm = hauteur_camera_mm_min - (hauteur_camera_mm - d_cam_bordimage_mm);
+            //    int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
 
-                roi.Height = rotated.mat.Height - d_pix;
-            }
-            else
-            {
-                //on rogne pas
-                roi.Height = rotated.mat.Height;
-            }
+            //    roi.Height = rotated.mat.Height - d_pix;
+            //}
+            //else
+            //{
+            //    //on rogne pas
+            //    roi.Height = rotated.mat.Height;
+            //}
         }
 
         void ComputePicture(Mat image)
@@ -1014,7 +1096,7 @@ namespace OpenCVSharpJJ
                 return;
 
             resized.mat = Resize(frame.mat);
-            rotated.mat = Rotation(resized.mat, rotation_angle);
+            rotated.mat = Rotation(resized.mat, configuration.rotation_angle);
 
             OpenCvSharp.Rect newroi;
             newroi = Cv2.SelectROI(window_name, rotated.mat, true);
@@ -1077,9 +1159,9 @@ namespace OpenCVSharpJJ
             roi_y = 0;
             roi_yh = 0;
 
-            roi_xw = x+ w;
-            roi_x = x; 
-            roi_yh = y+h;
+            roi_xw = x + w;
+            roi_x = x;
+            roi_yh = y + h;
             roi_y = y;
             //roi = new OpenCvSharp.Rect(x, y, w, h);
             //tbx_roi.Text = ROIToString();
@@ -1105,7 +1187,7 @@ namespace OpenCVSharpJJ
                 roi_x = x;
                 roi_yh = y + h;
                 roi_y = y;
-               // roi = new OpenCvSharp.Rect(x, y, w, h);
+                // roi = new OpenCvSharp.Rect(x, y, w, h);
             }
             catch (Exception ex)
             {
@@ -1150,7 +1232,7 @@ namespace OpenCVSharpJJ
 
             resized.mat = Resize(image);
 
-            rotated.mat = Rotation(resized.mat, rotation_angle);
+            rotated.mat = Rotation(resized.mat, configuration.rotation_angle);
 
             ROI1.mat = ROI_NewMat(rotated.mat, roi);
 
@@ -1375,7 +1457,7 @@ namespace OpenCVSharpJJ
             }
             #endregion
 
-            Cv2.Line(graph1.mat, 0, niveau_pixel, graph1.mat.Width - 1, niveau_pixel, bleu, epaisseur);
+           // Cv2.Line(graph1.mat, 0, niveau_pixel, graph1.mat.Width - 1, niveau_pixel, bleu, epaisseur);
 
             #region TRACE centre caméra (mire+)
             int milieuhauteur = rotated.mat.Height / 2;
@@ -1385,7 +1467,7 @@ namespace OpenCVSharpJJ
             #endregion
 
             #region GRAPH INIT de l'image
-            int largeur_graph = _pointsMax;
+            int largeur_graph = 255;
             graph1.mat = new Mat(nbrLignes, largeur_graph, type: MatType.CV_8UC3, noir);
             #endregion
 
@@ -1441,21 +1523,21 @@ namespace OpenCVSharpJJ
                 for (int i = 0; i < n_h; i++)
                 {
                     int y_ = (i + 1) * rotated.mat.Rows / n_h;
-                    Cv2.Line(rotated.mat, 0, y_, rotated.mat.Cols - 1, y_, blanc, 1);
+                    Cv2.Line(rotated.mat, 0, y_, rotated.mat.Cols - 1, y_, blanc, 3);
                 }
                 //verticales
                 int n_v = 10;
                 for (int i = 0; i < n_v; i++)
                 {
                     int x_ = (i + 1) * rotated.mat.Cols / n_v;
-                    Cv2.Line(rotated.mat, x_, 0, x_, rotated.mat.Rows - 1, blanc, 1);
+                    Cv2.Line(rotated.mat, x_, 0, x_, rotated.mat.Rows - 1, blanc, 3);
                 }
             }
             #endregion
 
             #region dessine roi sur rotated
             if (_DisplayROI == true)
-                Cv2.Rectangle(rotated.mat, roi, bleu, 1);
+                Cv2.Rectangle(rotated.mat, roi, bleu, 3);
             #endregion
 
             #region dessine centre sur roi
@@ -1643,15 +1725,7 @@ namespace OpenCVSharpJJ
         #region Resize
         Mat Resize(Mat frame)
         {
-            if (ResizeFactor == 100)
-                return frame;
-            return Resize(frame, ResizeFactor);
-        }
-
-        Mat Resize(Mat frame, int ResizeFactor_sur_100)
-        {
-            double facteur = (double)ResizeFactor_sur_100 / 100;
-            return Resize(frame, facteur);
+            return Resize(frame, configuration.resize_factor);
         }
 
         Mat Resize(Mat frame, double ResizeFactor)
@@ -1753,9 +1827,18 @@ namespace OpenCVSharpJJ
 
         void Button_Connexion_Click(object sender, MouseButtonEventArgs e)
         {
+            Arduino_Connexion();
+        }
+
+        void Arduino_Connexion()
+        {
             if (cs == null)
             {
-                cs = new Communication_Série.Communication_Série(cbx_COM.Text, cbx_bauds.Text, DataReceived);
+                //cs = new Communication_Série.Communication_Série(cbx_COM.Text, cbx_bauds.Text, DataReceived);
+                cs = new Communication_Série.Communication_Série(configuration.deplacement_portCOM,
+                   configuration.deplacement_bauds,
+                   //cbx_COM.Text, cbx_bauds.Text, 
+                   DataReceived);
                 if (cs.PortCom_ON())
                 {
                     Button_DeviceConnect.Visibility = Visibility.Visible;
@@ -1804,7 +1887,6 @@ namespace OpenCVSharpJJ
                     val_txt = val_txt.Replace("mm", "");
                     val_txt = val_txt.Replace(".", ",");
                     camera_pos_mm = float.Parse(val_txt);
-                    SLD_camera_position((float)camera_pos_mm);
                 }
                 if (txt.Contains("D max = "))
                 {
@@ -1812,7 +1894,6 @@ namespace OpenCVSharpJJ
                     val_txt = val_txt.Replace("mm", "");
                     val_txt = val_txt.Replace(".", ",");
                     camera_pos_max = float.Parse(val_txt);
-                    SLD_camera_position_max(camera_pos_max);
                 }
 
                 if (txt.Contains("Up max reached"))
@@ -1844,26 +1925,6 @@ namespace OpenCVSharpJJ
             }
         }
 
-        void SLD_camera_position(float value)
-        {
-            Application.Current.Dispatcher.BeginInvoke(
-                DispatcherPriority.Background,
-                new Action(() =>
-                {
-                    if (value > sld_camera_position_mm.Maximum)
-                        sld_camera_position_mm.Maximum = value;
-                    sld_camera_position_mm.Value = value;
-                }));
-        }
-        void SLD_camera_position_max(float value)
-        {
-            Application.Current.Dispatcher.BeginInvoke(
-                DispatcherPriority.Background,
-                new Action(() =>
-                {
-                    sld_camera_position_mm.Maximum = value;
-                }));
-        }
 
         void AddTextInLBX(string message)
         {
@@ -2291,49 +2352,51 @@ namespace OpenCVSharpJJ
         }
 
         #region IMAGE FILE(S)
-        void Button_PickFiles_Click(object sender, MouseButtonEventArgs e)
-        {
-            lbx_files.Items.Clear();
-            SelectFiles();
-        }
+        //void Button_PickFiles_Click(object sender, MouseButtonEventArgs e)
+        //{
+        //    lbx_files.Items.Clear();
+        //    SelectFiles();
+        //}
 
-        void Button_PickFilesAdd_Click(object sender, MouseButtonEventArgs e)
-        {
-            SelectFiles();
-        }
+        //void Button_PickFilesAdd_Click(object sender, MouseButtonEventArgs e)
+        //{
+        //    SelectFiles();
+        //}
 
-        void SelectFiles()
-        {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Multiselect = true;
-            if (openFileDialog.ShowDialog() == true)
-                foreach (var item in openFileDialog.FileNames)
-                    lbx_files.Items.Add(item);
-            if (lbx_files.Items.Count > 0)
-                lbx_files.SelectedIndex = 0;
-        }
+        //void SelectFiles()
+        //{
+        //    Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+        //    openFileDialog.Multiselect = true;
+        //    if (openFileDialog.ShowDialog() == true)
+        //        foreach (var item in openFileDialog.FileNames)
+        //            lbx_files.Items.Add(item);
+        //    if (lbx_files.Items.Count > 0)
+        //        lbx_files.SelectedIndex = 0;
+        //}
 
-        void Button_Files_Clear(object sender, MouseButtonEventArgs e)
-        {
-            lbx_files.Items.Clear();
-        }
+        //void Button_Files_Clear(object sender, MouseButtonEventArgs e)
+        //{
+        //    lbx_files.Items.Clear();
+        //}
 
-        void lbx_files_Change(object sender, SelectionChangedEventArgs e)
-        {
-            if (first)
-            {
-                Display_Init();
-                MatNamesToMats_Reset();
-                first = false;
-            }
-            if (lbx_files.SelectedValue == null)
-                return;
+        //void lbx_files_Change(object sender, SelectionChangedEventArgs e)
+        //{
+        //    if (first)
+        //    {
+        //        Display_Init();
+        //        MatNamesToMats_Reset();
+        //        first = false;
+        //    }
+        //    if (lbx_files.SelectedValue == null)
+        //        return;
 
-            frame.mat = new Mat(lbx_files.SelectedValue.ToString());
+        //    frame.mat = new Mat(lbx_files.SelectedValue.ToString());
 
-            ComputePicture(frame.mat);
-        }
+        //    ComputePicture(frame.mat);
+        //}
+        #endregion
 
+        #region DATA Points
         private void Button_SaveData_ToDisk_Click(object sender, MouseButtonEventArgs e)
         {
             string cheminDossier = _SavedFolder + "\\DATA\\";
@@ -2362,8 +2425,6 @@ namespace OpenCVSharpJJ
         {
             _points.Clear();
         }
-
-
         #endregion
 
         #region Graphique
