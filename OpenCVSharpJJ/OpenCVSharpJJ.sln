@@ -7,10 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCVSharpJJ", "OpenCVShar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Communication_Série", "Communication_Série\Communication_Série\Communication_Série.csproj", "{6B67FD91-AF94-4F24-B934-43CBF1D56927}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Standard_UC_Net4_7_2_JJO", "Standard_UC_JJO\Standard_UC_.Net4.7.2_JJO\Standard_UC_.Net4.7.2_JJO\Standard_UC_Net4_7_2_JJO.csproj", "{859512E7-50BF-40AC-A772-72DF852098F4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Standard_UC_JJO", "Standard_UC_JJO\Standard_UC_.Net4_JJO\Standard_UC_JJO.csproj", "{24BDEB06-738E-4392-A78D-163185A26329}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,14 +21,6 @@ Global
 		{6B67FD91-AF94-4F24-B934-43CBF1D56927}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B67FD91-AF94-4F24-B934-43CBF1D56927}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B67FD91-AF94-4F24-B934-43CBF1D56927}.Release|Any CPU.Build.0 = Release|Any CPU
-		{859512E7-50BF-40AC-A772-72DF852098F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{859512E7-50BF-40AC-A772-72DF852098F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{859512E7-50BF-40AC-A772-72DF852098F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{859512E7-50BF-40AC-A772-72DF852098F4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{24BDEB06-738E-4392-A78D-163185A26329}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{24BDEB06-738E-4392-A78D-163185A26329}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{24BDEB06-738E-4392-A78D-163185A26329}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{24BDEB06-738E-4392-A78D-163185A26329}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

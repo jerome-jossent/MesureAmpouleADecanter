@@ -20,6 +20,7 @@ static char message[MAX_MESSAGE_LENGTH]; //incoming message
 
 //System Manager ==================================================
 bool au;
+bool scanmode = false;
 
 //Memory Manager ==================================================
 //#include <AT24C256.h>
@@ -123,6 +124,25 @@ void InteractionManager(){
   if (message[0] != 'e')
       au = false;
   
+  //i : info
+  //c : calibration
+  //e : emergency stop
+  //y : PrintD
+  //p : PrintPosition
+  //d : go down 
+  //u : go up  
+  //D : go down MIN 
+  //U : go up MAX
+  //s : scan mode On/Off  
+  //T:  set temps pulseWidthMicros
+  //t:  set temps microsBtwnSteps
+  
+    Deplacement_Min();
+    if (au) return;
+    Deplacement_Max();
+    if (au) return;
+
+  
   switch (message[0]){
     case 'i':
       PrintInfos();
@@ -160,20 +180,6 @@ void InteractionManager(){
       //Save_d(Add_coder, coder);
       PrintPosition();
       break;
-
-    case 'T':
-      //set temps pulseWidthMicros
-      val = GetVal();
-      pulseWidthMicros = (int)val;
-      PrintpulseWidthMicros();
-      break;
-
-    case 't':
-      //set temps microsBtwnSteps
-      val = GetVal();
-      microsBtwnSteps = (int)val;
-      PrintmicrosBtwnSteps();
-      break;
       
     case 'u':
       val = GetVal();
@@ -196,7 +202,32 @@ void InteractionManager(){
       PrintPosition();
       PrintD();
       break;
-      
+
+    case 'T':
+      //set temps pulseWidthMicros
+      val = GetVal();
+      pulseWidthMicros = (int)val;
+      PrintpulseWidthMicros();
+      break;
+
+    case 't':
+      //set temps microsBtwnSteps
+      val = GetVal();
+      microsBtwnSteps = (int)val;
+      PrintmicrosBtwnSteps();
+      break;
+
+    case 's':
+      //Scan Mode ON/OFF
+      scanmode = !scanmode;
+      if(scanmode){
+        Serial.println(Scan mode : ON);  
+        Scan(); 
+      }else{
+        Serial.println(Scan mode : OFF);   
+      }
+      break;
+
     default:
       Serial.print("inconnu : ");
       Serial.println(message);      
@@ -281,7 +312,7 @@ void Etalonnage(bool termineExtremiteHaute){
     Deplacement_Min();
     if (au) return;
     Deplacement_Max();
-    if (au) return;         
+    if (au) return;
   } else {
     
     Deplacement_Max();
@@ -300,6 +331,11 @@ void Etalonnage(bool termineExtremiteHaute){
   Serial.println(coder_max);
 
   Serial.println("Calibration end");
+}
+
+void Scan(){
+//  scanmode
+//DEV EN COURS
 }
 
 bool Deplacement(float d_rel_mm){
