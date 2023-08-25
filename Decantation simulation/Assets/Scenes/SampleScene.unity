@@ -60398,7 +60398,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1932701166}
   m_Layer: 0
-  m_Name: glissiere
+  m_Name: PARTIE MOBILE
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -60412,7 +60412,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1932701165}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.108, z: 1.3}
+  m_LocalPosition: {x: 0, y: 0.203, z: 1.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
