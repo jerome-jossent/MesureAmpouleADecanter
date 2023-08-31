@@ -136,7 +136,18 @@ namespace OpenCVSharpJJ
         }
         [JsonIgnore] double _seuil_perte_intensite = 0.3;
 
-
+        public bool? inverser
+        {
+            get { return _inverser; }
+            set
+            {
+                if (_inverser == value)
+                    return;
+                _inverser = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] bool? _inverser;
 
         public double bande_morte_mm
         {
@@ -176,6 +187,19 @@ namespace OpenCVSharpJJ
             }
         }
         [JsonIgnore] string _savedImageFolder;
+
+        public bool? addDirectory
+        {
+            get { return _addDirectory; }
+            set
+            {
+                if (_addDirectory == value)
+                    return;
+                _addDirectory = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] bool? _addDirectory;
 
 
         [JsonIgnore] static string filename = "Configuration.json";

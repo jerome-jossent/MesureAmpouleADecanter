@@ -205,6 +205,19 @@ namespace OpenCVSharpJJ
         }
         int _roi_yh;
 
+        public int savedImageCount
+        {
+            get { return _savedImageCount; }
+            set
+            {
+                if (_savedImageCount == value)
+                    return;
+                _savedImageCount = value;
+                OnPropertyChanged();
+            }
+        }
+        int _savedImageCount = 0;
+
         public System.Drawing.Bitmap _imageSource
         {
             get
@@ -365,6 +378,8 @@ namespace OpenCVSharpJJ
         DateTime t_last;
         TimeSpan t_vide = TimeSpan.FromSeconds(0.1);
         PointJJ lastPoint;
+
+        string savedImagesPath;
         #endregion
 
         #region ENUMERATIONS
@@ -889,6 +904,8 @@ namespace OpenCVSharpJJ
             DisplayFPS();
         }
 
+
+        bool firstFileToSave = true;
         void Save(NamedMat image)
         {
             DateTime t = DateTime.Now;
@@ -896,11 +913,28 @@ namespace OpenCVSharpJJ
             {
                 t_last_save = t;
                 string filename;
+
+                if (firstFileToSave)
+                {
+                    savedImageCount = 0;
+
+                    savedImagesPath = configuration.savedImageFolder + "\\";
+                    if (configuration.addDirectory == true)
+                        savedImagesPath += DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss") + "\\";
+
+                    //create folder
+                    Directory.CreateDirectory(savedImagesPath);
+
+                    firstFileToSave = false;
+                }
+
                 if (camera_pos_mm == null)
-                    filename = configuration.savedImageFolder + "\\" + image.imageType + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + ".jpg";
+                    filename = savedImagesPath + image.imageType + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + ".jpg";
                 else
-                    filename = configuration.savedImageFolder + "\\" + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + (int)camera_pos_mm + ".jpg";
+                    filename = savedImagesPath + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + (int)camera_pos_mm + ".jpg";
                 bool res = image.mat.SaveImage(filename);
+
+                savedImageCount++;
             }
         }
 
@@ -1116,29 +1150,49 @@ namespace OpenCVSharpJJ
             //https://stackoverflow.com/questions/59263100/how-to-easily-apply-a-gauss-filter-to-a-list-array-of-doubles
             #endregion
 
+            #region inverser les valeurs
+            if (configuration.inverser == true)
+            {
+                for (int y = 0; y < moyennesX.Length; y++)
+                    moyennesX[y] = valmax - moyennesX[y];
+            }
+            #endregion
+
             #region recherche dépassements de seuil
-            //on recherche (à partir de l'intensité max) ()en partant du haut la PREMIERE ligne pour laquelle on perd X% d'intensité
             float x_perte = (float)configuration.seuil_perte_intensite;
             float x_range = valmax - valmin;
             float seuil = (1 - x_perte) * x_range + valmin;
-            int niveau_pixel_debut = -1;
 
-            for (int y = 0; y < moyennesX.Length; y++)
-                if (moyennesX[y] < seuil)
-                {
-                    niveau_pixel_debut = y;
-                    break;
-                }
+            ////on recherche (à partir de l'intensité max) ()en partant du haut la PREMIERE ligne pour laquelle on perd X% d'intensité
+            //int niveau_pixel_debut = -1;
+            //for (int y = 0; y < moyennesX.Length; y++)
+            //    if (moyennesX[y] < seuil)
+            //    {
+            //        niveau_pixel_debut = y;
+            //        break;
+            //    }
 
             //on recherche (à partir de l'intensité max) ()en partant du bas la PREMIERE ligne pour laquelle on atteint X% d'intensité
             int niveau_pixel_fin = -1;
 
-            for (int y = moyennesX.Length - 1; y >= 0; y--)
-                if (moyennesX[y] > seuil)
-                {
-                    niveau_pixel_fin = y;
-                    break;
-                }
+            if (configuration.inverser == false)
+                for (int y = moyennesX.Length - 1; y >= 0; y--)
+                    if (moyennesX[y] > seuil)
+                    {
+                        niveau_pixel_fin = y;
+                        break;
+                    }
+
+            if (configuration.inverser == true)
+            {
+                seuil = valmax - seuil;
+                for (int y = moyennesX.Length - 1; y >= 0; y--)
+                    if (moyennesX[y] < seuil)
+                    {
+                        niveau_pixel_fin = y;
+                        break;
+                    }
+            }
             #endregion
             // moyenne entre niveau_pixel_debut et niveau_pixel_fin ???????????????
             //niveau_pixel = niveau_pixel_debut;
@@ -2060,7 +2114,8 @@ namespace OpenCVSharpJJ
                 if (first_commande)
                 {
                     first_commande = false;
-                    deplacement_mm_commande = 10; // arbitrairement, on prend 10mm pour le premier déplacement
+                    //deplacement_mm_commande = 10; // arbitrairement, on prend 10mm pour le premier déplacement
+                    deplacement_mm_commande = 3; // arbitrairement, on prend 10mm pour le premier déplacement
                 }
                 else
                 {
@@ -2076,7 +2131,8 @@ namespace OpenCVSharpJJ
                 }
                 else
                 {
-                    deplacement_mm_commande = Clamp(deplacement_mm_commande, -1, 1); //par petit pas (maxi +/-1 mm)
+                    //deplacement_mm_commande = Clamp(deplacement_mm_commande, -1, 1); //par petit pas (maxi +/-1 mm)
+                    deplacement_mm_commande = Clamp(deplacement_mm_commande, -5, 5); //par petit pas (maxi +/-1 mm)
                     //delta_pix_precedent = delta_pix;
                     //deplacement_mm_commande_precedent = deplacement_mm_commande;
                     string commandeArduino = (monte) ? "u" + deplacement_mm_commande.ToString() : "d" + (-deplacement_mm_commande).ToString();
@@ -2085,10 +2141,17 @@ namespace OpenCVSharpJJ
                     //temps d'action : attente que la commande soit terminée (Arduino dit "Waiting")
                     arduinoWaiting = false;
                     while (!arduinoWaiting)
-                        Thread.Sleep(10);
+                        //Thread.Sleep(10);
+                        //modifié le 2023/08/31
+                        Thread.Sleep(1);
                 }
 
-                Thread.Sleep(300);
+                //retiré le 2023/08/31
+                //Thread.Sleep(300);
+
+
+
+
 
 
                 //int d_mm;
@@ -2265,6 +2328,12 @@ namespace OpenCVSharpJJ
             if (result == System.Windows.Forms.DialogResult.OK)
                 configuration.savedImageFolder = dialog.SelectedPath;
         }
+
+        private void btn_OpenDataFolder_click(object sender, MouseButtonEventArgs e)
+        {
+            System.Diagnostics.Process.Start(savedImagesPath);
+        }
+
         #endregion
 
 
@@ -2290,6 +2359,7 @@ namespace OpenCVSharpJJ
 
             //envoyer un message à l'arduio pour dire "mode SCAN = OFF"
         }
+
         #endregion
 
         #region Graphique

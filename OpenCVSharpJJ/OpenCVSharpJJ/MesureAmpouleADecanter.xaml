@@ -37,12 +37,12 @@
                 <MenuItem Header="Save" Click="LayoutSaveButton_Click"/>
                 <MenuItem Header="Load" Click="LayoutLoadButton_Click"/>
             </MenuItem>
-           
+
             <MenuItem Header="Scan" IsEnabled="False">
                 <MenuItem Header="Start" x:Name="mit_scan_start" Click="mit_scan_start_Click"/>
                 <MenuItem Header="Stop" x:Name="mit_scan_stop" IsEnabled="False" Click="mit_scan_stop_Click"/>
             </MenuItem>
-            
+
             <MenuItem Header="About">
                 <MenuItem Header="VERI"/>
                 <MenuItem Header="Jérôme Jossent"/>
@@ -78,6 +78,7 @@
                                         <ColumnDefinition Width="30"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
+                                        <RowDefinition Height="30"/>
                                         <RowDefinition Height="30"/>
                                         <RowDefinition Height="30"/>
                                         <RowDefinition Height="30"/>
@@ -120,6 +121,8 @@
                                     <TextBox Grid.Row="3" Grid.Column="1" x:Name="tbx_txt_to_arduino" Margin="2" VerticalContentAlignment="Center" KeyDown="tbx_txt_to_arduino_KeyDown"/>
                                     <Image Grid.Row="3" Grid.Column="2" Margin="2" Source="images/device_send_to_it.png" MouseDown="SendToArduino" 
                    RenderOptions.BitmapScalingMode="HighQuality" ToolTip="Send to Arduino"/>
+
+                                    <Label Grid.Row="4" Grid.ColumnSpan="90" Content="METTRE bouton info (envoi i)" />
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
@@ -162,7 +165,9 @@
                        RenderOptions.BitmapScalingMode="HighQuality" Source="images/Stop.png" ToolTip="Stop camera" Visibility="Collapsed"/>
                                     </Grid>
 
-                                    <!--SAVE FRAME-->
+                                    <Separator Margin="10"/>
+
+                                    <!--SAVE FRAME A METTRE DANS UN UC Dédié-->
                                     <StackPanel Orientation="Vertical">
                                         <CheckBox Content="Save frame to disk" IsChecked="{Binding configuration.saveFrame, 
                                             UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
@@ -175,6 +180,18 @@
                                                    RenderOptions.BitmapScalingMode="Fant" Stretch="UniformToFill" Height="25" VerticalAlignment="Top"/>
                                             <TextBox Grid.Column="1" Text="{Binding configuration.savedImageFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"/>
                                         </Grid>
+                                        <CheckBox Content="Add directory" IsChecked="{Binding configuration.addDirectory, 
+                                            UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+
+                                        <StackPanel Height="30" Orientation="Horizontal">
+                                            <Label Content="Open saved image folder" VerticalContentAlignment="Center"/>
+                                            <Image  MouseDown="btn_OpenDataFolder_click" Source="images/5129-tOo-Dossierouvert.png" 
+                                                   RenderOptions.BitmapScalingMode="Fant" Stretch="UniformToFill" Height="25" VerticalAlignment="Top"/>
+                                            <Label  Content="{Binding savedImageCount, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+
+
+
                                     </StackPanel>
                                 </StackPanel>
                             </xcad:LayoutAnchorable>
@@ -297,8 +314,15 @@
 
                                         <xctk:DoubleUpDown Grid.Column="2" Value="{Binding configuration.seuil_perte_intensite, Mode=TwoWay}" MinWidth="60"
                                                            Minimum="0" Maximum="1" Increment="0.01"
-                                                           FormatString="F2" />                                        
+                                                           FormatString="F2" />
                                     </Grid>
+
+                                    <!--inverser la détection-->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Inverser" MinWidth="150"/>
+                                        <CheckBox IsChecked="{Binding configuration.inverser}" VerticalAlignment="Center" />
+                                    </StackPanel>
+
 
                                     <!--bande morte sur erreur-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -307,7 +331,7 @@
                                                            Minimum="0" Maximum="10" Increment="0.1" 
                                                            FormatString="F2"/>
                                     </StackPanel>
-                                    
+
                                     <!--bande morte sur erreur-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Label Content="Bande morte (px)" MinWidth="150"/>

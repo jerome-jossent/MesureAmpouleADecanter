@@ -55,7 +55,7 @@ int i_tour = 1000;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("System Starting");
   
   //init STEP Motor
@@ -115,6 +115,9 @@ void InteractionManager(){
   if (!SerialManager()) return;
 
   //Traitement du message reçu
+
+  //debug
+  Serial.println(message);   
   
   //à déclarer en dehors du switch, sinon CASSE le switch !
   float val; 
@@ -135,14 +138,7 @@ void InteractionManager(){
   //U : go up MAX
   //s : scan mode On/Off  
   //T:  set temps pulseWidthMicros
-  //t:  set temps microsBtwnSteps
-  
-    Deplacement_Min();
-    if (au) return;
-    Deplacement_Max();
-    if (au) return;
-
-  
+  //t:  set temps microsBtwnSteps    
   switch (message[0]){
     case 'i':
       PrintInfos();
@@ -217,14 +213,14 @@ void InteractionManager(){
       PrintmicrosBtwnSteps();
       break;
 
-    case 's':
+    case 's':// EN TRAVAUX !!!
       //Scan Mode ON/OFF
       scanmode = !scanmode;
       if(scanmode){
-        Serial.println(Scan mode : ON);  
+        Serial.println("Scan mode : ON");  
         Scan(); 
       }else{
-        Serial.println(Scan mode : OFF);   
+        Serial.println("Scan mode : OFF");   
       }
       break;
 
