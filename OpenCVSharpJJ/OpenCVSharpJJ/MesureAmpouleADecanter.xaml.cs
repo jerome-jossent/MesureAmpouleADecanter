@@ -24,6 +24,7 @@ using OpenCVSharpJJ.Processing;
 using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using ScottPlot;
 
 
 namespace OpenCVSharpJJ
@@ -1866,7 +1867,10 @@ namespace OpenCVSharpJJ
                 AddTextInLBX("!! ARDUINO DISCONNECTED !!");
             }
         }
-
+        void SendToArduinoInfo(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("i");
+        }
         void Button_Clear_Click(object sender, MouseButtonEventArgs e)
         {
             Application.Current.Dispatcher.BeginInvoke(
@@ -1884,7 +1888,8 @@ namespace OpenCVSharpJJ
         }
 
         bool etalonnage_fin_haut;
-        void Button_Etalonnage_Click(object sender, RoutedEventArgs e)
+
+        private void Button_Etalonnage_Click(object sender, MouseButtonEventArgs e)
         {
             if (etalonnage_fin_haut)
                 SendToArduino("c1");
@@ -1902,7 +1907,16 @@ namespace OpenCVSharpJJ
         {
             SendToArduino("d");
         }
-        void Button_GetPosition_Click(object sender, RoutedEventArgs e)
+        void Button_UP_Max_Click(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("U");
+        }
+
+        void Button_DOWN_Min_Max_Click(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("D");
+        }
+        private void Button_GetPosition_Click(object sender, MouseButtonEventArgs e)
         {
             camera_pos_mm = null;
             SendToArduino("p");
@@ -1924,7 +1938,8 @@ namespace OpenCVSharpJJ
             CameraDisplacement_Button_Update();
         }
 
-        void Button_DriveByVision_Click(object sender, RoutedEventArgs e)
+
+        private void Button_DriveByVision_Click(object sender, MouseButtonEventArgs e)
         {
             CameraDisplacement_Start();
         }
@@ -2046,6 +2061,8 @@ namespace OpenCVSharpJJ
                 string[] ligne = new string[1] { lastPoint.ToString() };
                 System.IO.File.AppendAllLines(data_filename, ligne);
                 _points.Add(lastPoint);
+
+                plot._Add(lastPoint);
 
                 lastPoint = newPoint;
             }
@@ -2313,7 +2330,10 @@ namespace OpenCVSharpJJ
         {
             _points.Clear();
             lastPoint = null;
-            System.IO.File.Delete(data_filename);
+            if (System.IO.File.Exists(data_filename))
+                System.IO.File.Delete(data_filename);
+
+            plot._Clear();
         }
 
         private void btn_savedImageFolder_SelectFolder_click(object sender, MouseButtonEventArgs e)
@@ -2359,6 +2379,9 @@ namespace OpenCVSharpJJ
 
             //envoyer un message à l'arduio pour dire "mode SCAN = OFF"
         }
+
+
+
 
         #endregion
 

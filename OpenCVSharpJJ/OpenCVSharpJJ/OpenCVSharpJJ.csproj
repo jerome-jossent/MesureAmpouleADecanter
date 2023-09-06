@@ -63,6 +63,12 @@
     <Reference Include="OpenCvSharp.WpfExtensions, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenCvSharp4.WpfExtensions.4.5.2.20210404\lib\net461\OpenCvSharp.WpfExtensions.dll</HintPath>
     </Reference>
+    <Reference Include="ScottPlot, Version=4.1.67.0, Culture=neutral, PublicKeyToken=86698dc10387c39e, processorArchitecture=MSIL">
+      <HintPath>..\packages\ScottPlot.4.1.67\lib\net462\ScottPlot.dll</HintPath>
+    </Reference>
+    <Reference Include="ScottPlot.WPF, Version=4.1.67.0, Culture=neutral, PublicKeyToken=e53b06131e34a3aa, processorArchitecture=MSIL">
+      <HintPath>..\packages\ScottPlot.WPF.4.1.67\lib\net472\ScottPlot.WPF.dll</HintPath>
+    </Reference>
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
     </Reference>
@@ -106,6 +112,11 @@
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.5.0.0\lib\net45\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
@@ -173,6 +184,9 @@
     <Compile Include="Processing\ImPr_Rotation_UC.xaml.cs">
       <DependentUpon>ImPr_Rotation_UC.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Plot_UC.xaml.cs">
+      <DependentUpon>Plot_UC.xaml</DependentUpon>
+    </Compile>
     <Compile Include="VideoInInfo.cs" />
     <Page Include="CaptureVideo.xaml">
       <SubType>Designer</SubType>
@@ -217,6 +231,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Processing\ImPr_Rotation_UC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Plot_UC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -346,6 +364,37 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="images\Plus.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\interrogation.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\toggle_off2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="images\toggle_on2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\Settings.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\copy_to_clipboard.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\Download.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="images\Upload.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

@@ -73,7 +73,8 @@
                             <xcad:LayoutAnchorable ContentId="arduino" Title="Arduino" CanClose="False">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="30"/>
+                                        <ColumnDefinition Width="30"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="30"/>
                                     </Grid.ColumnDefinitions>
@@ -85,51 +86,62 @@
                                         <RowDefinition Height="30"/>
                                         <!--<RowDefinition Height="*"/>-->
                                     </Grid.RowDefinitions>
-                                    <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5" Source="images/device.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                    <ComboBox Grid.Row="0" Grid.Column="1" Name="cbx_COM" Margin="2" VerticalContentAlignment="Center"
+                                    <Image Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"  Grid.RowSpan="2" Margin="5" Source="images/device.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="2" Name="cbx_COM" Margin="2" VerticalContentAlignment="Center"
                       Text="{Binding configuration.deplacement_portCOM, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                       />
-                                    <Image Grid.Row="0" Grid.Column="2" x:Name="Button_COMRefresh" Margin="2" Source="images/refresh.png" 
+                                    <Image Grid.Row="0" Grid.Column="3" x:Name="Button_COMRefresh" Margin="2" Source="images/refresh.png" 
                    Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_COMRefresh_Click"
                    ToolTip="Refresh COM list"/>
 
-                                    <ComboBox Grid.Row="1" Grid.Column="1" Name="cbx_bauds" Margin="2" VerticalContentAlignment="Center"
+                                    <ComboBox Grid.Row="1" Grid.Column="2" Name="cbx_bauds" Margin="2" VerticalContentAlignment="Center"
                       Text="{Binding configuration.deplacement_bauds, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
 
-                                    <Image Grid.Row="1" Grid.Column="2" x:Name="Button_DeviceConnect" Margin="2" Source="images/device_connect.png" Stretch="Uniform" 
+                                    <Image Grid.Row="1" Grid.Column="3" x:Name="Button_DeviceConnect" Margin="2" Source="images/device_connect.png" Stretch="Uniform" 
                    RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_Connexion_Click" Visibility="Collapsed"
                    ToolTip="Disconnect"/>
-                                    <Image Grid.Row="1" Grid.Column="2" x:Name="Button_DeviceDisconnect" Margin="2" Source="images/device_disconnect.png" Stretch="Uniform" 
+                                    <Image Grid.Row="1" Grid.Column="3" x:Name="Button_DeviceDisconnect" Margin="2" Source="images/device_disconnect.png" Stretch="Uniform" 
                    RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_Connexion_Click"
                    ToolTip="Connect"/>
 
-                                    <Image Grid.Row="2" Grid.Column="0" Margin="2" Source="images/arrow_up.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
+                                    <Image Grid.Row="2" Grid.Column="1" Margin="2" Source="images/arrow_up.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
                    MouseDown="Button_UP_Click" ToolTip="UP"/>
-                                    <Image Grid.Row="3" Grid.Column="0" Margin="2" Source="images/arrow_down.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
+                                    <Image Grid.Row="3" Grid.Column="1" Margin="2" Source="images/arrow_down.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
                    MouseDown="Button_DOWN_Click" ToolTip="DOWN"/>
 
-                                    <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                    <Image Grid.Row="2" Grid.Column="0" Margin="2" Source="images/Upload.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
+                   MouseDown="Button_UP_Max_Click" ToolTip="Go UP Max"/>
+                                    <Image Grid.Row="3" Grid.Column="0" Margin="2" Source="images/Download.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" 
+                   MouseDown="Button_DOWN_Min_Max_Click" ToolTip="Go DOWN Min"/>
+
+                                    <StackPanel Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                    
                                         <Button Margin="2" Content="STOP" Click="Button_ARRETURGENCE_Click" Background="Red" Foreground="#FFFFFA00"/>
-                                        <Button Margin="2" Content="Calibrate" Click="Button_Etalonnage_Click"/>
 
-                                        <Button Margin="2" x:Name="Button_DriveByVisionPlay" Click="Button_DriveByVision_Click" Content="Drive by vision OFF" Background="Red" Foreground="White" Width="125"/>
-                                        <Button Margin="2" x:Name="Button_DriveByVisionStop" Click="Button_DriveByVision_Click" Content="Drive by vision ON" Background="Green" Foreground="White" Width="125"/>
+                                        <Label Margin="2" Content="Vision control" />
+                                       
+                                        <Image Margin="2" x:Name="Button_DriveByVisionPlay" ToolTip="Drive by vision OFF" Source="images/toggle_off2.png" MouseDown="Button_DriveByVision_Click" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        <Image Margin="2" x:Name="Button_DriveByVisionStop" ToolTip="Drive by vision ON" Source="images/toggle_on2.png" MouseDown="Button_DriveByVision_Click" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        
+                                        <Image ToolTip="Info" Margin="2" Source="images/interrogation.png" MouseDown="SendToArduinoInfo" RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                                        <Button Margin="2" Content="Get Position" Click="Button_GetPosition_Click"/>
+                                        <Image Margin="2" ToolTip="Calibrate" Source="images/Settings.png" MouseDown="Button_Etalonnage_Click" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                        <Image Margin="2" ToolTip="Get position" Source="images/copy_to_clipboard.png" MouseDown="Button_GetPosition_Click" RenderOptions.BitmapScalingMode="HighQuality"/>
+
                                     </StackPanel>
 
-                                    <TextBox Grid.Row="3" Grid.Column="1" x:Name="tbx_txt_to_arduino" Margin="2" VerticalContentAlignment="Center" KeyDown="tbx_txt_to_arduino_KeyDown"/>
-                                    <Image Grid.Row="3" Grid.Column="2" Margin="2" Source="images/device_send_to_it.png" MouseDown="SendToArduino" 
+                                    <TextBox Grid.Row="3" Grid.Column="2" x:Name="tbx_txt_to_arduino" Margin="2" VerticalContentAlignment="Center" KeyDown="tbx_txt_to_arduino_KeyDown"/>
+                                    <Image Grid.Row="3" Grid.Column="3" Margin="2" Source="images/device_send_to_it.png" MouseDown="SendToArduino" 
                    RenderOptions.BitmapScalingMode="HighQuality" ToolTip="Send to Arduino"/>
 
-                                    <Label Grid.Row="4" Grid.ColumnSpan="90" Content="METTRE bouton info (envoi i)" />
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
                             <!--ARDUINO READ-->
                             <xcad:LayoutAnchorable ContentId="deplacement" Title="Deplacement" CanClose="False">
                                 <Grid>
-                                    <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding arduinoMessages, UpdateSourceTrigger=PropertyChanged}" Foreground="#FF1A9B21" Background="Black"/>
+                                    <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding arduinoMessages, UpdateSourceTrigger=PropertyChanged}" Foreground="#00FF00" Background="#3A4149"/>
                                     <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right"/>
                                     <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" 
                                            Width="30" Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right" 
@@ -363,7 +375,7 @@
                             <!--DATA Points-->
                             <xcad:LayoutAnchorable ContentId="data" Title="Data" CanClose="False">
                                 <Grid>
-                                    <ScrollViewer  x:Name="scv_data" VerticalScrollBarVisibility="Auto" Foreground="Yellow"  Background="Gray" >
+                                    <ScrollViewer  x:Name="scv_data" VerticalScrollBarVisibility="Auto" Foreground="#00FF00"  Background="#3A4149" >
                                         <ItemsControl x:Name="items_data" ItemsSource="{Binding _points}"
                                             Margin="0, 0, 0, 0" VerticalAlignment="Top" HorizontalAlignment="Left">
                                             <ItemsControl.ItemsPanel>
@@ -413,6 +425,10 @@
 
                             <xcad:LayoutAnchorable ContentId="vue4" Title="Vue4" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i4" MinWidth="20"/>
+                            </xcad:LayoutAnchorable>
+                            
+                            <xcad:LayoutAnchorable ContentId="graph" Title="Kynch slope" CanClose="False">
+                                <local:Plot_UC x:Name="plot" />
                             </xcad:LayoutAnchorable>
 
                         </xcad:LayoutDocumentPane>

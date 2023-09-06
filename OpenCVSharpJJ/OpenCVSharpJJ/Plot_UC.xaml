@@ -1,0 +1,32 @@
+﻿<UserControl x:Class="OpenCVSharpJJ.Plot_UC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OpenCVSharpJJ"
+             xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"
+
+
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+            <Grid >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" Content="Decantation speed (mm/s)"/>
+                <Label Grid.Column="1" Content="{Binding decantation_speed, UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
+        </StackPanel>
+        
+        <ScottPlot:WpfPlot Grid.Row="1" x:Name="WpfPlot1" />
+
+    </Grid>
+</UserControl>
