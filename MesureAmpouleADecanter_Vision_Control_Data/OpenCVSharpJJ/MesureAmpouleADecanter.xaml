@@ -43,6 +43,13 @@
                 <MenuItem Header="Stop" x:Name="mit_scan_stop" IsEnabled="False" Click="mit_scan_stop_Click"/>
             </MenuItem>
 
+            <MenuItem Header="Simulator">
+                <MenuItem Header="Data for graph">
+                    <MenuItem Header="Start" Click="simul_data_for_graph_start_Click"/>
+                    <MenuItem Header="Stop" Click="simul_data_for_graph_stop_Click"/>
+                </MenuItem>
+            </MenuItem>
+            
             <MenuItem Header="About">
                 <MenuItem Header="VERI"/>
                 <MenuItem Header="Jérôme Jossent"/>

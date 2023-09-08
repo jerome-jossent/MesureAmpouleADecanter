@@ -2380,6 +2380,16 @@ namespace OpenCVSharpJJ
             //envoyer un message à l'arduio pour dire "mode SCAN = OFF"
         }
 
+        void simul_data_for_graph_start_Click(object sender, RoutedEventArgs e)
+        {
+            plot._Simulator_Start();
+        }
+
+        void simul_data_for_graph_stop_Click(object sender, RoutedEventArgs e)
+        {
+            plot._Simulator_Stop();
+        }
+
 
 
 

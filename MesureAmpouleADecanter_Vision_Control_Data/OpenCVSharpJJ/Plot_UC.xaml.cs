@@ -34,8 +34,6 @@ namespace OpenCVSharpJJ
             get => a_minimum == null ? "-" : ((double)a_minimum).ToString("F2");
         }
 
-
-
         bool autoScale = true;
         ScottPlot.Plottable.DataLogger logger1;
 
@@ -60,8 +58,6 @@ namespace OpenCVSharpJJ
         float speed_mm_par_sec = -10;
 
         DispatcherTimer timer;
-
-
 
         public Plot_UC()
         {
@@ -88,8 +84,6 @@ namespace OpenCVSharpJJ
 
             WpfPlot1.MouseDown += WpfPlot1_MouseDown;
             WpfPlot1.MouseDoubleClick += WpfPlot1_MouseDoubleClick;
-
-            Simulator_Start();
         }
 
         #region interaction avec graphique 
@@ -122,12 +116,17 @@ namespace OpenCVSharpJJ
         #endregion
 
         #region simulateur
-        void Simulator_Start()
+        public void _Simulator_Start()
         {
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(dt);
             timer.Tick += timer_Tick;
             timer.Start();
+        }
+        public void _Simulator_Stop()
+        {
+            timer.Stop();
+            _Clear();
         }
 
         void timer_Tick(object sender, EventArgs e)
@@ -162,8 +161,8 @@ namespace OpenCVSharpJJ
         public void _Clear()
         {
             logger1.Clear();
-            a_minimum = null;
             Update();
+            a_minimum = null;
         }
         #endregion
 
