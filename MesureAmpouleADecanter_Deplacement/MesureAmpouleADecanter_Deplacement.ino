@@ -6,8 +6,8 @@
 #define y_limit_max 11  //End stop HIGH
 
 const int stepsPerRev = 200; // <=> 1.8° par step
-int pulseWidthMicros = 1000;  //1000
-int microsBtwnSteps = 1000;  //1000
+int pulseWidthMicros = 500;  //1000
+int microsBtwnSteps = 500;  //1000
 
 // 2 mm => 1 tour => 200 steps
 // 2 / 200 = 0,01 mm/step
