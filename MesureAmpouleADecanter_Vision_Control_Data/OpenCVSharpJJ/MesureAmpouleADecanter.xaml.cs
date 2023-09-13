@@ -66,6 +66,11 @@ namespace OpenCVSharpJJ
         }
         string fps;
 
+
+        //update bande_morte_pix quand             configuration.bande_morte_mm change
+
+
+
         public bool? _DisplayGrids
         {
             get { return DisplayGrids; }
@@ -91,6 +96,19 @@ namespace OpenCVSharpJJ
             }
         }
         bool? DisplayROI = false;
+
+        public bool? _DeadBand
+        {
+            get { return DeadBand; }
+            set
+            {
+                if (DeadBand == value)
+                    return;
+                DeadBand = value;
+                OnPropertyChanged();
+            }
+        }
+        bool? DeadBand = false;
 
         public bool? _DisplayCenter
         {
@@ -482,14 +500,6 @@ namespace OpenCVSharpJJ
         Configuration _configuration = new Configuration();
 
         bool configurationLoading;
-
-        public int bande_morte_pix
-        {
-            get
-            {
-                return (int)(configuration.bande_morte_mm * configuration.ratio_pix_par_mm);
-            }
-        }
 
         bool arduinoWaiting;
 
@@ -1432,6 +1442,14 @@ namespace OpenCVSharpJJ
             }
             #endregion
 
+            #region dessine la bande morte
+            if (_DeadBand == true)
+            {
+                Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y + configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y + configuration.bande_morte_pix, turquoise, 1);
+                Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y - configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y - configuration.bande_morte_pix, turquoise, 1);
+            }
+            #endregion
+
             #region dessine roi sur rotated
             if (_DisplayROI == true)
                 Cv2.Rectangle(rotated.mat, roi, bleu, 3);
@@ -1630,7 +1648,12 @@ namespace OpenCVSharpJJ
             if (ResizeFactor == 1)
                 return frame;
 
+
             Mat _out = new Mat();
+            //erreur
+            if (ResizeFactor <= 0)
+                ResizeFactor = 10f / frame.Width;
+
             Cv2.Resize(frame, _out, new OpenCvSharp.Size(0, 0), ResizeFactor, ResizeFactor, InterpolationFlags.Cubic);
             return _out;
         }
@@ -1980,6 +2003,9 @@ namespace OpenCVSharpJJ
             Thread.Sleep(100);
             threadCommandeArduino?.Abort();
             threadCommandeArduino = null;
+
+            camera_pos_low_switch = false;
+            camera_pos_high_switch = false;
         }
 
 
@@ -1993,10 +2019,11 @@ namespace OpenCVSharpJJ
 
             int v = Mediane(ds_pix.ToArray());
 
-            if (Math.Abs(v) > bande_morte_pix)
+            distancepixel = v; // 2023/09/08
+            if (Math.Abs(v) > configuration.bande_morte_pix)
             {
                 //pas assez proche, rapprochons nous
-                distancepixel = v;
+                //distancepixel = v;
                 newTarget = true;
             }
             else
@@ -2142,7 +2169,7 @@ namespace OpenCVSharpJJ
                     deplacement_mm_commande = (int)Math.Round(val);
                 }
 
-                if (deplacement_mm_commande == 0)
+                if (deplacement_mm_commande == 0 || camera_pos_low_switch || camera_pos_high_switch)
                 {
 
                 }
@@ -2160,13 +2187,18 @@ namespace OpenCVSharpJJ
                     while (!arduinoWaiting)
                         //Thread.Sleep(10);
                         //modifié le 2023/08/31
-                        Thread.Sleep(1);
+                        //Thread.Sleep(1);
+                        Thread.Sleep(TimeSpan.FromTicks(1));
                 }
 
                 //retiré le 2023/08/31
                 //Thread.Sleep(300);
 
-
+                ////si extrémité atteinte
+                //if (camera_pos_low_switch || camera_pos_high_switch)
+                //{
+                //    CameraDisplacement_Stop();
+                //}
 
 
 

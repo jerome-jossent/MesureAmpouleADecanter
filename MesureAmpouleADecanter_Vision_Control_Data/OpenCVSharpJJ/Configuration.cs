@@ -82,7 +82,7 @@ namespace OpenCVSharpJJ
                 OnPropertyChanged();
             }
         }
-        [JsonIgnore] float _resize_factor;
+        [JsonIgnore] float _resize_factor = 1;
 
         public float rotation_angle
         {
@@ -95,7 +95,7 @@ namespace OpenCVSharpJJ
                 OnPropertyChanged();
             }
         }
-        [JsonIgnore] float _rotation_angle;
+        [JsonIgnore] float _rotation_angle = 0;
 
         public Rect roi
         {
@@ -161,6 +161,16 @@ namespace OpenCVSharpJJ
             }
         }
         [JsonIgnore] double _bande_morte_mm = 1;
+
+
+        [JsonIgnore]
+        public int bande_morte_pix
+        {
+            get
+            {
+                return (int)(bande_morte_mm * ratio_pix_par_mm);
+            }
+        }
 
         public bool? saveFrame
         {

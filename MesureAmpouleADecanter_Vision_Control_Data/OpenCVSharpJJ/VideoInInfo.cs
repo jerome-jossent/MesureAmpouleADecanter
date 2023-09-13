@@ -53,6 +53,9 @@ namespace OpenCVSharpJJ
         {
             Dictionary<string, Format> formats = new Dictionary<string, Format>();
             var devices = EnumerateVideoDevices();
+            if (deviceIndex == -1) 
+                return formats;
+
             if (deviceIndex < devices.Length)
             {
                 var device = devices[deviceIndex];
