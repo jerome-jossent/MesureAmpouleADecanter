@@ -5,14 +5,12 @@
 #define y_limit_min 10  //End stop LOW
 #define y_limit_max 11  //End stop HIGH
 
-const int stepsPerRev = 200; // <=> 1.8° par step
-int pulseWidthMicros = 1000;  //1000
-int microsBtwnSteps = 1000;  //1000
+int microsecPulse = 1000;
+int microsecBtwPulse = 1000;
 
 // 2 mm => 1 tour => 200 steps
-// 2 / 200 = 0,01 mm/step
-const float mm_p_tour = 2;
-const float d_step_mm = 0.01f;
+float bar_mm_by_tr = 2;   //  ********PARAMETRE SYSTEME************
+int motor_steps_by_tr = 200;   //  ********PARAMETRE SYSTEME************
 
 //Serial exchange =================================================
 const unsigned int MAX_MESSAGE_LENGTH = 12;
@@ -37,9 +35,11 @@ bool scanmode = false;
 #include "Thread.h"
 Thread coderThread = Thread();
 
-#define pinA 2 //noir
-#define pinB 5 //blanc
+#define pinA 2
+#define pinB 5
 #define pinZ 3
+int codeur_imp_p_tour = 1000;   //  ********PARAMETRE SYSTEME************
+
 long coder = 0 ;
 long coder_last = 0 ;
 long coder_updated = 0;
@@ -51,7 +51,6 @@ long coder_lastZ = 0 ;
 bool coder_last_dir;
 int delta_tour;
 bool z_init = true;
-int i_tour = 1000;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
@@ -70,11 +69,11 @@ void setup() {
   Serial.println("STEP Motor OK");
   
   //get coder saved values
-  //coder = Read_d(Add_coder);
-  //PrintPosition();    
-  //coder_max = Read_d(Add_codermax);
-  //PrintD();
-  //Serial.println("Memory OK");
+//coder = Read_d(Add_coder);
+//PrintPosition();    
+//coder_max = Read_d(Add_codermax);
+//PrintD();
+//Serial.println("Memory OK");
   
   //init coder
   pinMode(pinA,INPUT_PULLUP);
@@ -89,14 +88,11 @@ void setup() {
   coderThread.onRun(CoderCallback);
   Serial.println("Coder Thread OK");
 
-//INFOS
+  //INFOS
   PrintInfos();
 
   Serial.println("System Initialized");
 }
-
-void(* resetFunc) (void) = 0;//declare reset function at address 0
-//resetFunc(); //call reset 
 
 void loop() {
   if (coderThread.shouldRun()){
@@ -140,8 +136,11 @@ void InteractionManager(){
   //D : go down MIN 
   //U : go up MAX
   //s : scan mode On/Off  
-  //T:  set temps pulseWidthMicros
-  //t:  set temps microsBtwnSteps    
+  //T : set temps microsecPulse
+  //t : set temps microsecBtwPulse  
+  //m : set bar_mm_by_tr
+  //b : set motor_steps_by_tr
+
   switch (message[0]){
     case 'i':
       PrintInfos();
@@ -184,7 +183,7 @@ void InteractionManager(){
       val = GetVal();
       if (val == 0) val = 1;
       if (val < 0)  val = -val;
-      Serial.print("Go up asked");
+      Serial.print("Go up asked : ");
       Serial.println(String(val));
       Deplacement(val);
       //Save_d(Add_coder, coder);
@@ -203,17 +202,15 @@ void InteractionManager(){
       break;
 
     case 'T':
-      //set temps pulseWidthMicros
-      val = GetVal();
-      pulseWidthMicros = (int)val;
-      PrintpulseWidthMicros();
+      //set temps microsecPulse
+      microsecPulse = (int)GetVal();
+      PrintmicrosecPulse();
       break;
 
     case 't':
-      //set temps microsBtwnSteps
-      val = GetVal();
-      microsBtwnSteps = (int)val;
-      PrintmicrosBtwnSteps();
+      //set temps microsecBtwPulse
+      microsecBtwPulse = (int)GetVal();
+      PrintmicrosecBtwPulse();
       break;
 
     case 's':// EN TRAVAUX !!!
@@ -225,6 +222,18 @@ void InteractionManager(){
       }else{
         Serial.println("Scan mode : OFF");   
       }
+      break;
+
+    case 'm':
+      //set motor_steps_by_tr
+      motor_steps_by_tr = (int)GetVal();
+      Print_motor_steps_by_tr();
+      break;
+
+    case 'b':
+      //set bar_mm_by_tr
+      bar_mm_by_tr = GetVal();
+      Print_bar_mm_by_tr();
       break;
 
     default:
@@ -341,6 +350,8 @@ bool Deplacement(float d_rel_mm){
   int steps;
   digitalWrite(enPin, LOW);
       
+  float d_step_mm = bar_mm_by_tr / motor_steps_by_tr;
+      
   if (d_rel_mm > 0){
     //on monte
     digitalWrite(dirYPin, HIGH);
@@ -378,6 +389,8 @@ bool Deplacement(float d_rel_mm){
     }
   }
 
+  Serial.println(steps);
+
   digitalWrite(enPin, HIGH); 
   return true;
 }
@@ -386,9 +399,9 @@ void Move1Step(){
   InteractionManager();
   if (au) return;
   digitalWrite(stepYPin, HIGH);
-  delayMicroseconds(pulseWidthMicros);
+  delayMicroseconds(microsecPulse);
   digitalWrite(stepYPin, LOW);
-  delayMicroseconds(microsBtwnSteps); 
+  delayMicroseconds(microsecBtwPulse); 
 }
 
 //void Save_d(int Add, float val){
@@ -414,11 +427,15 @@ void PrintInfos(){
   
   PrintD();
   PrintPosition();
-  PrintpulseWidthMicros();
-  PrintmicrosBtwnSteps();
+  PrintmicrosecPulse();
+  PrintmicrosecBtwPulse();
+  Serial.println("\"Tx\" : set x microsecPulse" );
+  Serial.println("\"tx\" : set x microsecBtwPulse" );
 
-  Serial.println("\"Tx\" : set x pulseWidthMicros" );
-  Serial.println("\"tx\" : set x microsBtwnSteps" );
+  Print_bar_mm_by_tr();
+  Print_motor_steps_by_tr();
+  Serial.println("\"bx\" : set x bar_mm_by_tr" );
+  Serial.println("\"mx\" : set x motor_steps_by_tr" );
 
   Serial.println("---------------" );
 }
@@ -435,22 +452,34 @@ void PrintD(){
   Serial.println(" mm");  
 }
 
-void PrintpulseWidthMicros(){
-  Serial.print("pulseWidthMicros : ");
-  Serial.print(String(pulseWidthMicros));
+void PrintmicrosecPulse(){
+  Serial.print("microsecPulse : ");
+  Serial.print(String(microsecPulse));
   Serial.println(" µs");  
 }
 
-void PrintmicrosBtwnSteps(){
-  Serial.print("microsBtwnSteps : ");
-  Serial.print(String(microsBtwnSteps));
+void PrintmicrosecBtwPulse(){
+  Serial.print("microsecBtwPulse : ");
+  Serial.print(String(microsecBtwPulse));
   Serial.println(" µs");  
+}
+
+void Print_bar_mm_by_tr(){
+  Serial.print("Bar : ");
+  Serial.print(String(bar_mm_by_tr));
+  Serial.println(" mm/tr");  
+}
+
+void Print_motor_steps_by_tr(){
+  Serial.print("Motor : ");
+  Serial.print(String(motor_steps_by_tr));
+  Serial.println(" steps/tr");  
 }
 
 float Distance_mmFromCoderValue(long coderval){
-  //i_tour [int] = 1000 i / tour
-  //mm_p_tour [float] = 2 mm / tour
-  return mm_p_tour * coderval / i_tour;
+  //codeur_imp_p_tour [int] = 1000 i / tour
+  //bar_mm_by_tr [float] = 2 mm / tour
+  return bar_mm_by_tr * coderval / codeur_imp_p_tour;
 }
 
 //-----------------CODER-------------------
@@ -472,9 +501,9 @@ void changementZ(){
     if (coder_last_dir == dirYPin){
       delta_tour = coder - coder_lastZ;      
       if (delta_tour > 0)      
-        coder = coder_lastZ + i_tour;
+        coder = coder_lastZ + codeur_imp_p_tour;
       else
-        coder = coder_lastZ - i_tour;            
+        coder = coder_lastZ - codeur_imp_p_tour;            
     }
     
     coder_lastZ = coder;
