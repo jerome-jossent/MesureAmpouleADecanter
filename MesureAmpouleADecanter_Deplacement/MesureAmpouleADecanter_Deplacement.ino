@@ -5,14 +5,11 @@
 #define y_limit_min 10  //End stop LOW
 #define y_limit_max 11  //End stop HIGH
 
-const int stepsPerRev = 200; // <=> 1.8° par step
+int motor_steps_by_turn = 200; // <=> 1.8° par step
 int pulseWidthMicros = 1000;  //1000
 int microsBtwnSteps = 1000;  //1000
 
-// 2 mm => 1 tour => 200 steps
-// 2 / 200 = 0,01 mm/step
-const float mm_p_tour = 2;
-const float d_step_mm = 0.01f;
+//float mm_p_tour = 2;
 
 //Serial exchange =================================================
 const unsigned int MAX_MESSAGE_LENGTH = 12;
@@ -33,6 +30,9 @@ bool scanmode = false;
 //  byte by[4];
 //};
 
+//Mecanique
+float bar_mm_tour = 8.0f;
+
 //Coder Manager ==================================================
 #include "Thread.h"
 Thread coderThread = Thread();
@@ -51,7 +51,7 @@ long coder_lastZ = 0 ;
 bool coder_last_dir;
 int delta_tour;
 bool z_init = true;
-int i_tour = 1000;
+int coder_i_tour = 1000;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
@@ -184,7 +184,7 @@ void InteractionManager(){
       val = GetVal();
       if (val == 0) val = 1;
       if (val < 0)  val = -val;
-      Serial.print("Go up asked");
+      Serial.print("Go up asked : ");
       Serial.println(String(val));
       Deplacement(val);
       //Save_d(Add_coder, coder);
@@ -340,11 +340,13 @@ void Scan(){
 bool Deplacement(float d_rel_mm){
   int steps;
   digitalWrite(enPin, LOW);
-      
+
+  float d_step_in_mm = bar_mm_tour / motor_steps_by_turn;
+
   if (d_rel_mm > 0){
     //on monte
     digitalWrite(dirYPin, HIGH);
-    steps = d_rel_mm / d_step_mm;
+    steps = d_rel_mm / d_step_in_mm;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_max) == LOW) {
@@ -361,7 +363,7 @@ bool Deplacement(float d_rel_mm){
   } else {
     //on descend
     digitalWrite(dirYPin, LOW);
-    steps = - d_rel_mm / d_step_mm;
+    steps = - d_rel_mm / d_step_in_mm;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_min) == LOW) 
@@ -448,9 +450,9 @@ void PrintmicrosBtwnSteps(){
 }
 
 float Distance_mmFromCoderValue(long coderval){
-  //i_tour [int] = 1000 i / tour
-  //mm_p_tour [float] = 2 mm / tour
-  return mm_p_tour * coderval / i_tour;
+  //coder_i_tour [int] = 1000 i / tour
+  //bar_mm_tour [float] = 8 mm / tour
+  return bar_mm_tour * coderval / coder_i_tour;
 }
 
 //-----------------CODER-------------------
@@ -472,9 +474,9 @@ void changementZ(){
     if (coder_last_dir == dirYPin){
       delta_tour = coder - coder_lastZ;      
       if (delta_tour > 0)      
-        coder = coder_lastZ + i_tour;
+        coder = coder_lastZ + coder_i_tour;
       else
-        coder = coder_lastZ - i_tour;            
+        coder = coder_lastZ - coder_i_tour;            
     }
     
     coder_lastZ = coder;
