@@ -32,6 +32,91 @@ namespace OpenCVSharpJJ
 {
     public partial class MesureAmpouleADecanter : System.Windows.Window, INotifyPropertyChanged
     {
+        #region CLASSES
+        public class NamedMat
+        {
+            public Mat mat;
+            public ImageType imageType;
+            public NamedMat(ImageType imageType)
+            {
+                this.imageType = imageType;
+                //  /!\     si erreur dll OpenCV : dans les propriétés du projet, décocher "Préférer 32 bits"
+                mat = new Mat();
+            }
+        }
+
+        public class NamedMats
+        {
+            public Dictionary<ImageType, NamedMat> MatNamesToMats = new Dictionary<ImageType, NamedMat>();
+            internal NamedMat Get(ImageType imageType)
+            {
+                if (!MatNamesToMats.ContainsKey(imageType))
+                    MatNamesToMats.Add(imageType, new NamedMat(imageType));
+                return MatNamesToMats[imageType];
+            }
+        }
+
+        public class PointJJ
+        {
+            public DateTime T { get; set; }
+            public double t { get; set; }
+            public string T_string
+            {
+                get
+                {
+                    string chaine = T.ToString("yyyy/MM/dd HH:mm:ss.fff");
+                    return chaine;
+                }
+            }
+            public float z_mm { get; set; }
+
+            public int erreur_pixel { get; set; }
+
+            public PointJJ(DateTime T, float z_mm, int erreur_pixel)
+            {
+                this.T = T;
+                this.z_mm = z_mm;
+                this.erreur_pixel = erreur_pixel;
+                this.t = (T - MesureAmpouleADecanter.t0).TotalSeconds;
+            }
+            public PointJJ(float z_mm, int erreur_pixel)
+            {
+                T = DateTime.Now;
+                this.z_mm = z_mm;
+                this.erreur_pixel = erreur_pixel;
+            }
+
+            public override string ToString()
+            {
+                return t.ToString().Replace(",", ".") + "," +
+                    z_mm + "," +
+                    "," +
+                    T_string + "," +
+                    erreur_pixel;
+            }
+        }
+        #endregion
+
+        #region ENUMERATIONS
+        public enum ImageType
+        {
+            none,
+            original,
+            resized,
+            rotated,
+            roi1, roi2,
+            gray1, gray2,
+            bw1, bw2,
+            canny,
+            bgr1, bgr2,
+            debug1, debug2, debug3, debug4, debug5,
+            graph1, graph2
+        }
+
+        enum Calque { all, red, green, blue }
+        #endregion
+
+        #region VARIABLES & cie
         #region BINDINGS IHM
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -72,90 +157,40 @@ namespace OpenCVSharpJJ
 
 
 
-        public bool? _DisplayGrids
-        {
-            get { return DisplayGrids; }
-            set
-            {
-                if (DisplayGrids == value)
-                    return;
-                DisplayGrids = value;
-                OnPropertyChanged("_DisplayGrids");
-            }
-        }
-        bool? DisplayGrids = false;
 
-        public bool? _DisplayROI
-        {
-            get { return DisplayROI; }
-            set
-            {
-                if (DisplayROI == value)
-                    return;
-                DisplayROI = value;
-                OnPropertyChanged("_DisplayROI");
-            }
-        }
-        bool? DisplayROI = false;
 
-        public bool? _DeadBand
-        {
-            get { return DeadBand; }
-            set
-            {
-                if (DeadBand == value)
-                    return;
-                DeadBand = value;
-                OnPropertyChanged();
-            }
-        }
-        bool? DeadBand = false;
+        //public int Threshold1
+        //{
+        //    get { return threshold1; }
+        //    set
+        //    {
+        //        if (threshold1 == value)
+        //            return;
+        //        threshold1 = value;
 
-        public bool? _DisplayCenter
-        {
-            get { return DisplayCenter; }
-            set
-            {
-                if (DisplayCenter == value)
-                    return;
-                DisplayCenter = value;
-                OnPropertyChanged("_DisplayCenter");
-            }
-        }
-        bool? DisplayCenter = true;
+        //        ROI_AutoAdjustH(value);
 
-        public int Threshold1
-        {
-            get { return threshold1; }
-            set
-            {
-                if (threshold1 == value)
-                    return;
-                threshold1 = value;
+        //        OnPropertyChanged("Threshold1");
+        //        if (!captureVideoIsRunning)
+        //            ComputePicture(frame.mat);
+        //    }
+        //}
+        //int threshold1 = 350;
 
-                ROI_AutoAdjustH(value);
-
-                OnPropertyChanged("Threshold1");
-                if (!captureVideoIsRunning)
-                    ComputePicture(frame.mat);
-            }
-        }
-        int threshold1 = 350;
-
-        public int Threshold2
-        {
-            get { return threshold2; }
-            set
-            {
-                if (threshold2 == value)
-                    return;
-                threshold2 = value;
-                OnPropertyChanged("Threshold2");
-                if (!captureVideoIsRunning)
-                    ComputePicture(frame.mat);
-            }
-        }
-        int threshold2 = 10;
+        //public int Threshold2
+        //{
+        //    get { return threshold2; }
+        //    set
+        //    {
+        //        if (threshold2 == value)
+        //            return;
+        //        threshold2 = value;
+        //        OnPropertyChanged("Threshold2");
+        //        if (!captureVideoIsRunning)
+        //            ComputePicture(frame.mat);
+        //    }
+        //}
+        //int threshold2 = 10;
 
         public int rotatedframe_width { get { return rotated.mat.Width; } }
 
@@ -251,7 +286,7 @@ namespace OpenCVSharpJJ
                 if (imageSource != value)
                 {
                     imageSource = value;
-                    OnPropertyChanged("_imageSource");
+                    OnPropertyChanged();
                 }
             }
         }
@@ -270,7 +305,7 @@ namespace OpenCVSharpJJ
                 if (imageCalque != value)
                 {
                     imageCalque = value;
-                    OnPropertyChanged("_imageCalque");
+                    OnPropertyChanged();
                 }
             }
         }
@@ -289,7 +324,7 @@ namespace OpenCVSharpJJ
                 if (image1 != value)
                 {
                     image1 = value;
-                    OnPropertyChanged("_image1");
+                    OnPropertyChanged();
                 }
             }
         }
@@ -308,7 +343,7 @@ namespace OpenCVSharpJJ
                 if (image2 != value)
                 {
                     image2 = value;
-                    OnPropertyChanged("_image2");
+                    OnPropertyChanged();
                 }
             }
         }
@@ -327,7 +362,7 @@ namespace OpenCVSharpJJ
                 if (image3 != value)
                 {
                     image3 = value;
-                    OnPropertyChanged("_image3");
+                    OnPropertyChanged();
                 }
             }
         }
@@ -342,7 +377,7 @@ namespace OpenCVSharpJJ
             set
             {
                 _arduinoMessages = value;
-                OnPropertyChanged("ArduinoMessages");
+                OnPropertyChanged();
             }
         }
         ObservableCollection<string> _arduinoMessages = new ObservableCollection<string>();
@@ -353,6 +388,9 @@ namespace OpenCVSharpJJ
         #endregion
 
         #region VARIABLES GLOBALES
+
+        string data_filename;
+        public static DateTime t0;
         public int _pointsMax { get; set; }
         int nbrLignes;
         int nbrPixel_par_ligne;
@@ -399,94 +437,15 @@ namespace OpenCVSharpJJ
         TimeSpan t_vide = TimeSpan.FromSeconds(0.1);
         PointJJ lastPoint;
 
+        bool firstFileToSave = true;
         string savedImagesPath;
-        #endregion
 
-        #region ENUMERATIONS
-        public enum ImageType
-        {
-            none,
-            original,
-            resized,
-            rotated,
-            roi1, roi2,
-            gray1, gray2,
-            bw1, bw2,
-            canny,
-            bgr1, bgr2,
-            debug1, debug2, debug3, debug4, debug5,
-            graph1, graph2
-        }
 
-        enum Calque { all, red, green, blue }
-        #endregion
-
-        #region CLASSES
-        public class NamedMat
-        {
-            public Mat mat;
-            public ImageType imageType;
-            public NamedMat(ImageType imageType)
-            {
-                this.imageType = imageType;
-                //  /!\     si erreur dll OpenCV : dans les propriétés du projet, décocher "Préférer 32 bits"
-                mat = new Mat();
-            }
-        }
-
-        public class NamedMats
-        {
-            public Dictionary<ImageType, NamedMat> MatNamesToMats = new Dictionary<ImageType, NamedMat>();
-            internal NamedMat Get(ImageType imageType)
-            {
-                if (!MatNamesToMats.ContainsKey(imageType))
-                    MatNamesToMats.Add(imageType, new NamedMat(imageType));
-                return MatNamesToMats[imageType];
-            }
-        }
-
-        public class PointJJ
-        {
-            public DateTime T { get; set; }
-            public double t { get; set; }
-            public string T_string
-            {
-                get
-                {
-                    string chaine = T.ToString("yyyy/MM/dd HH:mm:ss.fff");
-                    return chaine;
-                }
-            }
-            public float z_mm { get; set; }
-
-            public int erreur_pixel { get; set; }
-
-            public PointJJ(DateTime T, float z_mm, int erreur_pixel)
-            {
-                this.T = T;
-                this.z_mm = z_mm;
-                this.erreur_pixel = erreur_pixel;
-                this.t = (T - MesureAmpouleADecanter.t0).TotalSeconds;
-            }
-            public PointJJ(float z_mm, int erreur_pixel)
-            {
-                T = DateTime.Now;
-                this.z_mm = z_mm;
-                this.erreur_pixel = erreur_pixel;
-            }
-
-            public override string ToString()
-            {
-                return t.ToString().Replace(",", ".") + "," +
-                    z_mm + "," +
-                    "," +
-                    T_string + "," +
-                    erreur_pixel;
-            }
-        }
+        bool etalonnage_fin_haut;
         #endregion
 
         #region PARAMETERS
+        bool configurationLoading;
         public Configuration configuration
         {
             get { return _configuration; }
@@ -499,8 +458,6 @@ namespace OpenCVSharpJJ
             }
         }
         Configuration _configuration = new Configuration();
-
-        bool configurationLoading;
 
         bool arduinoWaiting;
 
@@ -523,17 +480,7 @@ namespace OpenCVSharpJJ
         NamedMat bw2 = new NamedMat(ImageType.bw2);
         NamedMat graph1 = new NamedMat(ImageType.graph1);
         NamedMat graph2 = new NamedMat(ImageType.graph2);
-        Mat[] bgr;
-
-        Thread threadCaptureVideo;
-        Thread threadCommandeArduino;
-
-        Dictionary<string, VideoInInfo.Format> formats;
-        VideoCapture capture;
-        bool captureVideoIsRunning = false;
-        bool first = true;
-        VideoInInfo.Format camera_encodage_resolution_precedent = null;
-        System.Diagnostics.Stopwatch mesureFPS = new System.Diagnostics.Stopwatch();
+        //Mat[] bgr;
 
         OpenCvSharp.Rect roi
         {
@@ -550,6 +497,17 @@ namespace OpenCVSharpJJ
         }
         OpenCvSharp.Rect _roi;
 
+        Thread threadCaptureVideo;
+        Thread threadCommandeArduino;
+
+        Dictionary<string, VideoInInfo.Format> formats;
+        VideoCapture capture;
+        bool captureVideoIsRunning = false;
+        bool captureCamera_first = true;
+        VideoInInfo.Format camera_encodage_resolution_precedent = null;
+        System.Diagnostics.Stopwatch mesureFPS = new System.Diagnostics.Stopwatch();
+
+
         Communication_Série.Communication_Série cs;
         string buffer;
         char[] split_car = new char[] { '\n' };
@@ -559,13 +517,15 @@ namespace OpenCVSharpJJ
 
         bool cameraDisplacement_Running = false;
 
-        bool camera_pos_low_switch, camera_pos_high_switch;
+        bool camera_pos_low_switch;
+        bool camera_pos_high_switch;
 
-        OpenCvSharp.Window w;
+        OpenCvSharp.Window dislpay_debug;
+        //OpenCvSharp.Window w;
         //bool display_in_OpenCVSharpWindow = false;
         #endregion
 
-        #region CONSTANTES
+        #region COULEURS (OpenCV)
         Scalar rouge = new Scalar(0, 0, 255);
         Scalar magenta = new Scalar(255, 0, 150);
         Scalar vert = new Scalar(0, 255, 0);
@@ -574,6 +534,7 @@ namespace OpenCVSharpJJ
         Scalar blanc = new Scalar(255, 255, 255, 255);
         Scalar gris = new Scalar(128, 128, 128);
         Scalar noir = new Scalar(0, 0, 0);
+        #endregion
         #endregion
 
         #region WINDOW MANAGEMENT
@@ -618,6 +579,7 @@ namespace OpenCVSharpJJ
         private void lbx_arduino_received_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             lbx_arduino_received.SelectedIndex = lbx_arduino_received.Items.Count - 1;
+            lbx_arduino_received.ScrollIntoView(lbx_arduino_received.SelectedItem);
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
@@ -661,8 +623,6 @@ namespace OpenCVSharpJJ
                 throw;
             }
         }
-
-
         #endregion
         #endregion
 
@@ -703,6 +663,7 @@ namespace OpenCVSharpJJ
         }
         #endregion
 
+        #region CAMERA & IMAGE
         #region CAPTURE DEVICE
         void Camera_Init()
         {
@@ -792,7 +753,7 @@ namespace OpenCVSharpJJ
             captureVideoIsRunning = false;
             Thread.Sleep(100);
             threadCaptureVideo?.Abort();
-            first = true;
+            captureCamera_first = true;
             threadCaptureVideo = null;
         }
 
@@ -825,12 +786,12 @@ namespace OpenCVSharpJJ
                         camera_encodage_resolution_precedent = configuration.camera_encodage_resolution;
                     }
 
-                    if (first)
+                    if (captureCamera_first)
                     {
-                        Display_Init();
+                        //Display_Init();
                         MatNamesToMats_Reset();
                         roi = new OpenCvSharp.Rect();
-                        first = false;
+                        captureCamera_first = false;
 
                         for (int i = 0; i < 3; i++)
                             capture.Read(frame.mat);
@@ -866,97 +827,6 @@ namespace OpenCVSharpJJ
             }
         }
         #endregion
-
-        void ROI_AutoAdjustH(int hauteur_camera_mm)     // 2022/07/30 Dmax = 334.58mm
-        {
-            //float d_cam_objet_mm = 200;
-            //double fov = 85 * Math.PI / 180;
-            //float alpha = (float)fov / 2;
-
-            ////int hauteur_camera_mm = 237; //exemple (position live)
-            //int hauteur_camera_mm_max = 490; //exemple (calibration)
-            //int hauteur_camera_mm_min = 150; //exemple (calibration)
-
-            ////int keepX = roi.X;
-            ////int keepW = roi.Width;
-
-            ////en fonction de la hauteur on va retirer de la ROI les zones extrêmes
-            //float d_cam_bordimage_mm = d_cam_objet_mm * (float)Math.Tan(alpha);
-
-            //if (hauteur_camera_mm + d_cam_bordimage_mm > hauteur_camera_mm_max)
-            //{
-            //    //on doit rogner le haut : Y
-            //    float d_mm = hauteur_camera_mm + d_cam_bordimage_mm - hauteur_camera_mm_max;
-            //    int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
-
-            //    roi.Y = d_pix;
-            //}
-            //else
-            //{
-            //    //on rogne pas
-            //    roi.Y = 0;
-            //}
-
-            //if (hauteur_camera_mm - d_cam_bordimage_mm < hauteur_camera_mm_min)
-            //{
-            //    //on doit rogner le bas : Height
-            //    float d_mm = hauteur_camera_mm_min - (hauteur_camera_mm - d_cam_bordimage_mm);
-            //    int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
-
-            //    roi.Height = rotated.mat.Height - d_pix;
-            //}
-            //else
-            //{
-            //    //on rogne pas
-            //    roi.Height = rotated.mat.Height;
-            //}
-        }
-
-        void ComputePicture(Mat image)
-        {
-            if (!image.Empty())
-            {
-                NamedMat imageToSave = FrameProcessing1(image);
-            }
-
-            UpdateDisplayImages();
-
-            DisplayFPS();
-        }
-
-
-        bool firstFileToSave = true;
-        void Save(NamedMat image)
-        {
-            DateTime t = DateTime.Now;
-            if (t.Subtract(t_last_save) > t_vide_save)
-            {
-                t_last_save = t;
-                string filename;
-
-                if (firstFileToSave)
-                {
-                    savedImageCount = 0;
-
-                    savedImagesPath = configuration.savedImageFolder + "\\";
-                    if (configuration.addDirectory == true)
-                        savedImagesPath += DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss") + "\\";
-
-                    //create folder
-                    Directory.CreateDirectory(savedImagesPath);
-
-                    firstFileToSave = false;
-                }
-
-                if (camera_pos_mm == null)
-                    filename = savedImagesPath + image.imageType + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + ".jpg";
-                else
-                    filename = savedImagesPath + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + (int)camera_pos_mm + ".jpg";
-                bool res = image.mat.SaveImage(filename);
-
-                savedImageCount++;
-            }
-        }
 
         #region IMAGE PROCESSINGS
         void ImageProcessing_Init()
@@ -1001,6 +871,7 @@ namespace OpenCVSharpJJ
             NMs.MatNamesToMats.Add(ImageType.graph2, graph2);
         }
 
+        #region ROI
         void Button_CaptureDeviceROI_Click(object sender, RoutedEventArgs e)
         {
             string window_name = "Valid ROI with 'Enter' or 'Space', cancel with 'c'";
@@ -1094,6 +965,52 @@ namespace OpenCVSharpJJ
             roi_y = 0;
             roi_yh = rotatedframe_height;
         }
+
+        void ROI_AutoAdjustH(int hauteur_camera_mm)     // 2022/07/30 Dmax = 334.58mm
+        {
+            //float d_cam_objet_mm = 200;
+            //double fov = 85 * Math.PI / 180;
+            //float alpha = (float)fov / 2;
+
+            ////int hauteur_camera_mm = 237; //exemple (position live)
+            //int hauteur_camera_mm_max = 490; //exemple (calibration)
+            //int hauteur_camera_mm_min = 150; //exemple (calibration)
+
+            ////int keepX = roi.X;
+            ////int keepW = roi.Width;
+
+            ////en fonction de la hauteur on va retirer de la ROI les zones extrêmes
+            //float d_cam_bordimage_mm = d_cam_objet_mm * (float)Math.Tan(alpha);
+
+            //if (hauteur_camera_mm + d_cam_bordimage_mm > hauteur_camera_mm_max)
+            //{
+            //    //on doit rogner le haut : Y
+            //    float d_mm = hauteur_camera_mm + d_cam_bordimage_mm - hauteur_camera_mm_max;
+            //    int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
+
+            //    roi.Y = d_pix;
+            //}
+            //else
+            //{
+            //    //on rogne pas
+            //    roi.Y = 0;
+            //}
+
+            //if (hauteur_camera_mm - d_cam_bordimage_mm < hauteur_camera_mm_min)
+            //{
+            //    //on doit rogner le bas : Height
+            //    float d_mm = hauteur_camera_mm_min - (hauteur_camera_mm - d_cam_bordimage_mm);
+            //    int d_pix = (int)(d_mm / (float)_ratio_mm_pix);
+
+            //    roi.Height = rotated.mat.Height - d_pix;
+            //}
+            //else
+            //{
+            //    //on rogne pas
+            //    roi.Height = rotated.mat.Height;
+            //}
+        }
+        #endregion
 
         void FrameProcessing_InitData(Mat mat)
         {
@@ -1434,7 +1351,7 @@ namespace OpenCVSharpJJ
             #endregion
 
             #region dessine des lignes de repères
-            if (_DisplayGrids == true)
+            if (configuration.displayGrids == true)
             {
                 //horizontales
                 int n_h = 10;
@@ -1454,7 +1371,7 @@ namespace OpenCVSharpJJ
             #endregion
 
             #region dessine la bande morte
-            if (_DeadBand == true)
+            if (configuration.deadBand == true)
             {
                 Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y + configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y + configuration.bande_morte_pix, turquoise, 1);
                 Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y - configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y - configuration.bande_morte_pix, turquoise, 1);
@@ -1462,12 +1379,12 @@ namespace OpenCVSharpJJ
             #endregion
 
             #region dessine roi sur rotated
-            if (_DisplayROI == true)
+            if (configuration.displayROI == true)
                 Cv2.Rectangle(rotated.mat, roi, bleu, 3);
             #endregion
 
             #region dessine centre sur roi
-            if (_DisplayCenter == true)
+            if (configuration.displayCenter == true)
                 Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y, ROI1.mat.Cols - 1, milieuhauteur - roi.Y, rouge, 1);
             #endregion
 
@@ -1486,98 +1403,9 @@ namespace OpenCVSharpJJ
             return ROI1;
         }
 
-        float[] Medianes(float[] valeurs, int fenetre)
-        {
-            float[] medianes = new float[valeurs.Length];
-
-            for (int i = 0; i < medianes.Length; i++)
-            {
-                int index_a = i - fenetre;
-                if (index_a < 0) index_a = 0;
-                int index_z = i + fenetre;
-                if (index_z > valeurs.Length - 1) index_z = valeurs.Length - 1;
-
-                List<float> valeurs_fentre = valeurs.Skip(index_a).Take(index_z - index_a).OrderBy(n => n).Select(s => s).ToList<float>();
-                medianes[i] = valeurs_fentre[valeurs_fentre.Count / 2];
-            }
-
-            return medianes;
-        }
-
-        void GraphTemporelle()
-        {
-            Scalar fond = noir;
-            int hauteur_graph = ROI1.mat.Height;
-            int largeur_graph = _pointsMax;
-            Mat mat = new Mat(hauteur_graph, largeur_graph, type: MatType.CV_8UC3, fond);
-
-            if (_points.Count < _pointsMax)
-                return;
-
-            //tracé
-            try
-            {
-                for (int i = _points.Count - _pointsMax; i < _points.Count; i++)
-                {
-                    int y1 = ROI1.mat.Height - (int)(_points[i - 1].z_mm + ROI1.mat.Height / 2);
-                    int y2 = ROI1.mat.Height - (int)(_points[i].z_mm + ROI1.mat.Height / 2);
-                    Cv2.Line(mat, i - 1 - (_points.Count - _pointsMax), y1, i - (_points.Count - _pointsMax), y2, blanc, 1);
-                }
-            }
-            catch (Exception ex)
-            {
-                //
-            }
-
-            graph2.mat = mat;
-        }
-
-        void FrameProcessing2(Mat rotated)
-        {
-            if (roi.Width > 0)
-                ROI1.mat = new Mat(rotated, roi);
-            else
-                ROI1.mat = rotated;
-
-            frameGray.mat = RGBToGray(ROI1.mat, Calque.all);
-
-            //NamedMat BW1 = NMs.Get(ImageType.bw1);
-
-            ////BW1.mat = frameGray.mat.Threshold(Threshold1, 255, ThresholdTypes.Binary);
-            //Cv2.InRange(frameGray.mat, new Scalar(Threshold1), new Scalar(Threshold2), BW1.mat);
-
-
-            //Cv2.Canny(frameGray.mat, cannymat.mat, 50, 200);
-
-            //bgr[0] = cannymat.mat;
-            //bgr[1] = new Mat(bgr[0].Size(), MatType.CV_8UC1);
-            //bgr[2] = bgr[1];
-
-            //Cv2.Merge(bgr, BGR.mat);
-
-
-            //Cv2.Canny(ROI1.mat, cannymat.mat, 95, 100);
-            Cv2.Canny(ROI1.mat, cannymat.mat, Threshold1, Threshold2);
-
-            //HoughLinesP
-            //LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 180, 100, 100, 10);
-            LineSegmentPoint[] segHoughP = Cv2.HoughLinesP(cannymat.mat, 1, Math.PI / 2, 2, 30, 1);
-
-            //debug1.mat = ROI1.mat.EmptyClone();
-
-            bgr[0] = frameGray.mat;
-            bgr[1] = bgr[0];
-            bgr[2] = bgr[1];
-            Cv2.Merge(bgr, BGR.mat);
-
-            debug1.mat = BGR.mat.Clone();
-
-            foreach (LineSegmentPoint s in segHoughP)
-                debug1.mat.Line(s.P1, s.P2, Scalar.Red, 1, LineTypes.AntiAlias, 0);
-        }
         #endregion
 
-        #region COMMON IMAGE PROCESSING
+        #region (COMMON) IMAGE PROCESSING
         Mat RGBToGray(Mat input, Calque calque)
         {
             Mat gris = new Mat();
@@ -1646,6 +1474,17 @@ namespace OpenCVSharpJJ
             }
             return _out;
         }
+
+        private void Image_Turn90_Left_Click(object sender, MouseButtonEventArgs e)
+        {
+            configuration.rotation_angle -= 90;
+        }
+
+        private void Image_Turn90_Right_Click(object sender, MouseButtonEventArgs e)
+        {
+            configuration.rotation_angle += 90;
+        }
+
         #endregion
 
         #region Resize
@@ -1698,13 +1537,13 @@ namespace OpenCVSharpJJ
 
         #endregion
 
-        #region DISPLAY IMAGE(S)
-        void Display_Init()
-        {
-            bgr = new Mat[] { new Mat(frame.mat.Size(), MatType.CV_8UC1),
-                              new Mat(frame.mat.Size(), MatType.CV_8UC1),
-                              new Mat(frame.mat.Size(), MatType.CV_8UC1)};
-        }
+        #region IMAGE DISPLAY & SAVE
+        //void Display_Init()
+        //{
+        //    bgr = new Mat[] { new Mat(frame.mat.Size(), MatType.CV_8UC1),
+        //                      new Mat(frame.mat.Size(), MatType.CV_8UC1),
+        //                      new Mat(frame.mat.Size(), MatType.CV_8UC1)};
+        //}
 
         void UpdateDisplayImages()
         {
@@ -1722,7 +1561,50 @@ namespace OpenCVSharpJJ
             _fps = " [" + f.ToString("N1") + " fps]";
         }
 
-        OpenCvSharp.Window dislpay_debug;
+        void ComputePicture(Mat image)
+        {
+            if (!image.Empty())
+            {
+                NamedMat imageToSave = FrameProcessing1(image);
+            }
+
+            UpdateDisplayImages();
+
+            DisplayFPS();
+        }
+
+        void Save(NamedMat image)
+        {
+            DateTime t = DateTime.Now;
+            if (t.Subtract(t_last_save) > t_vide_save)
+            {
+                t_last_save = t;
+                string filename;
+
+                if (firstFileToSave)
+                {
+                    savedImageCount = 0;
+
+                    savedImagesPath = configuration.savedImageFolder + "\\";
+                    if (configuration.addDirectory == true)
+                        savedImagesPath += DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss") + "\\";
+
+                    //create folder
+                    Directory.CreateDirectory(savedImagesPath);
+
+                    firstFileToSave = false;
+                }
+
+                if (camera_pos_mm == null)
+                    filename = savedImagesPath + image.imageType + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + ".jpg";
+                else
+                    filename = savedImagesPath + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fff") + " _ " + (int)camera_pos_mm + ".jpg";
+                bool res = image.mat.SaveImage(filename);
+
+                savedImageCount++;
+            }
+        }
+
         void Display_debug(Mat mat)
         {
             if (dislpay_debug == null)
@@ -1737,12 +1619,14 @@ namespace OpenCVSharpJJ
         }
 
         #endregion
+        #endregion
 
+        #region DEPLACEMENT
         #region ARDUINO
         void Arduino_Init()
         {
             COMBaudsRefresh();
-            cbx_bauds.Text = "9600";
+            cbx_bauds.Text = "115200";
         }
 
         void Button_COMRefresh_Click(object sender, MouseButtonEventArgs e)
@@ -1856,6 +1740,21 @@ namespace OpenCVSharpJJ
             }
         }
 
+        private void Button_SendConfigToArduino_Click(object sender, MouseButtonEventArgs e)
+        {
+            //envoi l'ensemble des paramètres de configuration du système vers Arduino
+            SendToArduino("B" + configuration.bar_mm_by_turn.ToString().Replace(',', '.'));
+            Thread.Sleep(100);
+            SendToArduino("C" + configuration.coder_imp_by_turn.ToString());
+            Thread.Sleep(100);
+            SendToArduino("M" + configuration.motor_steps_by_turn.ToString());
+            Thread.Sleep(100);
+            SendToArduino("T" + configuration.motor_step_duration.ToString());
+            Thread.Sleep(100);
+            SendToArduino("t" + configuration.motor_step_pause.ToString());
+            Thread.Sleep(100);
+            SendToArduinoInfo(null, null);
+        }
 
         void AddTextInLBX(string message)
         {
@@ -1867,9 +1766,8 @@ namespace OpenCVSharpJJ
                     arduinoMessages.Add(message);
                     while (arduinoMessages.Count > 100)
                         arduinoMessages.RemoveAt(0);
+                    OnPropertyChanged("arduinoMessages");                    
                 }));
-
-            OnPropertyChanged("ArduinoMessages");
         }
 
         void tbx_txt_to_arduino_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -1914,14 +1812,6 @@ namespace OpenCVSharpJJ
                     arduinoMessages.Clear();
                 }));
         }
-
-
-        private void Button_Points_Clear_Click(object sender, MouseButtonEventArgs e)
-        {
-            points.Clear();
-        }
-
-        bool etalonnage_fin_haut;
 
         private void Button_Etalonnage_Click(object sender, MouseButtonEventArgs e)
         {
@@ -1972,7 +1862,6 @@ namespace OpenCVSharpJJ
             CameraDisplacement_Button_Update();
         }
 
-
         private void Button_DriveByVision_Click(object sender, MouseButtonEventArgs e)
         {
             CameraDisplacement_Start();
@@ -2019,7 +1908,6 @@ namespace OpenCVSharpJJ
             camera_pos_high_switch = false;
         }
 
-
         void NewDistancePixel(int d_pix)
         {
             ds_pix.Add(d_pix);
@@ -2028,13 +1916,12 @@ namespace OpenCVSharpJJ
             else
                 return;
 
-            int v = Mediane(ds_pix.ToArray());
+            //distancepixel : aussi dans CameraDisplacement()
+            distancepixel = Mediane(ds_pix.ToArray());
 
-            distancepixel = v; // 2023/09/08
-            if (Math.Abs(v) > configuration.bande_morte_pix)
+            if (Math.Abs(distancepixel) > configuration.bande_morte_pix)
             {
                 //pas assez proche, rapprochons nous
-                //distancepixel = v;
                 newTarget = true;
             }
             else
@@ -2042,7 +1929,8 @@ namespace OpenCVSharpJJ
                 //on est proche :
                 newTarget = false;
                 DateTime t = DateTime.Now;
-                //on peut sauvegarder ce point !
+
+                //on peut sauvegarder ce point !?
                 if (t - t_last > t_vide)
                 {
                     if (camera_pos_mm != null)
@@ -2052,23 +1940,7 @@ namespace OpenCVSharpJJ
                     }
                 }
             }
-
-            ////POUR TESTER GRAPH
-            //camera_pos_mm = v;
-            //DateTime ttest = DateTime.Now;
-            //if (ttest.Subtract(t_last) > t_vide)
-            //{
-            //    if (camera_pos_mm != null)
-            //    {
-            //        t_last = ttest;
-            //        Application.Current.Dispatcher.Invoke(() => NewPoint(ttest));
-            //    }
-            //}
         }
-
-
-        string data_filename;
-        public static DateTime t0;
 
         void NewPoint(DateTime t, int ecart_pix)
         {
@@ -2076,8 +1948,9 @@ namespace OpenCVSharpJJ
 
             if (lastPoint == null)
             {
-                lastPoint = newPoint;
                 t0 = t;
+                newPoint.t = 0;
+                lastPoint = newPoint;
 
                 //création du fichier de sauvegarde de l'expérience
                 string ligne = "t(s),z(mm),,date,erreur(pix)\n\r";
@@ -2104,49 +1977,6 @@ namespace OpenCVSharpJJ
 
                 lastPoint = newPoint;
             }
-
-            ////Limite du nombre de points
-            //while (_points.Count > _pointsMax)
-            //    //_points.RemoveAt(0);
-            //    _points.RemoveAt(_points.Count - 1);
-
-            ////nettoyage
-            //List<int> pointstoremove = new List<int>();
-            //for (int i = 0; i < _points.Count; i++)
-            //{
-            //    if (i > 1 && i < _points.Count)
-            //    {
-            //        if (_points[i].erreur_pixel > 1)
-            //            pointstoremove.Add(i);
-            //    }
-            //}
-            //for (int i = pointstoremove.Count - 1; i >= 0; i--)
-            //    _points.RemoveAt(pointstoremove[i]);
-
-
-
-
-
-            //GraphTemporelle();
-        }
-
-        int Mediane(int[] valeurs)
-        {
-            List<int> listToSort = valeurs.ToList();
-            listToSort.Sort();
-            return listToSort[listToSort.Count / 2];
-        }
-        static int Clamp(int value, int min, int max)
-        {
-            if (value < min) return min;
-            if (value > max) return max;
-            return value;
-        }
-        static float Clamp(float value, float min, float max)
-        {
-            if (value < min) return min;
-            if (value > max) return max;
-            return value;
         }
 
         void CameraDisplacement()
@@ -2169,14 +1999,13 @@ namespace OpenCVSharpJJ
                     continue;
                 }
 
-                delta_pix = distancepixel;
+                delta_pix = distancepixel; // variable setté dans NewDistancePixel()
                 bool monte = delta_pix > 0;
 
                 if (first_commande)
                 {
                     first_commande = false;
-                    //deplacement_mm_commande = 10; // arbitrairement, on prend 10mm pour le premier déplacement
-                    deplacement_mm_commande = 3; // arbitrairement, on prend 10mm pour le premier déplacement
+                    deplacement_mm_commande = 3; // arbitrairement, on prend 3mm pour le premier déplacement
                 }
                 else
                 {
@@ -2192,95 +2021,104 @@ namespace OpenCVSharpJJ
                 }
                 else
                 {
-                    //deplacement_mm_commande = Clamp(deplacement_mm_commande, -1, 1); //par petit pas (maxi +/-1 mm)
-
                     //TODO PARAMETRISER CLAMP
-                    deplacement_mm_commande = Clamp(deplacement_mm_commande, -5, 5); //par petit pas (maxi +/-1 mm)
+                    //deplacement_mm_commande = Clamp(deplacement_mm_commande, -5, 5); //par petit pas (maxi +/-1 mm)
                                                                                      //delta_pix_precedent = delta_pix;
                                                                                      //deplacement_mm_commande_precedent = deplacement_mm_commande;
-
-                    //                    string val_txt =
                     string commandeArduino = "";
-                    if (monte)
-                    {
-                        commandeArduino = "u";
-                    }
+                    if (monte)                    
+                        commandeArduino = "u";                    
                     else
                     {
                         commandeArduino = "d";
                         deplacement_mm_commande = -deplacement_mm_commande;
                     }
-                    string val_txt = deplacement_mm_commande.ToString().Replace(',','.');
+                    string val_txt = deplacement_mm_commande.ToString().Replace(',', '.');
                     SendToArduino(commandeArduino + val_txt);
 
                     //temps d'action : attente que la commande soit terminée (Arduino dit "Waiting")
                     arduinoWaiting = false;
                     while (!arduinoWaiting)
-                        //Thread.Sleep(10);
-                        //modifié le 2023/08/31
-                        //Thread.Sleep(1);
                         Thread.Sleep(TimeSpan.FromTicks(1));
                 }
-
-                //retiré le 2023/08/31
-                //Thread.Sleep(300);
-
-                ////si extrémité atteinte
-                //if (camera_pos_low_switch || camera_pos_high_switch)
-                //{
-                //    CameraDisplacement_Stop();
-                //}
-
-
-
-
-                //int d_mm;
-                //float? camera_pos_precedent;
-                //cameraDisplacement_Running = true;
-                //int distancepixel_target;
-                //while (cameraDisplacement_Running)
-                //{
-                //    if (newTarget)
-                //    {
-                //        newTarget = false;
-                //        arduinoWaiting = false;
-                //        camera_pos_precedent = camera_pos_mm;
-                //        distancepixel_target = distancepixel;
-                //        d_mm = (int)(distancepixel * _ratio_mm_pix / ((double)resizeFactor / 100));
-
-                //        d_mm = Clamp(d_mm, -10, 10); //par petit pas (maxi +/-10 mm)
-
-                //        if (distancepixel > 0)
-                //        {
-                //            //on monte
-                //            SendToArduino("u" + d_mm);
-                //        }
-                //        else
-                //        {
-                //            //on descend
-                //            SendToArduino("d" + d_mm);
-                //        }
-
-                //        //temps d'action
-                //        while (!arduinoWaiting)
-                //            Thread.Sleep(10);
-
-                //        ////adjust ratio
-                //        //if (camera_pos_precedent != null)
-                //        //{
-                //        //    int delta_pixel = (distancepixel - distancepixel_target);
-                //        //    if (delta_pixel != 0)
-                //        //        _ratio_mm_pix = (double)Math.Abs((float)camera_pos_precedent - (float)camera_pos_mm) / delta_pixel;
-
-                //        //    //ratio_mm_pix = 1;
-                //        //    //ratio_mm_pix /= 2;
-                //        //}
-                //    }
-                //    Thread.Sleep(10);
             }
         }
         #endregion
+        #endregion
 
+        #region DATA Points
+
+        void Button_OpenDataFile_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (System.IO.File.Exists(data_filename))
+                System.Diagnostics.Process.Start(data_filename);
+        }
+
+        void Button_DATA_Clear_Click(object sender, MouseButtonEventArgs e)
+        {
+            _points.Clear();
+            lastPoint = null;
+            if (System.IO.File.Exists(data_filename))
+                System.IO.File.Delete(data_filename);
+
+            plot._Clear();
+        }
+
+        private void btn_savedImageFolder_SelectFolder_click(object sender, MouseButtonEventArgs e)
+        {
+            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            //default folder
+            if (System.IO.Directory.Exists(configuration.savedImageFolder))
+                dialog.SelectedPath = configuration.savedImageFolder;
+
+            System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+
+            if (result == System.Windows.Forms.DialogResult.OK)
+                configuration.savedImageFolder = dialog.SelectedPath;
+        }
+
+        private void btn_OpenDataFolder_click(object sender, MouseButtonEventArgs e)
+        {
+            System.Diagnostics.Process.Start(savedImagesPath);
+        }
+
+        #endregion
+
+        #region (COMMON) MATHS
+        static float[] Medianes(float[] valeurs, int fenetre)
+        {
+            float[] medianes = new float[valeurs.Length];
+
+            for (int i = 0; i < medianes.Length; i++)
+            {
+                int index_a = i - fenetre;
+                if (index_a < 0) index_a = 0;
+                int index_z = i + fenetre;
+                if (index_z > valeurs.Length - 1) index_z = valeurs.Length - 1;
+
+                List<float> valeurs_fentre = valeurs.Skip(index_a).Take(index_z - index_a).OrderBy(n => n).Select(s => s).ToList<float>();
+                medianes[i] = valeurs_fentre[valeurs_fentre.Count / 2];
+            }
+
+            return medianes;
+        }
+
+        static int Mediane(int[] valeurs)
+        {
+            List<int> listToSort = valeurs.ToList();
+            listToSort.Sort();
+            return listToSort[listToSort.Count / 2];
+        }
+
+        static float Clamp(float value, float min, float max)
+        {
+            if (value < min) return min;
+            if (value > max) return max;
+            return value;
+        }
+        #endregion
+
+        #region SCAN
         void Scan()
         {
             camera_pos_high_switch = false;
@@ -2336,91 +2174,6 @@ namespace OpenCVSharpJJ
             }
         }
 
-        #region IMAGE FILE(S)
-        //void Button_PickFiles_Click(object sender, MouseButtonEventArgs e)
-        //{
-        //    lbx_files.Items.Clear();
-        //    SelectFiles();
-        //}
-
-        //void Button_PickFilesAdd_Click(object sender, MouseButtonEventArgs e)
-        //{
-        //    SelectFiles();
-        //}
-
-        //void SelectFiles()
-        //{
-        //    Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-        //    openFileDialog.Multiselect = true;
-        //    if (openFileDialog.ShowDialog() == true)
-        //        foreach (var item in openFileDialog.FileNames)
-        //            lbx_files.Items.Add(item);
-        //    if (lbx_files.Items.Count > 0)
-        //        lbx_files.SelectedIndex = 0;
-        //}
-
-        //void Button_Files_Clear(object sender, MouseButtonEventArgs e)
-        //{
-        //    lbx_files.Items.Clear();
-        //}
-
-        //void lbx_files_Change(object sender, SelectionChangedEventArgs e)
-        //{
-        //    if (first)
-        //    {
-        //        Display_Init();
-        //        MatNamesToMats_Reset();
-        //        first = false;
-        //    }
-        //    if (lbx_files.SelectedValue == null)
-        //        return;
-
-        //    frame.mat = new Mat(lbx_files.SelectedValue.ToString());
-
-        //    ComputePicture(frame.mat);
-        //}
-        #endregion
-
-        #region DATA Points
-
-        void Button_OpenDataFile_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (System.IO.File.Exists(data_filename))
-                System.Diagnostics.Process.Start(data_filename);
-        }
-
-        void Button_DATA_Clear_Click(object sender, MouseButtonEventArgs e)
-        {
-            _points.Clear();
-            lastPoint = null;
-            if (System.IO.File.Exists(data_filename))
-                System.IO.File.Delete(data_filename);
-
-            plot._Clear();
-        }
-
-        private void btn_savedImageFolder_SelectFolder_click(object sender, MouseButtonEventArgs e)
-        {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog();
-            //default folder
-            if (System.IO.Directory.Exists(configuration.savedImageFolder))
-                dialog.SelectedPath = configuration.savedImageFolder;
-
-            System.Windows.Forms.DialogResult result = dialog.ShowDialog();
-
-            if (result == System.Windows.Forms.DialogResult.OK)
-                configuration.savedImageFolder = dialog.SelectedPath;
-        }
-
-        private void btn_OpenDataFolder_click(object sender, MouseButtonEventArgs e)
-        {
-            System.Diagnostics.Process.Start(savedImagesPath);
-        }
-
-        #endregion
-
-
-        #region SCAN
         private void mit_scan_start_Click(object sender, RoutedEventArgs e)
         {
             mit_scan_start.IsEnabled = false;
@@ -2451,20 +2204,6 @@ namespace OpenCVSharpJJ
         void simul_data_for_graph_stop_Click(object sender, RoutedEventArgs e)
         {
             plot._Simulator_Stop();
-        }
-
-
-
-
-
-        #endregion
-
-        #region Graphique
-        void AddPoint(DateTime t, float valeur)
-        {
-            //LiveChartsCore.Series<DateTime, float>
-            //var s = chart.Series.First();//.Series[0];
-            //s.Points.Add(new Point(t, valeur));
         }
         #endregion
     }

@@ -91,7 +91,18 @@ namespace OpenCVSharpJJ
             {
                 if (_rotation_angle == value)
                     return;
+
+                while (value < 0)
+                    value += 360;
+
+                while (value > 360)
+                    value -= 360;
+
+                if (value == 360)
+                    value = 0;
+
                 _rotation_angle = value;
+
                 OnPropertyChanged();
             }
         }
@@ -162,6 +173,70 @@ namespace OpenCVSharpJJ
         }
         [JsonIgnore] double _bande_morte_mm = 1;
 
+        public double bar_mm_by_turn
+        {
+            get { return _bar_mm_by_turn; }
+            set
+            {
+                if (_bar_mm_by_turn == value)
+                    return;
+                _bar_mm_by_turn = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] double _bar_mm_by_turn = 1;
+
+        public int coder_imp_by_turn
+        {
+            get { return _coder_imp_by_turn; }
+            set
+            {
+                if (_coder_imp_by_turn == value)
+                    return;
+                _coder_imp_by_turn = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] int _coder_imp_by_turn = 1;
+
+        public int motor_steps_by_turn
+        {
+            get { return _motor_steps_by_turn; }
+            set
+            {
+                if (_motor_steps_by_turn == value)
+                    return;
+                _motor_steps_by_turn = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] int _motor_steps_by_turn = 1;
+
+        public int motor_step_duration
+        {
+            get { return _motor_step_duration; }
+            set
+            {
+                if (_motor_step_duration == value)
+                    return;
+                _motor_step_duration = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] int _motor_step_duration = 1;
+
+        public int motor_step_pause
+        {
+            get { return _motor_step_pause; }
+            set
+            {
+                if (_motor_step_pause == value)
+                    return;
+                _motor_step_pause = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] int _motor_step_pause = 1;
 
         [JsonIgnore]
         public int bande_morte_pix
@@ -184,6 +259,58 @@ namespace OpenCVSharpJJ
             }
         }
         [JsonIgnore] bool? _saveFrame;
+
+        public bool? displayGrids
+        {
+            get { return _displayGrids; }
+            set
+            {
+                if (_displayGrids == value)
+                    return;
+                _displayGrids = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] bool? _displayGrids = false;
+
+        public bool? displayROI
+        {
+            get { return _displayROI; }
+            set
+            {
+                if (_displayROI == value)
+                    return;
+                _displayROI = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] bool? _displayROI = false;
+
+        public bool? deadBand
+        {
+            get { return _deadBand; }
+            set
+            {
+                if (_deadBand == value)
+                    return;
+                _deadBand = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] bool? _deadBand = false;
+
+        public bool? displayCenter
+        {
+            get { return _displayCenter; }
+            set
+            {
+                if (_displayCenter == value)
+                    return;
+                _displayCenter = value;
+                OnPropertyChanged();
+            }
+        }
+        [JsonIgnore] bool? _displayCenter = true;
 
         public string savedImageFolder
         {

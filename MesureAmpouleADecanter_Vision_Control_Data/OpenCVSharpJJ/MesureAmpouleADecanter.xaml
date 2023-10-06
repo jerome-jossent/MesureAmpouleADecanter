@@ -49,7 +49,7 @@
                     <MenuItem Header="Stop" Click="simul_data_for_graph_stop_Click"/>
                 </MenuItem>
             </MenuItem>
-            
+
             <MenuItem Header="About">
                 <MenuItem Header="VERI"/>
                 <MenuItem Header="Jérôme Jossent"/>
@@ -122,14 +122,14 @@
                    MouseDown="Button_DOWN_Min_Max_Click" ToolTip="Go DOWN Min"/>
 
                                     <StackPanel Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal">
-                                    
+
                                         <Button Margin="2" Content="STOP" Click="Button_ARRETURGENCE_Click" Background="Red" Foreground="#FFFFFA00"/>
 
                                         <Label Margin="2" Content="Vision control" />
-                                       
+
                                         <Image Margin="2" x:Name="Button_DriveByVisionPlay" ToolTip="Drive by vision OFF" Source="images/toggle_off2.png" MouseDown="Button_DriveByVision_Click" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         <Image Margin="2" x:Name="Button_DriveByVisionStop" ToolTip="Drive by vision ON" Source="images/toggle_on2.png" MouseDown="Button_DriveByVision_Click" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                        
+
                                         <Image ToolTip="Info" Margin="2" Source="images/interrogation.png" MouseDown="SendToArduinoInfo" RenderOptions.BitmapScalingMode="HighQuality"/>
 
                                         <Image Margin="2" ToolTip="Calibrate" Source="images/Settings.png" MouseDown="Button_Etalonnage_Click" RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -150,9 +150,8 @@
                                 <Grid>
                                     <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding arduinoMessages, UpdateSourceTrigger=PropertyChanged}" 
                                              Foreground="#00FF00" Background="#3A4149" />
-                                    <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right"/>
                                     <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" 
-                                           Width="30" Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right" 
+                                           Width="30" Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right" 
                                            MouseDown="Button_Clear_Click" ToolTip="Clear"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
@@ -218,44 +217,53 @@
 
                             <!--IMAGE PREPROCESS-->
                             <xcad:LayoutAnchorable ContentId="preproc" Title="PreProcessing" CanClose="False">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="auto"/>
-                                    </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Vertical">
 
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="30"/>
-                                        <RowDefinition Height="30"/>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="30"/>
-                                    </Grid.RowDefinitions>
-
-                                    <Label Grid.Row="0" Grid.Column="0" Content="Resize Factor" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                                    <Slider Grid.Row="0" Grid.Column="1" Margin="5" Minimum="0.10" Maximum="1" Value="{Binding configuration.resize_factor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" LargeChange="0.1" SmallChange="0.01" TickFrequency="0.1"/>
-                                    <!--<TextBox Grid.Row="0" Grid.Column="2" Text="{Binding configuration.resize_factor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />-->
-                                    <xctk:DoubleUpDown Grid.Row="0" Grid.Column="2" Value="{Binding configuration.resize_factor}" MinWidth="60"
-                                                           Minimum="0.00001" Maximum="1" Increment="0.01"
-                                                           FormatString="F2" Margin="3"/>
-                                    
-                                    <Label Grid.Row="1" Grid.Column="0" Content="Rotation" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                                    <Slider Grid.Row="1" Grid.Column="1" Margin="5" Minimum="0" Maximum="360" Value="{Binding configuration.rotation_angle, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <!--<TextBox Grid.Row="1" Grid.Column="2" Text="{Binding configuration.rotation_angle, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />-->
-                                    <xctk:DoubleUpDown Grid.Row="1" Grid.Column="2" Value="{Binding configuration.rotation_angle}" MinWidth="60"
-                                                           Minimum="0" Maximum="360" Increment="0.1" FormatString="F1" Margin="3" />
-
-                                    <Label Grid.Row="2" Grid.Column="0" Content="ROI" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
-                                    <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
+                                    <!--Resize-->
+                                    <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="auto"/>
+                                            <ColumnDefinition Width="115"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="auto"/>
                                         </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Resize Factor" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                        <Slider  Grid.Column="1" Margin="5" Minimum="0.10" Maximum="1" Value="{Binding configuration.resize_factor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" LargeChange="0.1" SmallChange="0.01" TickFrequency="0.1"/>
+                                        <!--<TextBox Grid.Column="2" Text="{Binding configuration.resize_factor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />-->
+                                        <xctk:DoubleUpDown Grid.Column="2" Value="{Binding configuration.resize_factor}" MinWidth="60"
+                                                           Minimum="0.00001" Maximum="1" Increment="0.01"
+                                                           FormatString="F2" Margin="3"/>
+                                    </Grid>
 
-                                        <xctk:RangeSlider x:Name="sld_roi_Y" Step="1" 
+                                    <!--Rotation-->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="115"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="auto"/>
+                                            <ColumnDefinition Width="auto"/>
+                                            <ColumnDefinition Width="auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Row="1" Grid.Column="0" Content="Rotation" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                        <Slider Grid.Row="1" Grid.Column="1" Margin="5" Minimum="0" Maximum="360" Value="{Binding configuration.rotation_angle, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                        <Image Grid.Column="2" Width="20" Source="images/arrow_turn_left.png" Margin="0,0,3,0"
+                                               RenderOptions.BitmapScalingMode="Fant" MouseDown="Image_Turn90_Left_Click"/>
+                                        <Image Grid.Column="3" Width="20" Source="images/arrow_turn_right.png"
+                                               RenderOptions.BitmapScalingMode="Fant" MouseDown="Image_Turn90_Right_Click" />
+
+                                        <xctk:DoubleUpDown Grid.Row="1" Grid.Column="4" Value="{Binding configuration.rotation_angle}" MinWidth="60"
+                                                           Minimum="0" Maximum="360" Increment="0.1" FormatString="F1" Margin="3" />
+                                    </Grid>
+
+                                    <!--ROI-->
+                                    <Grid >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <xctk:RangeSlider Grid.Column="0" x:Name="sld_roi_Y" Step="1" 
                                                   Orientation="Vertical" Width="30"
                                                   LowerValue="{Binding roi_y, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
                                                   HigherValue="{Binding roi_yh, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
@@ -268,13 +276,18 @@
                                             </xctk:RangeSlider.RenderTransform>
                                         </xctk:RangeSlider>
 
-                                        <Grid Grid.Column="1" Grid.ColumnSpan="2" >
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
+                                        <Grid Grid.Column="1" >
+                                            <StackPanel VerticalAlignment="Center">
+                                                <Label Content="ROI" Margin="50,0,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Top"/>
 
-                                            <StackPanel Grid.Column="1"  VerticalAlignment="Center">
+                                                <!--ROI Save/Load buttons-->
+                                                <StackPanel   Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <Button Margin="2" Padding="5" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
+                                                    <Button Margin="2" Padding="5" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
+                                                    <!--<Button Margin="2" Padding="5" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
+                                                        <Button Margin="2" Padding="5" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>-->
+                                                </StackPanel>
+
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -285,43 +298,83 @@
                                                 </Grid>
 
                                                 <xctk:RangeSlider x:Name="sld_roi_X" Step="1"
-                                              Orientation="Horizontal" 
-                                              HigherValue="{Binding roi_xw, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
-                                              LowerValue="{Binding roi_x, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"                                                
-                                              Minimum="0" 
-                                              Maximum="{Binding rotatedframe_width, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
-                                              />
+                                                        Orientation="Horizontal" 
+                                                        HigherValue="{Binding roi_xw, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                                        LowerValue="{Binding roi_x, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"                                                
+                                                        Minimum="0" 
+                                                        Maximum="{Binding rotatedframe_width, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                                        />
                                             </StackPanel>
                                         </Grid>
                                     </Grid>
-
-                                    <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Button Margin="2" Padding="5" Content="None" Click="Button_CaptureDeviceROI_None_Click"/>
-                                        <Button Margin="2" Padding="5" Content="Define" Click="Button_CaptureDeviceROI_Click"/>
-                                        <!--<Button Margin="2" Padding="5" Content="Save" Click="Button_CaptureDeviceROI_Save_Click"/>
-                                        <Button Margin="2" Padding="5" Content="Load" Click="Button_CaptureDeviceROI_Load_Click"/>-->
-                                    </StackPanel>
-                                </Grid>
-                            </xcad:LayoutAnchorable>
-
-                            <!--AFFICHAGE augmenté-->
-                            <xcad:LayoutAnchorable ContentId="affichage" Title="Affichage" CanClose="False">
-                                <StackPanel Orientation="Vertical">
-                                    <CheckBox Content="Grids" VerticalAlignment="Center" IsChecked="{Binding _DisplayGrids}" />
-                                    <CheckBox Content="ROI" VerticalAlignment="Center" IsChecked="{Binding _DisplayROI}" />
-                                    <CheckBox Content="Center" VerticalAlignment="Center" IsChecked="{Binding _DisplayCenter}" />
-                                    <CheckBox Content="Dead bands" VerticalAlignment="Center" IsChecked="{Binding _DeadBand}" />
                                 </StackPanel>
                             </xcad:LayoutAnchorable>
 
-                            <!--Paramètres systèmes-->
-                            <xcad:LayoutAnchorable ContentId="parameters" Title="Parameters" CanClose="False">
+                            <!--AFFICHAGE augmenté-->
+                            <xcad:LayoutAnchorable ContentId="display" Title="Display" CanClose="False">
+                                <StackPanel Orientation="Vertical">
+                                    <CheckBox Content="Grids" VerticalAlignment="Center" IsChecked="{Binding configuration.displayGrids}" />
+                                    <CheckBox Content="ROI" VerticalAlignment="Center" IsChecked="{Binding configuration.displayROI}" />
+                                    <CheckBox Content="Center" VerticalAlignment="Center" IsChecked="{Binding configuration.displayCenter}" />
+                                    <CheckBox Content="Dead bands" VerticalAlignment="Center" IsChecked="{Binding configuration.deadBand}" />
+                                </StackPanel>
+                            </xcad:LayoutAnchorable>
+
+                            <!--Paramètres système-->
+                            <xcad:LayoutAnchorable ContentId="sys_parameters" Title="System parameters" CanClose="False">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Any modification need to uploaded to Arduino" VerticalAlignment="Center" Margin="5"/>
+                                        <Image Grid.Row="0" Grid.Column="2" Margin="2" Source="images/device_send_to_it.png" Stretch="Uniform" Width="30"
+                       RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_SendConfigToArduino_Click" ToolTip="Send Configs to Arduino"/>
+                                    </StackPanel>
+
+                                    <!--Bar-->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Bar (mm/turn)" MinWidth="150"/>
+                                        <xctk:DoubleUpDown Value="{Binding configuration.bar_mm_by_turn}" MinWidth="60"
+                                                           Minimum="0.1" Maximum="20" Increment="1.0"
+                                                           FormatString="F1" Margin="3"/>
+                                    </StackPanel>
+
+                                    <!--Motor-->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Motor (steps/turn)" MinWidth="150"/>
+                                        <xctk:IntegerUpDown Value="{Binding configuration.motor_steps_by_turn}" MinWidth="60"
+                                                           Minimum="10" Maximum="1000" Increment="10"
+                                                           Margin="3"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Motor step duration (µs)" MinWidth="150"/>
+                                        <xctk:IntegerUpDown Value="{Binding configuration.motor_step_duration}" MinWidth="60"
+                                                           Minimum="0" Maximum="10000" Increment="10"
+                                                           Margin="3"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Motor step pause (µs)" MinWidth="150"/>
+                                        <xctk:IntegerUpDown Value="{Binding configuration.motor_step_pause}" MinWidth="60"
+                                                           Minimum="0" Maximum="10000" Increment="10"
+                                                           Margin="3"/>
+                                    </StackPanel>
+
+                                    <!--Coder-->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Coder (imp/turn)" MinWidth="150"/>
+                                        <xctk:IntegerUpDown Value="{Binding configuration.coder_imp_by_turn}" MinWidth="60"
+                                                           Minimum="1" Maximum="3600" Increment="10"
+                                                           Margin="3"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </xcad:LayoutAnchorable>
+
+                            <!--Paramètres Algo-->
+                            <xcad:LayoutAnchorable ContentId="algo_parameters" Title="Algorithm parameters" CanClose="False">
                                 <StackPanel>
                                     <!--ratio-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Label Content="Ratio (px/mm)" MinWidth="115"/>
                                         <xctk:DoubleUpDown Value="{Binding configuration.ratio_pix_par_mm}" MinWidth="60"
-                                                           Minimum="0.00001" Maximum="100" Increment="0.01"
+                                                           Minimum="0.00001" Maximum="100" Increment="1.0"
                                                            FormatString="F2" Margin="3"/>
                                     </StackPanel>
 
@@ -349,7 +402,6 @@
                                         <Label Content="Inverse" MinWidth="115"/>
                                         <CheckBox IsChecked="{Binding configuration.inverser}" VerticalAlignment="Center" />
                                     </StackPanel>
-
 
                                     <!--bande morte sur erreur-->
                                     <Grid>
@@ -386,14 +438,6 @@
                                         <Label Content="Error (mm)" MinWidth="115"/>
                                         <Label Content="{Binding deplacement_mm_commande, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
                                     </StackPanel>
-
-                                    <!--<Label IsEnabled="False" Grid.Row="2" Grid.Column="0" Content="BW" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                                    <Slider IsEnabled="False" Grid.Row="2" Grid.Column="1" Margin="5" Minimum="0" Maximum="255" Value="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <Label IsEnabled="False" Grid.Row="2" Grid.Column="2" Content="{Binding Threshold1, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-
-                                    <Label IsEnabled="False" Grid.Row="3" Grid.Column="0" Content="Line" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                                    <Slider IsEnabled="False" Grid.Row="3" Grid.Column="1" Margin="5" Minimum="0" Maximum="100" Value="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <Label IsEnabled="False" Grid.Row="3" Grid.Column="2" Content="{Binding Threshold2, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>-->
                                 </StackPanel>
                             </xcad:LayoutAnchorable>
 
@@ -424,34 +468,34 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                     </ScrollViewer>
-                                    <StackPanel Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Right">
-                                        <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" 
-                                               Width="30" Opacity="0.3" MouseDown="Button_OpenDataFile_Click" />
 
-                                    </StackPanel>
+                                    <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" 
+                                           Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                           MouseDown="Button_OpenDataFile_Click" ToolTip="Open file"/>
+
                                     <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30"
-                                           Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right" 
+                                           Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right" 
                                            MouseDown="Button_DATA_Clear_Click" ToolTip="Clear"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
                             <!--Vues-->
-                            <xcad:LayoutAnchorable ContentId="vue1" Title="Vue1" CanClose="False">
+                            <xcad:LayoutAnchorable ContentId="view1" Title="View 1" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i1" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable ContentId="vue2" Title="Vue2" CanClose="False">
+                            <xcad:LayoutAnchorable ContentId="view2" Title="View 2" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i2" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable ContentId="vue3" Title="Vue3" CanClose="False">
+                            <xcad:LayoutAnchorable ContentId="view3" Title="View 3" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i3" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable ContentId="vue4" Title="Vue4" CanClose="False">
+                            <xcad:LayoutAnchorable ContentId="view4" Title="View 4" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i4" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
-                            
+
                             <xcad:LayoutAnchorable ContentId="graph" Title="Kynch slope" CanClose="False">
                                 <local:Plot_UC x:Name="plot" />
                             </xcad:LayoutAnchorable>

@@ -1,44 +1,34 @@
-//STEP MOTOR ============================================
-#define enPin 8         //enable
-#define stepYPin 4      //Z.STEP
-#define dirYPin 7       //Z.DIR
+/*
+sur d = 326.7 mm
+avec T1000 et t1000 : on a une vitesse (montante = descendante) de 19.1 mm/sec
+avec T1000 et t700 : on a une vitesse de 22.4 mm/sec
+
+
+*/
+
+// System caracteristics ============================================
+float bar_mm_by_turn = 8.0f;
+
+// Step motor ============================================
+#define enPin 8         //Enable
+#define stepYPin 4      //Pulse / Step
+#define dirYPin 7       //Direction
 #define y_limit_min 10  //End stop LOW
 #define y_limit_max 11  //End stop HIGH
 
-const int stepsPerRev = 200; // <=> 1.8° par step
-int pulseWidthMicros = 1000;  //1000
-int microsBtwnSteps = 1000;  //1000
+int motor_steps_by_turn = 200;  // <=> 1.8° par step
+int motor_step_duration = 1000; //1000
+int motor_step_pause = 1000;    //1000
 
-float bar_mm_by_turn = 8.0f;
-int motor_steps_by_turn = 200;
-int coder_imp_by_turn = 360;
-
-//Serial exchange =================================================
-const unsigned int MAX_MESSAGE_LENGTH = 12;
-static char message[MAX_MESSAGE_LENGTH]; //incoming message
-
-//System Manager ==================================================
-bool au;
-bool scanmode = false;
-
-//Memory Manager ==================================================
-//#include <AT24C256.h>
-//AT24C256 eeprom = AT24C256();
-//int Add_coder = 0;
-//int Add_codermax = 10;
-//
-//union Float_Bytes{
-//  float f;
-//  byte by[4];
-//};
-
-//Coder Manager ==================================================
+// Coder manager ==================================================
 #include "Thread.h" //ArduinoThread by Ivan Seidel
 Thread coderThread = Thread();
 
-#define pinA 2
-#define pinB 5
-#define pinZ 3
+#define pinA 2 // codeur fil noir
+#define pinB 5 // codeur fil blanc
+#define pinZ 3 // codeur fil orange
+int coder_imp_by_turn = 1000;
+
 long coder = 0 ;
 long coder_last = 0 ;
 long coder_updated = 0;
@@ -50,7 +40,14 @@ long coder_lastZ = 0 ;
 bool coder_last_dir;
 int delta_tour;
 bool z_init = true;
-int i_tour = 1000;
+
+// System Manager ==================================================
+bool au;
+bool scanmode = false;
+
+// Serial exchange =================================================
+const unsigned int MAX_MESSAGE_LENGTH = 12;
+static char message[MAX_MESSAGE_LENGTH]; //incoming message
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
@@ -69,11 +66,11 @@ void setup() {
   Serial.println("STEP Motor OK");
   
   //get coder saved values
-//coder = Read_d(Add_coder);
-//PrintPosition();    
-//coder_max = Read_d(Add_codermax);
-//PrintD();
-//Serial.println("Memory OK");
+  //coder = Read_d(Add_coder);
+  //PrintPosition();    
+  //coder_max = Read_d(Add_codermax);
+  //PrintD();
+  //Serial.println("Memory OK");
   
   //init coder
   pinMode(pinA,INPUT_PULLUP);
@@ -93,6 +90,9 @@ void setup() {
 
   Serial.println("System Initialized");
 }
+
+//Reset by code - call reset with : resetFunc();
+void(* resetFunc) (void) = 0;//declare reset function at address 0
 
 void loop() {
   if (coderThread.shouldRun()){
@@ -136,8 +136,12 @@ void InteractionManager(){
   //D : go down MIN 
   //U : go up MAX
   //s : scan mode On/Off  
-  //T:  set temps pulseWidthMicros
-  //t:  set temps microsBtwnSteps    
+  //T : set temps motor_step_duration
+  //t : set temps motor_step_pause
+  //C : set coder_imp_by_turn
+  //B : set bar_mm_by_tr
+  //M : set motor_steps_by_tr
+
   switch (message[0]){
     case 'i':
       PrintInfos();
@@ -199,17 +203,17 @@ void InteractionManager(){
       break;
 
     case 'T':
-      //set temps pulseWidthMicros
+      //set temps motor_step_duration
       val = GetVal();
-      pulseWidthMicros = (int)val;
-      PrintpulseWidthMicros();
+      motor_step_duration = (int)val;
+      Printmotor_step_duration();
       break;
 
     case 't':
-      //set temps microsBtwnSteps
+      //set temps motor_step_pause
       val = GetVal();
-      microsBtwnSteps = (int)val;
-      PrintmicrosBtwnSteps();
+      motor_step_pause = (int)val;
+      Printmotor_step_pause();
       break;
 
     case 's':// EN TRAVAUX !!!
@@ -221,6 +225,24 @@ void InteractionManager(){
       }else{
         Serial.println("Scan mode : OFF");   
       }
+      break;
+
+    case 'C':
+      //set coder_imp_by_turn
+      coder_imp_by_turn = (int)GetVal();
+      Print_coder_imp_by_turn();
+      break;
+
+    case 'M':
+      //set motor_steps_by_tr
+      motor_steps_by_turn = (int)GetVal();
+      Print_motor_steps_by_turn();
+      break;
+
+    case 'B':
+      //set bar_mm_by_tr
+      bar_mm_by_turn = GetVal();
+      Print_bar_mm_by_turn();
       break;
 
     default:
@@ -257,7 +279,7 @@ bool SerialManager() {
   return true;
 }
 
-float GetVal(){ // retourne en float la suite du message
+float GetVal(){ // retourne en float la suite du message (retire le 1er caractère (code))
   return String(message).substring(1).toFloat();
 }
 
@@ -302,18 +324,23 @@ void Deplacement_Min(){
 
 void Etalonnage(bool termineExtremiteHaute){
   Serial.println("Calibration start");
+  int ta, tz;
   if (termineExtremiteHaute)
   {  
     Deplacement_Min();
     if (au) return;
+    ta = millis();
     Deplacement_Max();
     if (au) return;
-  } else {
-    
+    tz = millis();
+  } 
+  else   {    
     Deplacement_Max();
+    ta = millis();
     if (au) return;    
     Deplacement_Min();
     if (au) return;
+    tz = millis();
   }
   
   coder_max = coder_max - coder_min;
@@ -321,6 +348,7 @@ void Etalonnage(bool termineExtremiteHaute){
 
   //Save_d(Add_codermax, coder_max);
   PrintD();
+  PrintSpeed(tz - ta);
   
   Serial.print("coder max : ");
   Serial.println(coder_max);
@@ -337,12 +365,12 @@ bool Deplacement(float d_rel_mm){
   int steps;
   digitalWrite(enPin, LOW);
 
-  float d_mm_by_step = bar_mm_by_turn / coder_imp_by_turn; // en mm/step
+  float d_step_in_mm = bar_mm_by_turn / motor_steps_by_turn;
 
   if (d_rel_mm > 0){
     //on monte
     digitalWrite(dirYPin, HIGH);
-    steps = d_rel_mm / d_mm_by_step;
+    steps = d_rel_mm / d_step_in_mm;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_max) == LOW) {
@@ -359,7 +387,7 @@ bool Deplacement(float d_rel_mm){
   } else {
     //on descend
     digitalWrite(dirYPin, LOW);
-    steps = - d_rel_mm / d_mm_by_step;
+    steps = - d_rel_mm / d_step_in_mm;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_min) == LOW) 
@@ -384,40 +412,23 @@ void Move1Step(){
   InteractionManager();
   if (au) return;
   digitalWrite(stepYPin, HIGH);
-  delayMicroseconds(pulseWidthMicros);
+  delayMicroseconds(motor_step_duration);
   digitalWrite(stepYPin, LOW);
-  delayMicroseconds(microsBtwnSteps); 
+  delayMicroseconds(motor_step_pause); 
 }
 
-//void Save_d(int Add, float val){
-//  Float_Bytes D;
-//  D.f = val;
-//  eeprom.write(D.by[0], Add);
-//  eeprom.write(D.by[1], Add + 1);
-//  eeprom.write(D.by[2], Add + 2);
-//  eeprom.write(D.by[3], Add + 3);
-//}
-
-//float Read_d(int Add){
-//  Float_Bytes D;
-//  D.by[0] = eeprom.read(Add);
-//  D.by[1] = eeprom.read(Add + 1);
-//  D.by[2] = eeprom.read(Add + 2);
-//  D.by[3] = eeprom.read(Add + 3);
-//  return D.f;
-//}
 
 void PrintInfos(){
-  Serial.println("-----INFOS-----" );
-  
+  Serial.println("-----INFOS-----" ); 
+  Print_bar_mm_by_turn();
+  Print_coder_imp_by_turn();  
+  Print_motor_steps_by_turn();  
+  Printmotor_step_duration();
+  Printmotor_step_pause();
   PrintD();
   PrintPosition();
-  PrintpulseWidthMicros();
-  PrintmicrosBtwnSteps();
-
-  Serial.println("\"Tx\" : set x pulseWidthMicros" );
-  Serial.println("\"tx\" : set x microsBtwnSteps" );
-
+  // Serial.println("\"Tx\" : set x motor_step_duration" );
+  // Serial.println("\"tx\" : set x motor_step_pause" );
   Serial.println("---------------" );
 }
 
@@ -433,22 +444,48 @@ void PrintD(){
   Serial.println(" mm");  
 }
 
-void PrintpulseWidthMicros(){
-  Serial.print("pulseWidthMicros : ");
-  Serial.print(String(pulseWidthMicros));
+void PrintSpeed(int t){
+  float vitesse = Distance_mmFromCoderValue(coder_max) * 1000 / t;
+  Serial.print("V = ");
+  Serial.print(vitesse);
+  Serial.println(" mm / sec");
+}
+
+void Printmotor_step_duration(){
+  Serial.print("Motor step duration : ");
+  Serial.print(String(motor_step_duration));
   Serial.println(" µs");  
 }
 
-void PrintmicrosBtwnSteps(){
-  Serial.print("microsBtwnSteps : ");
-  Serial.print(String(microsBtwnSteps));
+void Printmotor_step_pause(){
+  Serial.print("Motor step pause : ");
+  Serial.print(String(motor_step_pause));
   Serial.println(" µs");  
 }
+
+void Print_coder_imp_by_turn(){
+  Serial.print("Coder : ");
+  Serial.print(String(coder_imp_by_turn));
+  Serial.println(" imp/tr");
+}
+
+void Print_motor_steps_by_turn(){
+  Serial.print("Motor : ");
+  Serial.print(String(motor_steps_by_turn));
+  Serial.println(" steps/tr");
+}
+
+void Print_bar_mm_by_turn(){
+  Serial.print("Bar : ");
+  Serial.print(String(bar_mm_by_turn));
+  Serial.println(" mm/tr");  
+}
+
 
 float Distance_mmFromCoderValue(long coderval){
-  //i_tour [int] = 1000 i / tour
   //bar_mm_by_turn [float] = 2 mm / tour
-  return bar_mm_by_turn * coderval / i_tour;
+  //coder_imp_by_turn [int] = 1000 i / tour
+  return bar_mm_by_turn * coderval / coder_imp_by_turn;
 }
 
 //-----------------CODER-------------------
@@ -470,9 +507,9 @@ void changementZ(){
     if (coder_last_dir == dirYPin){
       delta_tour = coder - coder_lastZ;      
       if (delta_tour > 0)      
-        coder = coder_lastZ + i_tour;
+        coder = coder_lastZ + coder_imp_by_turn;
       else
-        coder = coder_lastZ - i_tour;            
+        coder = coder_lastZ - coder_imp_by_turn;            
     }
     
     coder_lastZ = coder;
