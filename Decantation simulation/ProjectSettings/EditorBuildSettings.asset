@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/simulateur de decantation pour montrer a la camera.unity
+    guid: ef8870d3997905c4383056d665020784
   m_configObjects: {}
