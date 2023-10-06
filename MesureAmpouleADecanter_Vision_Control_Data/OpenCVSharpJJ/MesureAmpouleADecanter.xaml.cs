@@ -1766,7 +1766,7 @@ namespace OpenCVSharpJJ
                     arduinoMessages.Add(message);
                     while (arduinoMessages.Count > 100)
                         arduinoMessages.RemoveAt(0);
-                    OnPropertyChanged("arduinoMessages");                    
+                    OnPropertyChanged("arduinoMessages");
                 }));
         }
 
@@ -1919,10 +1919,13 @@ namespace OpenCVSharpJJ
             //distancepixel : aussi dans CameraDisplacement()
             distancepixel = Mediane(ds_pix.ToArray());
 
+            distancepixel = d_pix;
+
             if (Math.Abs(distancepixel) > configuration.bande_morte_pix)
             {
-                //pas assez proche, rapprochons nous
-                newTarget = true;
+                //pas assez proche, si on peut, rapprochons-nous
+                if (arduinoWaiting)
+                    newTarget = true;
             }
             else
             {
@@ -1988,11 +1991,11 @@ namespace OpenCVSharpJJ
             int delta_pix;
             int delta_pix_precedent = 0;
 
-            int deplacement_mm_commande_precedent = 0;
-
+            float deplacement_mm_commande_precedent = 0;
+            int limitateur_occurence = 0;
             while (cameraDisplacement_Running)
             {
-                //en attente d'ordre de déplacement
+                //en attente d'ordre de déplacement & pas d'arrêt (continue)
                 if (!newTarget)
                 {
                     Thread.Sleep(10);
@@ -2005,14 +2008,22 @@ namespace OpenCVSharpJJ
                 if (first_commande)
                 {
                     first_commande = false;
-                    deplacement_mm_commande = 3; // arbitrairement, on prend 3mm pour le premier déplacement
+                    deplacement_mm_commande = 3; // arbitrairement, on prend 3 mm pour le premier déplacement
                 }
                 else
                 {
                     // calcul auto du ratio (si la cible correspond toujours au même objet observé !)
                     //_ratio_mm_pix = (float)deplacement_mm_commande_precedent / (delta_pix_precedent - delta_pix);
-                    double val = delta_pix / configuration.ratio_pix_par_mm;
-                    deplacement_mm_commande = (float)val;// (float)Math.Round(val);
+                    deplacement_mm_commande = (float)((double)delta_pix / configuration.ratio_pix_par_mm);
+
+                    if(deplacement_mm_commande > 0 && deplacement_mm_commande_precedent < 0 ||
+                       deplacement_mm_commande < 0 && deplacement_mm_commande_precedent > 0
+                        )
+                    {
+                        deplacement_mm_commande /= 3;
+                        Console.WriteLine("limitateur " + limitateur_occurence++);
+                    }
+
                 }
 
                 if (deplacement_mm_commande == 0 || camera_pos_low_switch || camera_pos_high_switch)
@@ -2023,17 +2034,24 @@ namespace OpenCVSharpJJ
                 {
                     //TODO PARAMETRISER CLAMP
                     //deplacement_mm_commande = Clamp(deplacement_mm_commande, -5, 5); //par petit pas (maxi +/-1 mm)
-                                                                                     //delta_pix_precedent = delta_pix;
-                                                                                     //deplacement_mm_commande_precedent = deplacement_mm_commande;
+                    
+                    
+                    
+
+
+                    
+                    
+                    
                     string commandeArduino = "";
-                    if (monte)                    
-                        commandeArduino = "u";                    
+                    float val = deplacement_mm_commande;
+                    if (monte)
+                        commandeArduino = "u";
                     else
                     {
                         commandeArduino = "d";
-                        deplacement_mm_commande = -deplacement_mm_commande;
+                        val = -val;
                     }
-                    string val_txt = deplacement_mm_commande.ToString().Replace(',', '.');
+                    string val_txt = val.ToString().Replace(',', '.');
                     SendToArduino(commandeArduino + val_txt);
 
                     //temps d'action : attente que la commande soit terminée (Arduino dit "Waiting")
@@ -2041,6 +2059,9 @@ namespace OpenCVSharpJJ
                     while (!arduinoWaiting)
                         Thread.Sleep(TimeSpan.FromTicks(1));
                 }
+
+                deplacement_mm_commande_precedent = deplacement_mm_commande;
+                delta_pix_precedent = delta_pix;
             }
         }
         #endregion

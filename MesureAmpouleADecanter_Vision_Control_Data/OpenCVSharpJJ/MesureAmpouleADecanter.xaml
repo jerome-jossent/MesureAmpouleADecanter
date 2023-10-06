@@ -469,13 +469,13 @@
                                         </ItemsControl>
                                     </ScrollViewer>
 
-                                    <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" 
-                                           Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                                           MouseDown="Button_OpenDataFile_Click" ToolTip="Open file"/>
-
                                     <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30"
                                            Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right" 
                                            MouseDown="Button_DATA_Clear_Click" ToolTip="Clear"/>
+
+                                    <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" 
+                                           Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                           MouseDown="Button_OpenDataFile_Click" ToolTip="Open file"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
@@ -497,7 +497,13 @@
                             </xcad:LayoutAnchorable>
 
                             <xcad:LayoutAnchorable ContentId="graph" Title="Kynch slope" CanClose="False">
-                                <local:Plot_UC x:Name="plot" />
+                                <Grid>
+                                    <local:Plot_UC x:Name="plot" />
+
+                                    <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30"
+                                           Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right" 
+                                           MouseDown="Button_DATA_Clear_Click" ToolTip="Clear"/>
+                                </Grid>
                             </xcad:LayoutAnchorable>
 
                         </xcad:LayoutDocumentPane>
