@@ -148,7 +148,8 @@
                             <!--ARDUINO READ-->
                             <xcad:LayoutAnchorable ContentId="deplacement" Title="Deplacement" CanClose="False">
                                 <Grid>
-                                    <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding arduinoMessages, UpdateSourceTrigger=PropertyChanged}" Foreground="#00FF00" Background="#3A4149"/>
+                                    <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding arduinoMessages, UpdateSourceTrigger=PropertyChanged}" 
+                                             Foreground="#00FF00" Background="#3A4149" />
                                     <Image Source="images/device_receive_from_it.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right"/>
                                     <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" 
                                            Width="30" Opacity="0.3" VerticalAlignment="Bottom" HorizontalAlignment="Right" 

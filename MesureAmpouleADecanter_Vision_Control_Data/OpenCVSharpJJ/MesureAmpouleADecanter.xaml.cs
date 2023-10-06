@@ -25,7 +25,8 @@ using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 using ScottPlot;
-
+using System.Windows.Forms;
+using System.Collections.Specialized;
 
 namespace OpenCVSharpJJ
 {
@@ -378,7 +379,7 @@ namespace OpenCVSharpJJ
         }
         int _distancepixel = -234;
 
-        public int deplacement_mm_commande
+        public float deplacement_mm_commande
         {
             get { return _deplacement_mm_commande; }
             set
@@ -389,7 +390,7 @@ namespace OpenCVSharpJJ
                 OnPropertyChanged();
             }
         }
-        int _deplacement_mm_commande = 123;
+        float _deplacement_mm_commande = 123;
 
         DateTime t_last_save;
         TimeSpan t_vide_save = TimeSpan.FromSeconds(1);
@@ -595,11 +596,14 @@ namespace OpenCVSharpJJ
             LayoutLoadButton_Click(null, null);
 
             //focus FORCé sur le dernier message Arduino
-            ((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.ItemsSource).CollectionChanged += (s, e2) =>
-            {
-                if (e2.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-                    lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
-            };
+            ((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.Items).CollectionChanged +=
+       lbx_arduino_received_CollectionChanged;
+            //((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.ItemsSource).CollectionChanged += (s, e2) =>
+            //{
+            //    if (e2.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+            //        lbx_arduino_received.SelectedItem = lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1];
+            //    //lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
+            //};
 
             //focus FORCé sur la dernière donnée enregistrée
             ((System.Collections.Specialized.INotifyCollectionChanged)items_data.ItemsSource).CollectionChanged += (s, e2) =>
@@ -609,6 +613,11 @@ namespace OpenCVSharpJJ
             };
 
             this.WindowState = WindowState.Maximized;
+        }
+
+        private void lbx_arduino_received_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            lbx_arduino_received.SelectedIndex = lbx_arduino_received.Items.Count - 1;
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
@@ -1022,7 +1031,7 @@ namespace OpenCVSharpJJ
             x = roi_x;
             w = roi_xw - x;
             roi = new OpenCvSharp.Rect(x, y, w, h);
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
             {
                 tbx_roi.Text = ROIToString();
             }));
@@ -1161,12 +1170,12 @@ namespace OpenCVSharpJJ
             //https://stackoverflow.com/questions/59263100/how-to-easily-apply-a-gauss-filter-to-a-list-array-of-doubles
             #endregion
 
-            #region inverser les valeurs
-            if (configuration.inverser == true)
-            {
-                for (int y = 0; y < moyennesX.Length; y++)
-                    moyennesX[y] = valmax - moyennesX[y];
-            }
+            #region // inverser les valeurs
+            //if (configuration.inverser == true)
+            //{
+            //    for (int y = 0; y < moyennesX.Length; y++)
+            //        moyennesX[y] = valmax - moyennesX[y];
+            //}
             #endregion
 
             #region recherche dépassements de seuil
@@ -1186,6 +1195,7 @@ namespace OpenCVSharpJJ
             //on recherche (à partir de l'intensité max) ()en partant du bas la PREMIERE ligne pour laquelle on atteint X% d'intensité
             int niveau_pixel_fin = -1;
 
+            //on recherche en partant du bas
             if (configuration.inverser == false)
                 for (int y = moyennesX.Length - 1; y >= 0; y--)
                     if (moyennesX[y] > seuil)
@@ -1194,10 +1204,11 @@ namespace OpenCVSharpJJ
                         break;
                     }
 
+            //on recherche en partant du haut
             if (configuration.inverser == true)
             {
-                seuil = valmax - seuil;
-                for (int y = moyennesX.Length - 1; y >= 0; y--)
+                //seuil = valmax - seuil;
+                for (int y = 0; y < moyennesX.Length; y++)
                     if (moyennesX[y] < seuil)
                     {
                         niveau_pixel_fin = y;
@@ -1243,7 +1254,7 @@ namespace OpenCVSharpJJ
             //}
             #endregion
 
-            #region //derivée seconde simplifié : car /(x2-x1) => /1
+            #region // derivée seconde simplifié : car /(x2-x1) => /1
             ////et recherche des maximum et minimum
             //float d2_min = 0;
             //float d2_max = 0;
@@ -1841,14 +1852,14 @@ namespace OpenCVSharpJJ
             }
             catch (Exception ex)
             {
-                MessageBox.Show(txt + "\n\n" + ex.Message, "", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(txt + "\n\n" + ex.Message, "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
 
         void AddTextInLBX(string message)
         {
-            Application.Current.Dispatcher.BeginInvoke(
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(
                 DispatcherPriority.Background,
                 new Action(() =>
                 {
@@ -1861,7 +1872,7 @@ namespace OpenCVSharpJJ
             OnPropertyChanged("ArduinoMessages");
         }
 
-        void tbx_txt_to_arduino_KeyDown(object sender, KeyEventArgs e)
+        void tbx_txt_to_arduino_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
                 SendToArduino();
@@ -1896,7 +1907,7 @@ namespace OpenCVSharpJJ
         }
         void Button_Clear_Click(object sender, MouseButtonEventArgs e)
         {
-            Application.Current.Dispatcher.BeginInvoke(
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(
                 DispatcherPriority.Background,
                 new Action(() =>
                 {
@@ -2037,7 +2048,7 @@ namespace OpenCVSharpJJ
                     if (camera_pos_mm != null)
                     {
                         t_last = t;
-                        Application.Current.Dispatcher.Invoke(() => NewPoint(t, d_pix));
+                        System.Windows.Application.Current.Dispatcher.Invoke(() => NewPoint(t, d_pix));
                     }
                 }
             }
@@ -2131,6 +2142,12 @@ namespace OpenCVSharpJJ
             if (value > max) return max;
             return value;
         }
+        static float Clamp(float value, float min, float max)
+        {
+            if (value < min) return min;
+            if (value > max) return max;
+            return value;
+        }
 
         void CameraDisplacement()
         {
@@ -2166,7 +2183,7 @@ namespace OpenCVSharpJJ
                     // calcul auto du ratio (si la cible correspond toujours au même objet observé !)
                     //_ratio_mm_pix = (float)deplacement_mm_commande_precedent / (delta_pix_precedent - delta_pix);
                     double val = delta_pix / configuration.ratio_pix_par_mm;
-                    deplacement_mm_commande = (int)Math.Round(val);
+                    deplacement_mm_commande = (float)val;// (float)Math.Round(val);
                 }
 
                 if (deplacement_mm_commande == 0 || camera_pos_low_switch || camera_pos_high_switch)
@@ -2176,11 +2193,25 @@ namespace OpenCVSharpJJ
                 else
                 {
                     //deplacement_mm_commande = Clamp(deplacement_mm_commande, -1, 1); //par petit pas (maxi +/-1 mm)
+
+                    //TODO PARAMETRISER CLAMP
                     deplacement_mm_commande = Clamp(deplacement_mm_commande, -5, 5); //par petit pas (maxi +/-1 mm)
-                    //delta_pix_precedent = delta_pix;
-                    //deplacement_mm_commande_precedent = deplacement_mm_commande;
-                    string commandeArduino = (monte) ? "u" + deplacement_mm_commande.ToString() : "d" + (-deplacement_mm_commande).ToString();
-                    SendToArduino(commandeArduino);
+                                                                                     //delta_pix_precedent = delta_pix;
+                                                                                     //deplacement_mm_commande_precedent = deplacement_mm_commande;
+
+                    //                    string val_txt =
+                    string commandeArduino = "";
+                    if (monte)
+                    {
+                        commandeArduino = "u";
+                    }
+                    else
+                    {
+                        commandeArduino = "d";
+                        deplacement_mm_commande = -deplacement_mm_commande;
+                    }
+                    string val_txt = deplacement_mm_commande.ToString().Replace(',','.');
+                    SendToArduino(commandeArduino + val_txt);
 
                     //temps d'action : attente que la commande soit terminée (Arduino dit "Waiting")
                     arduinoWaiting = false;
@@ -2421,6 +2452,7 @@ namespace OpenCVSharpJJ
         {
             plot._Simulator_Stop();
         }
+
 
 
 

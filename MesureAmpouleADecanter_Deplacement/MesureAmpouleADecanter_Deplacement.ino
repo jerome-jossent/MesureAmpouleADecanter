@@ -6,13 +6,12 @@
 #define y_limit_max 11  //End stop HIGH
 
 const int stepsPerRev = 200; // <=> 1.8° par step
-int pulseWidthMicros = 500;  //1000
-int microsBtwnSteps = 500;  //1000
+int pulseWidthMicros = 1000;  //1000
+int microsBtwnSteps = 1000;  //1000
 
-// 2 mm => 1 tour => 200 steps
-// 2 / 200 = 0,01 mm/step
-const float mm_p_tour = 2;
-const float d_step_mm = 0.01f;
+float bar_mm_by_turn = 8.0f;
+int motor_steps_by_turn = 200;
+int coder_imp_by_turn = 360;
 
 //Serial exchange =================================================
 const unsigned int MAX_MESSAGE_LENGTH = 12;
@@ -34,7 +33,7 @@ bool scanmode = false;
 //};
 
 //Coder Manager ==================================================
-#include "Thread.h"
+#include "Thread.h" //ArduinoThread by Ivan Seidel
 Thread coderThread = Thread();
 
 #define pinA 2
@@ -181,7 +180,7 @@ void InteractionManager(){
       val = GetVal();
       if (val == 0) val = 1;
       if (val < 0)  val = -val;
-      Serial.print("Go up asked");
+      Serial.print("Go up asked : ");
       Serial.println(String(val));
       Deplacement(val);
       //Save_d(Add_coder, coder);
@@ -337,11 +336,13 @@ void Scan(){
 bool Deplacement(float d_rel_mm){
   int steps;
   digitalWrite(enPin, LOW);
-      
+
+  float d_mm_by_step = bar_mm_by_turn / coder_imp_by_turn; // en mm/step
+
   if (d_rel_mm > 0){
     //on monte
     digitalWrite(dirYPin, HIGH);
-    steps = d_rel_mm / d_step_mm;
+    steps = d_rel_mm / d_mm_by_step;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_max) == LOW) {
@@ -358,7 +359,7 @@ bool Deplacement(float d_rel_mm){
   } else {
     //on descend
     digitalWrite(dirYPin, LOW);
-    steps = - d_rel_mm / d_step_mm;
+    steps = - d_rel_mm / d_mm_by_step;
 
     for (int i = 0; i < steps; i++) {
       if (digitalRead(y_limit_min) == LOW) 
@@ -446,8 +447,8 @@ void PrintmicrosBtwnSteps(){
 
 float Distance_mmFromCoderValue(long coderval){
   //i_tour [int] = 1000 i / tour
-  //mm_p_tour [float] = 2 mm / tour
-  return mm_p_tour * coderval / i_tour;
+  //bar_mm_by_turn [float] = 2 mm / tour
+  return bar_mm_by_turn * coderval / i_tour;
 }
 
 //-----------------CODER-------------------
