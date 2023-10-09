@@ -9,8 +9,10 @@
 
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+        xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"
+    
         Title="{Binding _title}" 
-        Height="450" Width="600" 
+        Height="100" Width="600" 
         Closing="Window_Closing" Loaded="Window_Loaded"
         WindowState="Maximized"
         >
@@ -36,6 +38,7 @@
             <MenuItem Header="Layout">
                 <MenuItem Header="Save" Click="LayoutSaveButton_Click"/>
                 <MenuItem Header="Load" Click="LayoutLoadButton_Click"/>
+                <MenuItem Header="Show hidded layouts" Click="LayoutShowButton_Click" IsEnabled="False"/>
             </MenuItem>
 
             <MenuItem Header="Scan" IsEnabled="False">
@@ -60,24 +63,14 @@
 
         <!--VUES-->
         <xcad:DockingManager Grid.Row="1" x:Name="DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
-            <!--UTILE ?????????????-->
-            <xcad:DockingManager.DocumentHeaderTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="{Binding IconSource}" Margin="0,0,4,0"/>
-                        <TextBlock Text="{Binding Title}" />
-                    </StackPanel>
-                </DataTemplate>
-            </xcad:DockingManager.DocumentHeaderTemplate>
-
             <!--VUES DYNAMIQUES-->
             <xcad:LayoutRoot x:Name="_layoutRoot">
                 <xcad:LayoutPanel Orientation="Horizontal">
                     <xcad:LayoutDocumentPaneGroup >
-                        <xcad:LayoutDocumentPane x:Name="Views">
+                        <xcad:LayoutDocumentPane x:Name="Avalon_Views">
 
                             <!--ARDUINO CONFIG-->
-                            <xcad:LayoutAnchorable ContentId="arduino" Title="Arduino" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_arduino_config"  ContentId="arduino" Title="Arduino" CanClose="False">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="30"/>
@@ -146,7 +139,7 @@
                             </xcad:LayoutAnchorable>
 
                             <!--ARDUINO READ-->
-                            <xcad:LayoutAnchorable ContentId="deplacement" Title="Deplacement" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_arduino_read" ContentId="deplacement" Title="Deplacement" CanClose="False">
                                 <Grid>
                                     <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding arduinoMessages, UpdateSourceTrigger=PropertyChanged}" 
                                              Foreground="#00FF00" Background="#3A4149" />
@@ -157,7 +150,7 @@
                             </xcad:LayoutAnchorable>
 
                             <!--CAMERA CONFIG-->
-                            <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_camera_config" ContentId="camera" Title="Camera" CanClose="False">
                                 <StackPanel Orientation="Vertical">
                                     <!--SELECT CAMERA AND RESOLUTION-->
                                     <Grid >
@@ -216,7 +209,7 @@
                             </xcad:LayoutAnchorable>
 
                             <!--IMAGE PREPROCESS-->
-                            <xcad:LayoutAnchorable ContentId="preproc" Title="PreProcessing" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_image_process" ContentId="preproc" Title="PreProcessing" CanClose="False">
                                 <StackPanel Orientation="Vertical">
 
                                     <!--Resize-->
@@ -310,8 +303,8 @@
                                 </StackPanel>
                             </xcad:LayoutAnchorable>
 
-                            <!--AFFICHAGE augmenté-->
-                            <xcad:LayoutAnchorable ContentId="display" Title="Display" CanClose="False">
+                            <!--AUGMENTED DISPLAY-->
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_augmented_display" ContentId="display" Title="Display" CanClose="False">
                                 <StackPanel Orientation="Vertical">
                                     <CheckBox Content="Grids" VerticalAlignment="Center" IsChecked="{Binding configuration.displayGrids}" />
                                     <CheckBox Content="ROI" VerticalAlignment="Center" IsChecked="{Binding configuration.displayROI}" />
@@ -320,8 +313,8 @@
                                 </StackPanel>
                             </xcad:LayoutAnchorable>
 
-                            <!--Paramètres système-->
-                            <xcad:LayoutAnchorable ContentId="sys_parameters" Title="System parameters" CanClose="False">
+                            <!--SYSTEM PARAMETERS-->
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_system_paremeters" ContentId="sys_parameters" Title="System parameters" CanClose="False">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="Any modification need to uploaded to Arduino" VerticalAlignment="Center" Margin="5"/>
@@ -335,6 +328,14 @@
                                         <xctk:DoubleUpDown Value="{Binding configuration.bar_mm_by_turn}" MinWidth="60"
                                                            Minimum="0.1" Maximum="20" Increment="1.0"
                                                            FormatString="F1" Margin="3"/>
+                                    </StackPanel>
+
+                                    <!--Coder-->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Coder (imp/turn)" MinWidth="150"/>
+                                        <xctk:IntegerUpDown Value="{Binding configuration.coder_imp_by_turn}" MinWidth="60"
+                                                           Minimum="1" Maximum="3600" Increment="10"
+                                                           Margin="3"/>
                                     </StackPanel>
 
                                     <!--Motor-->
@@ -357,18 +358,11 @@
                                                            Margin="3"/>
                                     </StackPanel>
 
-                                    <!--Coder-->
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Label Content="Coder (imp/turn)" MinWidth="150"/>
-                                        <xctk:IntegerUpDown Value="{Binding configuration.coder_imp_by_turn}" MinWidth="60"
-                                                           Minimum="1" Maximum="3600" Increment="10"
-                                                           Margin="3"/>
-                                    </StackPanel>
                                 </StackPanel>
                             </xcad:LayoutAnchorable>
 
-                            <!--Paramètres Algo-->
-                            <xcad:LayoutAnchorable ContentId="algo_parameters" Title="Algorithm parameters" CanClose="False">
+                            <!--ALGORYTHM PARAMETERS-->
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_algorythn_parameters" ContentId="algo_parameters" Title="Algorithm parameters" CanClose="False">
                                 <StackPanel>
                                     <!--ratio-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -442,7 +436,7 @@
                             </xcad:LayoutAnchorable>
 
                             <!--DATA Points-->
-                            <xcad:LayoutAnchorable ContentId="data" Title="Data" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_data_points" ContentId="data" Title="Data" CanClose="False">
                                 <Grid>
                                     <ScrollViewer  x:Name="scv_data" VerticalScrollBarVisibility="Auto" Foreground="#00FF00"  Background="#3A4149" >
                                         <ItemsControl x:Name="items_data" ItemsSource="{Binding _points}"
@@ -480,23 +474,23 @@
                             </xcad:LayoutAnchorable>
 
                             <!--Vues-->
-                            <xcad:LayoutAnchorable ContentId="view1" Title="View 1" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_view1" ContentId="view1" Title="View 1" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i1" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable ContentId="view2" Title="View 2" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_view2" ContentId="view2" Title="View 2" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i2" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable ContentId="view3" Title="View 3" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_view3" ContentId="view3" Title="View 3" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i3" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable ContentId="view4" Title="View 4" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_view4" ContentId="view4" Title="View 4" CanClose="False">
                                 <local:ImageIHM_UC x:Name="i4" MinWidth="20"/>
                             </xcad:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable ContentId="graph" Title="Kynch slope" CanClose="False">
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_graph1" ContentId="graph" Title="Kynch slope" CanClose="False">
                                 <Grid>
                                     <local:Plot_UC x:Name="plot" />
 
@@ -505,6 +499,24 @@
                                            MouseDown="Button_DATA_Clear_Click" ToolTip="Clear"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
+
+                            <xcad:LayoutAnchorable x:Name="layoutAnchorable_graph2" ContentId="graph2" Title="Debug" CanClose="False">
+                                <Grid>
+                                    <ScottPlot:WpfPlot Grid.Row="1" x:Name="debug_plot" />
+                                    <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" >
+                                        <Image Source="images/Pause.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" 
+                                           MouseDown="Button_Debug_Pause_Click" ToolTip="Pause"/>
+
+                                        <Image Source="images/Lecture.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" 
+                                           MouseDown="Button_Debug_Play_Click" ToolTip="Play"/>
+
+                                        <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" Width="30" Opacity="0.3" 
+                                           MouseDown="Button_Debug_Clear_Click" ToolTip="Clear"/>
+
+                                    </StackPanel>
+                                </Grid>
+                            </xcad:LayoutAnchorable>
+
 
                         </xcad:LayoutDocumentPane>
                     </xcad:LayoutDocumentPaneGroup >
