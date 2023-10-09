@@ -27,6 +27,13 @@ using Xceed.Wpf.AvalonDock.Layout.Serialization;
 using ScottPlot;
 using System.Windows.Forms;
 using System.Collections.Specialized;
+using Xceed.Wpf.AvalonDock.Layout;
+using System.Reflection;
+using System.Security.Cryptography;
+using SharpDX.MediaFoundation;
+using ScottPlot.Renderable;
+using ScottPlot.Plottable;
+using OpenCvSharp.Flann;
 
 namespace OpenCVSharpJJ
 {
@@ -389,6 +396,8 @@ namespace OpenCVSharpJJ
 
         #region VARIABLES GLOBALES
 
+        List<LayoutAnchorable> views;
+
         string data_filename;
         public static DateTime t0;
         public int _pointsMax { get; set; }
@@ -498,6 +507,7 @@ namespace OpenCVSharpJJ
         OpenCvSharp.Rect _roi;
 
         Thread threadCaptureVideo;
+        Thread threadAlgo;
         Thread threadCommandeArduino;
 
         Dictionary<string, VideoInInfo.Format> formats;
@@ -507,6 +517,9 @@ namespace OpenCVSharpJJ
         VideoInInfo.Format camera_encodage_resolution_precedent = null;
         System.Diagnostics.Stopwatch mesureFPS = new System.Diagnostics.Stopwatch();
 
+        bool algoIsRunning = false;
+        bool algoStandBy = false;
+        object takeFrame = new object();
 
         Communication_Série.Communication_Série cs;
         string buffer;
@@ -546,6 +559,8 @@ namespace OpenCVSharpJJ
 
         void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            t0 = DateTime.Now;
+
             Camera_Init();
             Arduino_Init();
             ImageProcessing_Init();
@@ -574,6 +589,8 @@ namespace OpenCVSharpJJ
             };
 
             this.WindowState = WindowState.Maximized;
+
+            Debug_graph_INIT();
         }
 
         private void lbx_arduino_received_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -590,6 +607,7 @@ namespace OpenCVSharpJJ
         void Window_Closing(object sender, CancelEventArgs e)
         {
             CameraDisplacement_Stop();
+            Algo_Stop();
             CaptureCamera_Stop();
             cs?.PortCom_OFF();
         }
@@ -622,6 +640,90 @@ namespace OpenCVSharpJJ
             {
                 throw;
             }
+
+            views = new List<LayoutAnchorable>() {
+                layoutAnchorable_algorythn_parameters,
+                layoutAnchorable_arduino_config,
+                layoutAnchorable_arduino_read,
+                layoutAnchorable_augmented_display,
+                layoutAnchorable_camera_config,
+                layoutAnchorable_data_points,
+                layoutAnchorable_graph1,
+                layoutAnchorable_graph2,
+                layoutAnchorable_image_process,
+                layoutAnchorable_system_paremeters,
+                layoutAnchorable_view1,
+                layoutAnchorable_view2,
+                layoutAnchorable_view3,
+                layoutAnchorable_view4
+            };
+
+
+
+        }
+
+        private void LayoutShowButton_Click(object sender, RoutedEventArgs e)
+        {
+            //foreach (var child in Avalon_Views.Children)
+            //{
+            //    if (child == null) continue;
+            //    LayoutAnchorable la = (LayoutAnchorable)child;
+            //    if (la.IsHidden)
+            //        la.Show();
+            //}
+
+            //foreach (LayoutAnchorable la in views)
+            //{
+            //    if (la!= null)
+            //    {
+            //        try
+            //        {
+            //            la.Float();
+
+            //        }
+            //        catch (Exception ex)
+            //        {
+
+            //        }
+
+            //        //Xceed.Wpf.AvalonDock.Layout.LayoutAnchorableFloatingWindow lfw = new Xceed.Wpf.AvalonDock.Layout.LayoutAnchorableFloatingWindow();
+            //        //Xceed.Wpf.AvalonDock.Layout.LayoutAnchorablePane lap3 = new Xceed.Wpf.AvalonDock.Layout.LayoutAnchorablePane(la);
+            //        //lap3.Parent = lfw;
+            //        //lfw.RootPanel = new Xceed.Wpf.AvalonDock.Layout.LayoutAnchorablePaneGroup(lap3);
+            //        //lfw.Parent = DManager.Layout;
+            //        //DManager.Layout.FloatingWindows.Add(lfw);
+            //    }
+            //    //bool dansihm = false;
+            //    //foreach (LayoutContent lc in DManager.Layout.Descendents().OfType<LayoutContent>())
+            //    //{
+            //    //    LayoutAnchorable la2 = lc as LayoutAnchorable;
+            //    //    dansihm = (la2.Title == la.Title);
+            //    //    if (dansihm) break;
+
+            //    //}
+            //    continue;
+            //    //if (!dansihm)
+            //    //{
+            //    //    //la.Hide();
+            //    //    //la.Show();
+            //    //    la.AddToLayout(DManager, AnchorableShowStrategy.Most);
+            //    //    //la.Dock();
+            //    //    //la.Float();
+
+            //    //    break;
+            //    //    //ajout à l'IHM
+            //    //    Xceed.Wpf.AvalonDock.Layout.LayoutAnchorableFloatingWindow lfw = new Xceed.Wpf.AvalonDock.Layout.LayoutAnchorableFloatingWindow();
+            //    //    Xceed.Wpf.AvalonDock.Layout.LayoutAnchorablePane lap3 = new Xceed.Wpf.AvalonDock.Layout.LayoutAnchorablePane(la);
+            //    //    lap3.Parent = lfw;
+            //    //    lfw.RootPanel = new Xceed.Wpf.AvalonDock.Layout.LayoutAnchorablePaneGroup(lap3);
+            //    //    lfw.Parent = DManager.Layout;
+            //    //    DManager.Layout.FloatingWindows.Add(lfw);
+            //    //}
+            //}
+
+
+
+
         }
         #endregion
         #endregion
@@ -657,7 +759,7 @@ namespace OpenCVSharpJJ
         private void Configuration_Load_Start_Click(object sender, RoutedEventArgs e)
         {
             Configuration_Load_Click(null, null);
-
+            Algo_Start();
             Capture_Start();
             Arduino_Connexion();
         }
@@ -685,6 +787,7 @@ namespace OpenCVSharpJJ
 
         void Button_CaptureDevice_Click(object sender, MouseButtonEventArgs e)
         {
+            Algo_Start();
             Capture_Start();
         }
 
@@ -827,6 +930,40 @@ namespace OpenCVSharpJJ
             }
         }
         #endregion
+
+        void Algo_Start()
+        {
+            if (threadAlgo != null && threadAlgo.IsAlive)
+            {
+                Algo_Stop();
+                Thread.Sleep(100);
+            }
+            threadAlgo = new Thread(new ThreadStart(Algo));
+            threadAlgo.Start();
+        }
+
+        void Algo_Stop()
+        {
+            algoIsRunning = false;
+            Thread.Sleep(100);
+            threadAlgo?.Abort();
+            threadAlgo = null;
+        }
+
+        void Algo()
+        {
+            algoStandBy = true;
+            while (algoIsRunning)
+            {
+                lock (takeFrame)
+                {
+                    algoStandBy = false;
+                    ComputePicture(frame.mat.Clone());
+                    algoStandBy = true;
+                }
+            }
+        }
+
 
         #region IMAGE PROCESSINGS
         void ImageProcessing_Init()
@@ -1292,12 +1429,6 @@ namespace OpenCVSharpJJ
 
             // Cv2.Line(graph1.mat, 0, niveau_pixel, graph1.mat.Width - 1, niveau_pixel, bleu, epaisseur);
 
-            #region TRACE centre caméra (mire+)
-            int milieuhauteur = rotated.mat.Height / 2;
-            int milieulargeur = rotated.mat.Width / 2;
-            Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, rouge, 2);
-            Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, rouge, 2);
-            #endregion
 
             #region GRAPH INIT de l'image
             int largeur_graph = 255;
@@ -1350,7 +1481,7 @@ namespace OpenCVSharpJJ
             //}
             #endregion
 
-            #region dessine des lignes de repères
+            #region dessine des lignes de repères "Grids"
             if (configuration.displayGrids == true)
             {
                 //horizontales
@@ -1370,17 +1501,24 @@ namespace OpenCVSharpJJ
             }
             #endregion
 
+            #region dessine roi sur rotated
+            if (configuration.displayROI == true)
+                Cv2.Rectangle(rotated.mat, roi, bleu, 3);
+            #endregion
+
+            #region TRACE centre caméra (mire+)
+            int milieuhauteur = rotated.mat.Height / 2;
+            int milieulargeur = rotated.mat.Width / 2;
+            Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, rouge, 2);
+            Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, rouge, 2);
+            #endregion
+
             #region dessine la bande morte
             if (configuration.deadBand == true)
             {
                 Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y + configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y + configuration.bande_morte_pix, turquoise, 1);
                 Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y - configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y - configuration.bande_morte_pix, turquoise, 1);
             }
-            #endregion
-
-            #region dessine roi sur rotated
-            if (configuration.displayROI == true)
-                Cv2.Rectangle(rotated.mat, roi, bleu, 3);
             #endregion
 
             #region dessine centre sur roi
@@ -1702,6 +1840,7 @@ namespace OpenCVSharpJJ
                     val_txt = val_txt.Replace("mm", "");
                     val_txt = val_txt.Replace(".", ",");
                     camera_pos_mm = float.Parse(val_txt);
+                    Debug_Newcamera_pos_mm((float)camera_pos_mm);
                 }
                 if (txt.Contains("D max = "))
                 {
@@ -1791,6 +1930,9 @@ namespace OpenCVSharpJJ
             {
                 if (!txt.Contains('\n'))
                     txt += '\n';
+
+                if (txt.Length > 12)
+                    System.Windows.MessageBox.Show("ATTENTION DEPASSEMENT DE CAPACITE DE 12 CARACTERES MAX ATTENDU!");
 
                 cs?.Envoyer(txt);
             }
@@ -1921,6 +2063,8 @@ namespace OpenCVSharpJJ
 
             distancepixel = d_pix;
 
+            Debug_Newdistancepixel(distancepixel);
+
             if (Math.Abs(distancepixel) > configuration.bande_morte_pix)
             {
                 //pas assez proche, si on peut, rapprochons-nous
@@ -1951,7 +2095,7 @@ namespace OpenCVSharpJJ
 
             if (lastPoint == null)
             {
-                t0 = t;
+                //t0 = t;
                 newPoint.t = 0;
                 lastPoint = newPoint;
 
@@ -2016,7 +2160,7 @@ namespace OpenCVSharpJJ
                     //_ratio_mm_pix = (float)deplacement_mm_commande_precedent / (delta_pix_precedent - delta_pix);
                     deplacement_mm_commande = (float)((double)delta_pix / configuration.ratio_pix_par_mm);
 
-                    if(deplacement_mm_commande > 0 && deplacement_mm_commande_precedent < 0 ||
+                    if (deplacement_mm_commande > 0 && deplacement_mm_commande_precedent < 0 ||
                        deplacement_mm_commande < 0 && deplacement_mm_commande_precedent > 0
                         )
                     {
@@ -2026,6 +2170,8 @@ namespace OpenCVSharpJJ
 
                 }
 
+                Debug_Newdeplacement_mm_commande(deplacement_mm_commande);
+
                 if (deplacement_mm_commande == 0 || camera_pos_low_switch || camera_pos_high_switch)
                 {
 
@@ -2034,14 +2180,14 @@ namespace OpenCVSharpJJ
                 {
                     //TODO PARAMETRISER CLAMP
                     //deplacement_mm_commande = Clamp(deplacement_mm_commande, -5, 5); //par petit pas (maxi +/-1 mm)
-                    
-                    
-                    
 
 
-                    
-                    
-                    
+
+
+
+
+
+
                     string commandeArduino = "";
                     float val = deplacement_mm_commande;
                     if (monte)
@@ -2103,6 +2249,111 @@ namespace OpenCVSharpJJ
             System.Diagnostics.Process.Start(savedImagesPath);
         }
 
+        #endregion
+
+        #region Debug / graph
+        ScottPlot.Plottable.DataLogger debug_log_01;
+        ScottPlot.Plottable.DataLogger debug_log_02;
+        ScottPlot.Plottable.DataLogger debug_log_03;
+        ScottPlot.Plottable.DataLogger debug_log_04;
+
+        //DispatcherTimer sampler;
+        bool debug_record;
+        private void Debug_graph_INIT()
+        {
+            debug_plot.Plot.Style(new ScottPlot.Styles.Gray1());
+
+
+            //debug_log_01 = debug_plot.Plot.AddDataLogger();
+            //debug_log_01.MarkerSize = 5;
+            //debug_log_01.Color = System.Drawing.Color.Magenta;
+            //debug_plot.Plot.YAxis.Color(debug_log_01.Color);
+            //debug_log_01.YAxisIndex = 0; //1 à droite
+
+            debug_plot.Plot.YAxis.IsVisible = false;
+
+            debug_log_02 = debug_plot.Plot.AddDataLogger();
+            debug_log_02.MarkerSize = 5;
+            debug_log_02.Color = System.Drawing.Color.DodgerBlue;
+            // Create another axis to the left and give it an index
+            var secondYAxis = debug_plot.Plot.AddAxis(Edge.Left, axisIndex: 2, "distancepixel", color: debug_log_02.Color);
+            debug_log_02.YAxisIndex = 2;
+
+            debug_log_03 = debug_plot.Plot.AddDataLogger();
+            debug_log_03.MarkerSize = 5;
+            debug_log_03.Color = System.Drawing.Color.Yellow;
+            var thirdYAxis = debug_plot.Plot.AddAxis(Edge.Left, axisIndex: 3, "deplacement_mm_commande", color: debug_log_03.Color);
+            debug_log_03.YAxisIndex = 3;
+
+            debug_log_04 = debug_plot.Plot.AddDataLogger();
+            debug_log_04.MarkerSize = 5;
+            debug_log_04.Color = System.Drawing.Color.Lime;
+            var fourthYAxis = debug_plot.Plot.AddAxis(Edge.Left, axisIndex: 4, "camera_pos_mm", color: debug_log_04.Color);
+            debug_log_04.YAxisIndex = 4;
+        }
+
+        private void Button_Debug_Clear_Click(object sender, MouseButtonEventArgs e)
+        {
+            debug_log_01?.Clear();
+            debug_log_02?.Clear();
+            debug_log_03?.Clear();
+            debug_log_04?.Clear();
+            debug_plot.Plot.AxisAuto();
+            debug_plot.Refresh();
+        }
+        private void Button_Debug_Pause_Click(object sender, MouseButtonEventArgs e) { debug_record = false; }
+        private void Button_Debug_Play_Click(object sender, MouseButtonEventArgs e) { debug_record = true; }
+
+        void Debug_Newdistancepixel(float val)
+        {
+            Debug_New(debug_log_02, val);
+        }
+        void Debug_Newdeplacement_mm_commande(float val)
+        {
+            Debug_New(debug_log_03, val);
+        }
+        void Debug_Newcamera_pos_mm(float val)
+        {
+            Debug_New(debug_log_04, val);
+        }
+
+        void Debug_New(DataLogger dataLogger, float val)
+        {
+            if (!debug_record)
+                return;
+
+            double x = (DateTime.Now - t0).TotalSeconds;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    dataLogger.Add(x, val);
+                    debug_plot.Plot.AxisAuto();
+                    debug_plot.Refresh();
+                }
+                catch (Exception)
+                {
+
+                }
+            }));
+        }
+
+        //private void Sample_Tick(object sender, EventArgs e)
+        //{
+        //    //if (debug_record == false) return;
+
+        //    //DateTime t = DateTime.Now;
+        //    //double x = (t - t0).TotalSeconds;
+        //    //debug_log_02.Add(x, distancepixel);
+        //    debug_log_03.Add(x, deplacement_mm_commande);
+
+        //    if (camera_pos_mm != null)
+        //        debug_log_04.Add(x, (float)camera_pos_mm);
+
+        //    //debug_plot.Plot.AxisAuto();
+
+        //    //debug_plot.Refresh();
+        //}
         #endregion
 
         #region (COMMON) MATHS

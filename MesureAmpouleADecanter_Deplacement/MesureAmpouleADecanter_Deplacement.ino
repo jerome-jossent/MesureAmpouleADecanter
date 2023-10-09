@@ -2,9 +2,17 @@
 sur d = 326.7 mm
 avec T1000 et t1000 : on a une vitesse (montante = descendante) de 19.1 mm/sec
 avec T1000 et t700 : on a une vitesse de 22.4 mm/sec
-
-
 */
+
+#include "ArduPID.h" //https://github.com/PowerBroker2/ArduPID/tree/main
+ArduPID myController;
+double pid_input;
+double pid_output;
+// Arbitrary setpoint and gains - adjust these as fit for your project:
+double pid_setpoint = 30;
+double pid_p = 0.2;
+double pid_i = 0.0;
+double pid_d = 0.0001;
 
 // System caracteristics ============================================
 float bar_mm_by_turn = 8.0f;
@@ -42,6 +50,7 @@ int delta_tour;
 bool z_init = true;
 
 // System Manager ==================================================
+bool calibration = false;
 bool au;
 bool scanmode = false;
 
@@ -51,6 +60,9 @@ static char message[MAX_MESSAGE_LENGTH]; //incoming message
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void setup() {
+  au = false;
+
+  //init COM
   Serial.begin(115200);
   Serial.println("System Starting");
   
@@ -60,17 +72,8 @@ void setup() {
   pinMode(stepYPin, OUTPUT);
   pinMode(dirYPin, OUTPUT);  
   pinMode(y_limit_min, INPUT_PULLUP);
-  pinMode(y_limit_max, INPUT_PULLUP);
-  
-  au = false;
+  pinMode(y_limit_max, INPUT_PULLUP);  
   Serial.println("STEP Motor OK");
-  
-  //get coder saved values
-  //coder = Read_d(Add_coder);
-  //PrintPosition();    
-  //coder_max = Read_d(Add_codermax);
-  //PrintD();
-  //Serial.println("Memory OK");
   
   //init coder
   pinMode(pinA,INPUT_PULLUP);
@@ -78,14 +81,24 @@ void setup() {
   pinMode(pinZ,INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(pinA), changementA, RISING); //CHANGE
   attachInterrupt(digitalPinToInterrupt(pinZ), changementZ, RISING); //CHANGE
-  Serial.println("Coder OK");
+  Serial.println("Coder (1/2) hardware OK");
 
-  coderThread.enabled = true; // Default enabled value is true
-  coderThread.setInterval(10); // Setts the wanted interval to be 10ms
+  coderThread.setInterval(100); // Set the wanted interval in ms
   coderThread.onRun(CoderCallback);
-  Serial.println("Coder Thread OK");
+  coderThread.enabled = true; // Default enabled value is true
+  Serial.println("Coder (2/2) software OK");
 
-//INFOS
+  //Load PID
+  myController.begin(&pid_input, &pid_output, &pid_setpoint, pid_p, pid_i, pid_d);
+  // myController.reverse()               // Uncomment if controller output is "reversed"
+  // myController.setSampleTime(10);      // OPTIONAL - will ensure at least 10ms have past between successful compute() calls
+  myController.setOutputLimits(-50, 50);//0, 255); // +- 4mm
+  myController.setBias(0);//255.0 / 2.0);
+  myController.setPOn(P_ON_E);
+  myController.setWindUpLimits(-10, 10); // Groth bounds for the integral term to prevent integral wind-up  
+  myController.start();
+
+  //INFOS
   PrintInfos();
 
   Serial.println("System Initialized");
@@ -100,16 +113,30 @@ void loop() {
   }
   
   InteractionManager();
+
+  if(au) return;
   delay(20);
+
+  if (!calibration) return;
+
+  if(HIGHEST() || LOWEST()) return;
+
+  //PID
+  myController.compute();
+
+  if (pid_output > 0.1 || pid_output < -0.1) 
+  {
+    Serial.println(pid_output);
+    Deplacement(pid_output);
+  } 
+     
+  
+  //delay(500);
+
 }
 
-void CoderCallback(){
-  if (coder != coder_last){
-    Serial.println(String("Coder = ") + String(coder));
-    coder_last = coder;
-  }
-}
 
+//-----------------SERIAL COM-------------------
 void InteractionManager(){
   if (!SerialManager()) return;
 
@@ -118,13 +145,13 @@ void InteractionManager(){
   //debug
   Serial.println(message);   
   
-  //à déclarer en dehors du switch, sinon CASSE le switch !
-  float val; 
-  bool terminEnHaut;
-  
   //reset arrêt d'urgence (sauf si AU demandé)
   if (message[0] != 'e')
       au = false;
+      
+  //à déclarer en dehors du switch, sinon CASSE le switch !
+  float val; 
+  bool terminEnHaut;  
   
   //i : info
   //c : calibration
@@ -141,6 +168,8 @@ void InteractionManager(){
   //C : set coder_imp_by_turn
   //B : set bar_mm_by_tr
   //M : set motor_steps_by_tr
+  //P : set position
+  //r : reset arduino card
 
   switch (message[0]){
     case 'i':
@@ -152,7 +181,8 @@ void InteractionManager(){
       terminEnHaut = true;
       if(message[1] == '0') terminEnHaut = false;
       if(message[1] == '1') terminEnHaut = true;
-      DemandeEtalonnage(terminEnHaut, 10);
+      //DemandeEtalonnage(terminEnHaut, 10);
+      DemandeEtalonnage(true, 10);
       break;
       
     case 'e':
@@ -244,7 +274,17 @@ void InteractionManager(){
       bar_mm_by_turn = GetVal();
       Print_bar_mm_by_turn();
       break;
-
+    
+    case 'P':
+      //position_target in mm
+      pid_setpoint = GetVal();
+      break;
+    
+    case 'r':
+    //reset Arduino
+      resetFunc();
+      break;
+  
     default:
       Serial.print("inconnu : ");
       Serial.println(message);      
@@ -283,7 +323,10 @@ float GetVal(){ // retourne en float la suite du message (retire le 1er caractè
   return String(message).substring(1).toFloat();
 }
 
+
+//-----------------DEPLACEMENTS-------------------
 void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){ 
+  calibration = false;
   Etalonnage(termineExtremiteHaute);
   if (au) return;
   
@@ -300,6 +343,8 @@ void DemandeEtalonnage(bool termineExtremiteHaute, float degagement){
     //Save_d(Add_coder, coder);
   }
   PrintPosition();
+  //delay(3000);
+  calibration = true;
 }
 
 void Deplacement_Max(){
@@ -361,6 +406,13 @@ void Scan(){
 //DEV EN COURS
 }
 
+bool HIGHEST(){
+  return digitalRead(y_limit_max) == LOW;
+}
+bool LOWEST(){
+  return digitalRead(y_limit_min) == LOW;
+}
+
 bool Deplacement(float d_rel_mm){
   int steps;
   digitalWrite(enPin, LOW);
@@ -409,7 +461,7 @@ bool Deplacement(float d_rel_mm){
 }
 
 void Move1Step(){
-  InteractionManager();
+  InteractionManager(); // pour arrêt d'urgence
   if (au) return;
   digitalWrite(stepYPin, HIGH);
   delayMicroseconds(motor_step_duration);
@@ -418,6 +470,66 @@ void Move1Step(){
 }
 
 
+//-----------------CODER-------------------
+void CoderCallback(){
+  if (coder != coder_last){
+    Serial.println(String("Coder = ") + String(coder));
+    Serial.println(String("Distance = ") + String(Distance_mmFromCoderValue(coder)));
+    coder_last = coder;
+  }
+}
+
+void changementA(){
+  // +1 si B est haut, -1 si B est bas
+  if (digitalRead(pinB))
+    coder ++;
+  else
+    coder --;
+  
+  Set_pid_input();
+}
+
+void changementZ(){
+  if (z_init)
+  {
+    coder_lastZ = coder;
+    coder_last_dir = dirYPin;
+    z_init = false;
+  } else {    
+    if (coder_last_dir == dirYPin){
+      delta_tour = coder - coder_lastZ;      
+      if (delta_tour > 0)      
+        coder = coder_lastZ + coder_imp_by_turn;
+      else
+        coder = coder_lastZ - coder_imp_by_turn;    
+        
+      Set_pid_input();        
+    }
+    
+    coder_lastZ = coder;
+    coder_last_dir = dirYPin;
+  }
+}
+
+int seteach10 = 0;
+void Set_pid_input(){
+  seteach10 ++;
+  if(seteach10<10) return;
+  seteach10 = 0;
+  pid_input = Distance_mmFromCoderValue(coder);
+}
+
+//-----------------CONVERSIONS MM <=> IMPULSIONS CODER-------------------
+float Distance_mmFromCoderValue(long coderval){
+  return bar_mm_by_turn * coderval / coder_imp_by_turn; // mettre un float en premier !)
+}
+
+long CoderValueFromDistance_mm(float distance_mm){
+  return (long)coder_imp_by_turn * distance_mm / bar_mm_by_turn;
+}
+
+
+//-----------------PRINT-------------------
 void PrintInfos(){
   Serial.println("-----INFOS-----" ); 
   Print_bar_mm_by_turn();
@@ -427,6 +539,7 @@ void PrintInfos(){
   Printmotor_step_pause();
   PrintD();
   PrintPosition();
+  Print_PID();
   // Serial.println("\"Tx\" : set x motor_step_duration" );
   // Serial.println("\"tx\" : set x motor_step_pause" );
   Serial.println("---------------" );
@@ -481,38 +594,12 @@ void Print_bar_mm_by_turn(){
   Serial.println(" mm/tr");  
 }
 
-
-float Distance_mmFromCoderValue(long coderval){
-  //bar_mm_by_turn [float] = 2 mm / tour
-  //coder_imp_by_turn [int] = 1000 i / tour
-  return bar_mm_by_turn * coderval / coder_imp_by_turn;
-}
-
-//-----------------CODER-------------------
-void changementA(){
-  // Si B different de l'ancien état de A alors
-  if (digitalRead(pinB))
-    coder ++;
-  else
-    coder --;  
-}
-
-void changementZ(){
-  if (z_init)
-  {
-    coder_lastZ = coder;
-    coder_last_dir = dirYPin;
-    z_init = false;
-  } else {    
-    if (coder_last_dir == dirYPin){
-      delta_tour = coder - coder_lastZ;      
-      if (delta_tour > 0)      
-        coder = coder_lastZ + coder_imp_by_turn;
-      else
-        coder = coder_lastZ - coder_imp_by_turn;            
-    }
-    
-    coder_lastZ = coder;
-    coder_last_dir = dirYPin;
-  }
+void Print_PID(){
+  myController.debug(&Serial, "myController", PRINT_INPUT    | // Can include or comment out any of these terms to print
+                                              PRINT_OUTPUT   | // in the Serial plotter
+                                              PRINT_SETPOINT |
+                                              PRINT_BIAS     |
+                                              PRINT_P        |
+                                              PRINT_I        |
+                                              PRINT_D);
 }

@@ -110,6 +110,7 @@ namespace Communication_Série
             {
                 if (MySerialPort != null)
                 {
+                    //MySerialPort.ti
                     MySerialPort.Write(texte);
                     return true;
                 }
