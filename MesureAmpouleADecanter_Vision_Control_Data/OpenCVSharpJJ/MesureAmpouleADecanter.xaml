@@ -317,7 +317,7 @@
                             <xcad:LayoutAnchorable x:Name="layoutAnchorable_system_paremeters" ContentId="sys_parameters" Title="System parameters" CanClose="False">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Any modification need to uploaded to Arduino" VerticalAlignment="Center" Margin="5"/>
+                                        <TextBlock Text="Any modification need to be uploaded to Arduino" VerticalAlignment="Center" Margin="5"/>
                                         <Image Grid.Row="0" Grid.Column="2" Margin="2" Source="images/device_send_to_it.png" Stretch="Uniform" Width="30"
                        RenderOptions.BitmapScalingMode="HighQuality" MouseDown="Button_SendConfigToArduino_Click" ToolTip="Send Configs to Arduino"/>
                                     </StackPanel>

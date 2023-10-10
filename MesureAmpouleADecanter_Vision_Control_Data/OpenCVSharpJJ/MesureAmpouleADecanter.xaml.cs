@@ -963,7 +963,8 @@ namespace OpenCVSharpJJ
                         ComputePicture(frame_clone.mat);
                         frame_clone.mat = null;
                         algoStandBy = true;
-                    }else
+                    }
+                    else
                         Thread.Sleep(10);
                 }
             }
@@ -2117,6 +2118,8 @@ namespace OpenCVSharpJJ
             }
         }
 
+        float? vitesseinstantannee_mm_par_sec;
+
         void NewPoint(DateTime t, int ecart_pix)
         {
             PointJJ newPoint = new PointJJ(t, (float)camera_pos_mm, ecart_pix);
@@ -2139,6 +2142,17 @@ namespace OpenCVSharpJJ
                 {
                     //le point est meilleur : on écrase l'ancien et on met le nouveau
                     lastPoint = newPoint;
+
+                    //mesure vitesse instantanée
+
+                    if (_points.Count > 2)
+                    {
+                        var Z = _points[_points.Count - 1];
+                        var Y = _points[_points.Count - 2];
+                        vitesseinstantannee_mm_par_sec = (float)((Z.z_mm - Y.z_mm) / (Z.t - Y.t));
+                    }
+                    else
+                        vitesseinstantannee_mm_par_sec = null;
                 }
             }
             else
@@ -2165,6 +2179,7 @@ namespace OpenCVSharpJJ
 
             float deplacement_mm_commande_precedent = 0;
             int limitateur_occurence = 0;
+
             while (cameraDisplacement_Running)
             {
                 //en attente d'ordre de déplacement & pas d'arrêt (continue)
@@ -2187,6 +2202,10 @@ namespace OpenCVSharpJJ
                     // calcul auto du ratio (si la cible correspond toujours au même objet observé !)
                     //_ratio_mm_pix = (float)deplacement_mm_commande_precedent / (delta_pix_precedent - delta_pix);
                     deplacement_mm_commande = (float)((double)delta_pix / configuration.ratio_pix_par_mm);
+
+                    if (vitesseinstantannee_mm_par_sec != null)
+                        deplacement_mm_commande += (float)Math.Round((float)vitesseinstantannee_mm_par_sec * 1, 2); // arbitrairement 1 seconde de temps de réaction
+
 
                     if (deplacement_mm_commande > 0 && deplacement_mm_commande_precedent < 0 ||
                        deplacement_mm_commande < 0 && deplacement_mm_commande_precedent > 0
@@ -2341,6 +2360,8 @@ namespace OpenCVSharpJJ
         {
             if (!debug_record)
                 return;
+
+            debug_record = false;
 
             double x = (DateTime.Now - t0).TotalSeconds;
             Dispatcher.BeginInvoke(new Action(() =>
