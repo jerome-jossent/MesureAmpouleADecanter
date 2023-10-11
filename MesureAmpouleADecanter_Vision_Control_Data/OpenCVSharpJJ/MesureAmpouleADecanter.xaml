@@ -141,8 +141,16 @@
                             <!--ARDUINO READ-->
                             <xcad:LayoutAnchorable x:Name="layoutAnchorable_arduino_read" ContentId="deplacement" Title="Deplacement" CanClose="False">
                                 <Grid>
-                                    <ListBox x:Name="lbx_arduino_received" ItemsSource="{Binding arduinoMessages, UpdateSourceTrigger=PropertyChanged}" 
-                                             Foreground="#00FF00" Background="#3A4149" />
+
+                                    <ScrollViewer Name="svw_arduino_received">
+                                        <ListView Name="lbx_arduino_received" 
+                                                  ItemsSource="{Binding arduinoMessages}" 
+                                                  IsSynchronizedWithCurrentItem="True"
+                                                  ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                  Foreground="#00FF00" Background="#3A4149"
+                                            />
+                                    </ScrollViewer>
+                                                                        
                                     <Image Source="images/croix.png" RenderOptions.BitmapScalingMode="HighQuality" 
                                            Width="30" Opacity="0.3" VerticalAlignment="Top" HorizontalAlignment="Right" 
                                            MouseDown="Button_Clear_Click" ToolTip="Clear"/>

@@ -34,6 +34,8 @@ using SharpDX.MediaFoundation;
 using ScottPlot.Renderable;
 using ScottPlot.Plottable;
 using OpenCvSharp.Flann;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace OpenCVSharpJJ
 {
@@ -386,6 +388,11 @@ namespace OpenCVSharpJJ
             {
                 _arduinoMessages = value;
                 OnPropertyChanged();
+
+                //Dispatcher.BeginInvoke(new Action(() =>
+                //{
+                //    lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
+                //}));
             }
         }
         ObservableCollection<string> _arduinoMessages = new ObservableCollection<string>();
@@ -573,9 +580,12 @@ namespace OpenCVSharpJJ
 
             LayoutLoadButton_Click(null, null);
 
-            //focus FORCé sur le dernier message Arduino
-            ((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.Items).CollectionChanged +=
-       lbx_arduino_received_CollectionChanged;
+            //     //focus FORCé sur le dernier message Arduino
+            //     ((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.Items).CollectionChanged +=
+            //lbx_arduino_received_CollectionChanged;
+
+
+
             //((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.ItemsSource).CollectionChanged += (s, e2) =>
             //{
             //    if (e2.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
@@ -583,23 +593,23 @@ namespace OpenCVSharpJJ
             //    //lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
             //};
 
-            //focus FORCé sur la dernière donnée enregistrée
-            ((System.Collections.Specialized.INotifyCollectionChanged)items_data.ItemsSource).CollectionChanged += (s, e2) =>
-            {
-                if (e2.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-                    scv_data.ScrollToBottom();//.ScrollIntoView(items_data.Items[items_data.Items.Count - 1]);
-            };
+            ////focus FORCé sur la dernière donnée enregistrée
+            //((System.Collections.Specialized.INotifyCollectionChanged)items_data.ItemsSource).CollectionChanged += (s, e2) =>
+            //{
+            //    if (e2.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+            //        scv_data.ScrollToBottom();//.ScrollIntoView(items_data.Items[items_data.Items.Count - 1]);
+            //};
 
             this.WindowState = WindowState.Maximized;
 
             Debug_graph_INIT();
         }
 
-        private void lbx_arduino_received_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            lbx_arduino_received.SelectedIndex = lbx_arduino_received.Items.Count - 1;
-            lbx_arduino_received.ScrollIntoView(lbx_arduino_received.SelectedItem);
-        }
+        //private void lbx_arduino_received_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        //{
+        //    lbx_arduino_received.SelectedIndex = lbx_arduino_received.Items.Count - 1;
+        //    lbx_arduino_received.ScrollIntoView(lbx_arduino_received.SelectedItem);
+        //}
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
@@ -1929,9 +1939,11 @@ namespace OpenCVSharpJJ
                 {
                     //last is down
                     arduinoMessages.Add(message);
-                    while (arduinoMessages.Count > 100)
+                    while (arduinoMessages.Count > 300)
                         arduinoMessages.RemoveAt(0);
-                    OnPropertyChanged("arduinoMessages");
+
+                    svw_arduino_received.ScrollToEnd();
+                    //lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
                 }));
         }
 
@@ -2160,8 +2172,9 @@ namespace OpenCVSharpJJ
                 //sauvegarde/écriture dans fichier data du point précédent
                 string[] ligne = new string[1] { lastPoint.ToString() };
                 System.IO.File.AppendAllLines(data_filename, ligne);
+                                
                 _points.Add(lastPoint);
-
+                scv_data.ScrollToEnd();
                 plot._Add(lastPoint);
 
                 lastPoint = newPoint;
