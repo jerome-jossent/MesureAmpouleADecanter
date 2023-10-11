@@ -162,46 +162,6 @@ namespace OpenCVSharpJJ
         }
         string fps;
 
-
-        //update bande_morte_pix quand             configuration.bande_morte_mm change
-
-
-
-
-
-        //public int Threshold1
-        //{
-        //    get { return threshold1; }
-        //    set
-        //    {
-        //        if (threshold1 == value)
-        //            return;
-        //        threshold1 = value;
-
-        //        ROI_AutoAdjustH(value);
-
-        //        OnPropertyChanged("Threshold1");
-        //        if (!captureVideoIsRunning)
-        //            ComputePicture(frame.mat);
-        //    }
-        //}
-        //int threshold1 = 350;
-
-        //public int Threshold2
-        //{
-        //    get { return threshold2; }
-        //    set
-        //    {
-        //        if (threshold2 == value)
-        //            return;
-        //        threshold2 = value;
-        //        OnPropertyChanged("Threshold2");
-        //        if (!captureVideoIsRunning)
-        //            ComputePicture(frame.mat);
-        //    }
-        //}
-        //int threshold2 = 10;
-
         public int rotatedframe_width { get { return rotated.mat.Width; } }
 
         public int rotatedframe_height { get { return rotated.mat.Height; } }
@@ -458,7 +418,7 @@ namespace OpenCVSharpJJ
         string savedImagesPath;
 
 
-        bool etalonnage_fin_haut;
+        //bool etalonnage_fin_haut;
         #endregion
 
         #region PARAMETERS
@@ -580,36 +540,10 @@ namespace OpenCVSharpJJ
 
             LayoutLoadButton_Click(null, null);
 
-            //     //focus FORCé sur le dernier message Arduino
-            //     ((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.Items).CollectionChanged +=
-            //lbx_arduino_received_CollectionChanged;
-
-
-
-            //((System.Collections.Specialized.INotifyCollectionChanged)lbx_arduino_received.ItemsSource).CollectionChanged += (s, e2) =>
-            //{
-            //    if (e2.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-            //        lbx_arduino_received.SelectedItem = lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1];
-            //    //lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
-            //};
-
-            ////focus FORCé sur la dernière donnée enregistrée
-            //((System.Collections.Specialized.INotifyCollectionChanged)items_data.ItemsSource).CollectionChanged += (s, e2) =>
-            //{
-            //    if (e2.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-            //        scv_data.ScrollToBottom();//.ScrollIntoView(items_data.Items[items_data.Items.Count - 1]);
-            //};
-
             this.WindowState = WindowState.Maximized;
 
             Debug_graph_INIT();
         }
-
-        //private void lbx_arduino_received_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        //{
-        //    lbx_arduino_received.SelectedIndex = lbx_arduino_received.Items.Count - 1;
-        //    lbx_arduino_received.ScrollIntoView(lbx_arduino_received.SelectedItem);
-        //}
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
@@ -940,6 +874,7 @@ namespace OpenCVSharpJJ
         }
         #endregion
 
+        #region ALGO THREAD
         void Algo_Start()
         {
             if (threadAlgo != null && threadAlgo.IsAlive)
@@ -979,7 +914,7 @@ namespace OpenCVSharpJJ
                 }
             }
         }
-
+        #endregion
 
         #region IMAGE PROCESSINGS
         void ImageProcessing_Init()
@@ -1038,7 +973,6 @@ namespace OpenCVSharpJJ
 
             OpenCvSharp.Rect newroi;
             newroi = Cv2.SelectROI(window_name, rotated.mat, true);
-            //newroi = new OpenCvSharp.Rect(884,81,66,884);
 
             roi = newroi;
 
@@ -1427,23 +1361,6 @@ namespace OpenCVSharpJJ
             }
             #endregion
 
-            #region TRACE niveau en ligne hachée sur l'image
-            int morceaux = 10;
-            int dashed_line_A = 0;
-            int dashed_line_Z = ROI1.mat.Width - 1;
-            int dashed_line_total_length = dashed_line_Z - dashed_line_A;
-            float dashed_line_length = (float)dashed_line_total_length / (morceaux * 2 - 1);
-            int epaisseur = (int)(0.4 * nbrLignes / 100);
-            if (epaisseur < 1) epaisseur = 1;
-            for (int i = 0; i < morceaux * 2 - 1; i += 2)
-            {
-                int x1 = (int)(dashed_line_length * i);
-                int x2 = (int)(dashed_line_length * (i + 1));
-                Cv2.Line(ROI1.mat, x1, niveau_pixel, x2, niveau_pixel, bleu, epaisseur);
-                Cv2.Line(frameGray.mat, x1, niveau_pixel, x2, niveau_pixel, bleu, epaisseur);
-            }
-            #endregion
-
             // Cv2.Line(graph1.mat, 0, niveau_pixel, graph1.mat.Width - 1, niveau_pixel, bleu, epaisseur);
 
             #region GRAPH INIT de l'image
@@ -1497,6 +1414,23 @@ namespace OpenCVSharpJJ
             //}
             #endregion
 
+            #region dessine niveau en ligne hachée sur l'image
+            int morceaux = 10;
+            int dashed_line_A = 0;
+            int dashed_line_Z = ROI1.mat.Width - 1;
+            int dashed_line_total_length = dashed_line_Z - dashed_line_A;
+            float dashed_line_length = (float)dashed_line_total_length / (morceaux * 2 - 1);
+            int epaisseur = (int)(0.4 * nbrLignes / 100);
+            if (epaisseur < 1) epaisseur = 1;
+            for (int i = 0; i < morceaux * 2 - 1; i += 2)
+            {
+                int x1 = (int)(dashed_line_length * i);
+                int x2 = (int)(dashed_line_length * (i + 1));
+                Cv2.Line(ROI1.mat, x1, niveau_pixel, x2, niveau_pixel, bleu, epaisseur);
+                Cv2.Line(frameGray.mat, x1, niveau_pixel, x2, niveau_pixel, bleu, epaisseur);
+            }
+            #endregion
+
             #region dessine des lignes de repères "Grids"
             if (configuration.displayGrids == true)
             {
@@ -1522,31 +1456,11 @@ namespace OpenCVSharpJJ
                 Cv2.Rectangle(rotated.mat, roi, bleu, 3);
             #endregion
 
-            #region TRACE centre caméra (mire+)
+            #region dessine centre caméra (mire+)
             int milieuhauteur = rotated.mat.Height / 2;
             int milieulargeur = rotated.mat.Width / 2;
-            Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, rouge, 2);
-            Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, rouge, 2);
-            #endregion
-
-            #region dessine des lignes de repères
-            if (configuration.displayGrids == true)
-            {
-                //horizontales
-                int n_h = 10;
-                for (int i = 0; i < n_h; i++)
-                {
-                    int y_ = (i + 1) * rotated.mat.Rows / n_h;
-                    Cv2.Line(rotated.mat, 0, y_, rotated.mat.Cols - 1, y_, blanc, 3);
-                }
-                //verticales
-                int n_v = 10;
-                for (int i = 0; i < n_v; i++)
-                {
-                    int x_ = (i + 1) * rotated.mat.Cols / n_v;
-                    Cv2.Line(rotated.mat, x_, 0, x_, rotated.mat.Rows - 1, blanc, 3);
-                }
-            }
+            Cv2.Line(rotated.mat, milieulargeur - 50, milieuhauteur, milieulargeur + 50, milieuhauteur, rouge, 3);
+            Cv2.Line(rotated.mat, milieulargeur, milieuhauteur - 50, milieulargeur, milieuhauteur + 50, rouge, 3);
             #endregion
 
             #region dessine la bande morte
@@ -1823,10 +1737,8 @@ namespace OpenCVSharpJJ
         {
             if (cs == null)
             {
-                //cs = new Communication_Série.Communication_Série(cbx_COM.Text, cbx_bauds.Text, DataReceived);
                 cs = new Communication_Série.Communication_Série(configuration.deplacement_portCOM,
                    configuration.deplacement_bauds,
-                   //cbx_COM.Text, cbx_bauds.Text, 
                    DataReceived);
                 if (cs.PortCom_ON())
                 {
@@ -1943,7 +1855,6 @@ namespace OpenCVSharpJJ
                         arduinoMessages.RemoveAt(0);
 
                     svw_arduino_received.ScrollToEnd();
-                    //lbx_arduino_received.ScrollIntoView(lbx_arduino_received.Items[lbx_arduino_received.Items.Count - 1]);
                 }));
         }
 
@@ -1995,22 +1906,13 @@ namespace OpenCVSharpJJ
 
         private void Button_Etalonnage_Click(object sender, MouseButtonEventArgs e)
         {
-            if (etalonnage_fin_haut)
+            //if (etalonnage_fin_haut)
                 SendToArduino("c1");
-            else
-                SendToArduino("c0");
-            etalonnage_fin_haut = !etalonnage_fin_haut;
+            //else
+            //    SendToArduino("c0");
+            //etalonnage_fin_haut = !etalonnage_fin_haut;
         }
 
-        void Button_UP_Click(object sender, MouseButtonEventArgs e)
-        {
-            SendToArduino("u");
-        }
-
-        void Button_DOWN_Click(object sender, MouseButtonEventArgs e)
-        {
-            SendToArduino("d");
-        }
         void Button_UP_Max_Click(object sender, MouseButtonEventArgs e)
         {
             SendToArduino("U");
@@ -2020,13 +1922,53 @@ namespace OpenCVSharpJJ
         {
             SendToArduino("D");
         }
+        void Button_UP_Click(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("u");
+        }
+
+        void Button_DOWN_Click(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("d");
+        }
+
+        private void Button_UP_while_pressed_Click(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("U");
+        }
+
+        private void Button_UP_while_pressed_UnClick(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("e");
+        }
+
+        private void Button_DOWN_while_pressed_Click(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("D");
+        }
+
+        private void Button_DOWN_while_pressed_UnClick(object sender, MouseButtonEventArgs e)
+        {
+            SendToArduino("e");
+        }
+
+
         private void Button_GetPosition_Click(object sender, MouseButtonEventArgs e)
         {
             camera_pos_mm = null;
             SendToArduino("p");
         }
 
-        void Button_ARRETURGENCE_Click(object sender, RoutedEventArgs e)
+        //void Button_ARRETURGENCE_Click(object sender, RoutedEventArgs e)
+        //{
+        //    //arrêt Drive by vision
+        //    if (cameraDisplacement_Running)
+        //        CameraDisplacement_Start();
+
+        //    SendToArduino("e");
+        //}
+
+        private void Button_ARRETURGENCE_Click(object sender, MouseButtonEventArgs e)
         {
             //arrêt Drive by vision
             if (cameraDisplacement_Running)
@@ -2172,7 +2114,7 @@ namespace OpenCVSharpJJ
                 //sauvegarde/écriture dans fichier data du point précédent
                 string[] ligne = new string[1] { lastPoint.ToString() };
                 System.IO.File.AppendAllLines(data_filename, ligne);
-                                
+
                 _points.Add(lastPoint);
                 scv_data.ScrollToEnd();
                 plot._Add(lastPoint);
@@ -2214,33 +2156,42 @@ namespace OpenCVSharpJJ
                 {
                     // calcul auto du ratio (si la cible correspond toujours au même objet observé !)
                     //_ratio_mm_pix = (float)deplacement_mm_commande_precedent / (delta_pix_precedent - delta_pix);
-                    deplacement_mm_commande = (float)((double)delta_pix / configuration.ratio_pix_par_mm);
 
+                    float deplacement_mm_commande_tmp = (float)((double)delta_pix / configuration.ratio_pix_par_mm);
+
+                    //intégration de la vitesse courante de décantation
                     if (vitesseinstantannee_mm_par_sec != null)
-                        deplacement_mm_commande += (float)Math.Round((float)vitesseinstantannee_mm_par_sec * 1, 2); // arbitrairement 1 seconde de temps de réaction
-
-
-                    if (deplacement_mm_commande > 0 && deplacement_mm_commande_precedent < 0 ||
-                       deplacement_mm_commande < 0 && deplacement_mm_commande_precedent > 0
-                        )
                     {
-                        deplacement_mm_commande /= 3;
-                        Console.WriteLine("limitateur " + limitateur_occurence++);
+                        // arbitrairement 1 seconde de temps de réaction
+                        float marge1 = (float)Math.Round((float)vitesseinstantannee_mm_par_sec * 1, 2);
+                        deplacement_mm_commande_tmp += marge1;
                     }
 
+                    //intégration de la bande morte : on souhaite se déplacer sous le front de décantation pour pouvoir enregistrer
+                    //temps où le front sera exactement au niveau de la caméra
+                    float marge2 = (float)(-configuration.bande_morte_pix / configuration.ratio_pix_par_mm);
+                    marge2 /= 2;
+                    deplacement_mm_commande_tmp += marge2;
+
+                    if (deplacement_mm_commande_tmp > 0 && deplacement_mm_commande_precedent < 0 ||
+                       deplacement_mm_commande_tmp < 0 && deplacement_mm_commande_precedent > 0)
+                    {
+                        deplacement_mm_commande_tmp /= 3;
+                        Console.WriteLine("limitateur " + limitateur_occurence++);
+                    }
+                    deplacement_mm_commande = deplacement_mm_commande_tmp;
                 }
 
                 Debug_Newdeplacement_mm_commande(deplacement_mm_commande);
 
-                if (deplacement_mm_commande == 0 || camera_pos_low_switch || camera_pos_high_switch)
+                if (deplacement_mm_commande == 0 || 
+                    camera_pos_low_switch && deplacement_mm_commande < 0 ||
+                    camera_pos_high_switch && deplacement_mm_commande > 0)
                 {
 
                 }
                 else
                 {
-                    //TODO PARAMETRISER CLAMP
-                    //deplacement_mm_commande = Clamp(deplacement_mm_commande, -5, 5); //par petit pas (maxi +/-1 mm)
-
                     string commandeArduino = "";
                     float val = deplacement_mm_commande;
                     if (monte)
@@ -2271,7 +2222,11 @@ namespace OpenCVSharpJJ
         void Button_OpenDataFile_Click(object sender, MouseButtonEventArgs e)
         {
             if (System.IO.File.Exists(data_filename))
-                System.Diagnostics.Process.Start(data_filename);
+            {
+                string argument = "/select, \"" + data_filename + "\"";
+                System.Diagnostics.Process.Start("explorer.exe", argument);
+
+            }
         }
 
         void Button_DATA_Clear_Click(object sender, MouseButtonEventArgs e)
