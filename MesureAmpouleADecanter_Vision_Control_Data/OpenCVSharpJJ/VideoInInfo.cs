@@ -82,7 +82,7 @@ namespace OpenCVSharpJJ
             }
             else
             {
-                throw new IndexOutOfRangeException();
+                //throw new IndexOutOfRangeException();
             }
             return formats;
         }
