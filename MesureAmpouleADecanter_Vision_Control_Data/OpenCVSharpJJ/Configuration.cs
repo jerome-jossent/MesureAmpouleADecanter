@@ -160,18 +160,33 @@ namespace OpenCVSharpJJ
         }
         [JsonIgnore] bool? _inverser;
 
-        public double bande_morte_mm
+        public double bande_morte_haut_mm
         {
-            get { return _bande_morte_mm; }
+            get { return _bande_morte_haut_mm; }
             set
             {
-                if (_bande_morte_mm == value)
+                if (_bande_morte_haut_mm == value)
                     return;
-                _bande_morte_mm = value;
+                _bande_morte_haut_mm = value;
                 OnPropertyChanged();
+                OnPropertyChanged("bande_morte_haut_pix");
             }
         }
-        [JsonIgnore] double _bande_morte_mm = 1;
+        [JsonIgnore] double _bande_morte_haut_mm = 1;
+        
+        public double bande_morte_bas_mm
+        {
+            get { return _bande_morte_bas_mm; }
+            set
+            {
+                if (_bande_morte_bas_mm == value)
+                    return;
+                _bande_morte_bas_mm = value;
+                OnPropertyChanged();
+                OnPropertyChanged("bande_morte_bas_pix");
+            }
+        }
+        [JsonIgnore] double _bande_morte_bas_mm = 1;
 
         public double bar_mm_by_turn
         {
@@ -239,11 +254,20 @@ namespace OpenCVSharpJJ
         [JsonIgnore] int _motor_step_pause = 1;
 
         [JsonIgnore]
-        public int bande_morte_pix
+        public int bande_morte_haut_pix
         {
             get
             {
-                return (int)(bande_morte_mm * ratio_pix_par_mm);
+                return (int)(bande_morte_haut_mm * ratio_pix_par_mm);
+            }
+        }
+
+        [JsonIgnore]
+        public int bande_morte_bas_pix
+        {
+            get
+            {
+                return (int)(bande_morte_bas_mm * ratio_pix_par_mm);
             }
         }
 

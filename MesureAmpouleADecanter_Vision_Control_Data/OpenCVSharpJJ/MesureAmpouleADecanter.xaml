@@ -398,7 +398,7 @@
                                 <StackPanel>
                                     <!--ratio-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Label Content="Ratio (px/mm)" MinWidth="115"/>
+                                        <Label Content="Ratio (px/mm)" MinWidth="135"/>
                                         <xctk:DoubleUpDown Value="{Binding configuration.ratio_pix_par_mm}" MinWidth="60"
                                                            Minimum="0.00001" Maximum="100" Increment="1.0"
                                                            FormatString="F2" Margin="3"/>
@@ -407,7 +407,7 @@
                                     <!--seuil_perte_intensite-->
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="115"/>
+                                            <ColumnDefinition Width="135"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="65"/>
                                         </Grid.ColumnDefinitions>
@@ -425,44 +425,74 @@
 
                                     <!--inverser la détection-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Label Content="Inverse" MinWidth="115"/>
+                                        <Label Content="Inverse" Width="135"/>
                                         <CheckBox IsChecked="{Binding configuration.inverser}" VerticalAlignment="Center" />
                                     </StackPanel>
 
-                                    <!--bande morte sur erreur-->
+                                    <!--bande morte haute sur erreur-->
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="115"/>
+                                            <ColumnDefinition Width="135"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="65"/>
                                         </Grid.ColumnDefinitions>
-                                        <Label Content="Dead bands (mm)" MinWidth="115"/>
+                                        <Label Content="Dead band up (mm)" />
                                         <Slider Grid.Column="1" Minimum="0" Maximum="10" VerticalAlignment="Center"
-                                                Value="{Binding configuration.bande_morte_mm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                Value="{Binding configuration.bande_morte_haut_mm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                 SmallChange="0.01" LargeChange="0.1"/>
 
-                                        <xctk:DoubleUpDown Grid.Column="2" Value="{Binding configuration.bande_morte_mm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                        <xctk:DoubleUpDown Grid.Column="2" Value="{Binding configuration.bande_morte_haut_mm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                                            MinWidth="60"
                                                            Minimum="0" Maximum="10" Increment="0.1" 
                                                            FormatString="F2" Margin="3"/>
                                     </Grid>
 
-                                    <!--bande morte sur erreur-->
+                                    <!--bande morte basse sur erreur-->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="135"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="65"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Content="Dead band down (mm)"/>
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="10" VerticalAlignment="Center"
+                                                Value="{Binding configuration.bande_morte_bas_mm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                SmallChange="0.01" LargeChange="0.1"/>
+
+                                        <xctk:DoubleUpDown Grid.Column="2" Value="{Binding configuration.bande_morte_bas_mm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                           MinWidth="60"
+                                                           Minimum="0" Maximum="10" Increment="0.1" 
+                                                           FormatString="F2" Margin="3"/>
+                                    </Grid>
+
+                                    <!--bande morte haute sur erreur-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Label Content="Dead bands (px)" MinWidth="115"/>
-                                        <Label Content="{Binding configuration.bande_morte_pix, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Label Content="Dead band up (px)" Width="135"/>
+                                        <Label Content="{Binding configuration.bande_morte_haut_pix, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    
+                                    <!--bande morte bas sur erreur-->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Dead band down (px)" Width="135"/>
+                                        <Label Content="{Binding configuration.bande_morte_bas_pix, UpdateSourceTrigger=PropertyChanged}"/>
                                     </StackPanel>
 
                                     <!--erreur pixel-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Label Content="Error (px)" MinWidth="115"/>
-                                        <Label Content="{Binding distancepixel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                                        <Label Content="Error (px)" MinWidth="135"/>
+                                        <Label Content="{Binding distancepixel, UpdateSourceTrigger=PropertyChanged}"/>
                                     </StackPanel>
 
                                     <!--erreur mm-->
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Label Content="Error (mm)" MinWidth="115"/>
-                                        <Label Content="{Binding deplacement_mm_commande, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                                        <Label Content="Error (mm)" MinWidth="135"/>
+                                        <Label Content="{Binding deplacement_mm_commande, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    
+                                    <!--erreur mm-->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Label Content="Speed (mm / sec)" MinWidth="135"/>
+                                        <Label Content="{Binding vitesseinstantannee_mm_par_sec_txt}"/>
                                     </StackPanel>
                                 </StackPanel>
                             </xcad:LayoutAnchorable>

@@ -1466,8 +1466,8 @@ namespace OpenCVSharpJJ
             #region dessine la bande morte
             if (configuration.deadBand == true)
             {
-                Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y + configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y + configuration.bande_morte_pix, turquoise, 1);
-                Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y - configuration.bande_morte_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y - configuration.bande_morte_pix, turquoise, 1);
+                Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y - configuration.bande_morte_haut_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y - configuration.bande_morte_haut_pix, turquoise, 1);
+                Cv2.Line(ROI1.mat, 0, milieuhauteur - roi.Y + configuration.bande_morte_bas_pix, rotated.mat.Cols - 1, milieuhauteur - roi.Y + configuration.bande_morte_bas_pix, turquoise, 1);
             }
             #endregion
 
@@ -1881,7 +1881,8 @@ namespace OpenCVSharpJJ
                     txt += '\n';
 
                 if (txt.Length > 12)
-                    System.Windows.MessageBox.Show("ATTENTION DEPASSEMENT DE CAPACITE DE 12 CARACTERES MAX ATTENDU!");
+                    System.Windows.MessageBox.Show("ATTENTION DEPASSEMENT DE CAPACITE : 12 CARACTERES MAX ATTENDU! \n" +
+                        txt + "\n" + txt.Length + "caractères", "!!", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 
                 cs?.Envoyer(txt);
             }
@@ -1907,7 +1908,7 @@ namespace OpenCVSharpJJ
         private void Button_Etalonnage_Click(object sender, MouseButtonEventArgs e)
         {
             //if (etalonnage_fin_haut)
-                SendToArduino("c1");
+            SendToArduino("c1");
             //else
             //    SendToArduino("c0");
             //etalonnage_fin_haut = !etalonnage_fin_haut;
@@ -2047,8 +2048,8 @@ namespace OpenCVSharpJJ
 
             //if (Math.Abs(distancepixel) > configuration.bande_morte_pix)
             //test : on n'est pas dans la bande morte
-            if ((distancepixel > 0 && distancepixel > configuration.bande_morte_pix) ||
-                (distancepixel < 0 && distancepixel < -configuration.bande_morte_pix))
+            if ((distancepixel > 0 && distancepixel > configuration.bande_morte_haut_pix) ||
+                (distancepixel < 0 && distancepixel < -configuration.bande_morte_bas_pix))
             {
                 //pas assez proche, si on peut, rapprochons-nous
                 if (arduinoWaiting)
@@ -2072,7 +2073,24 @@ namespace OpenCVSharpJJ
             }
         }
 
+
         float? vitesseinstantannee_mm_par_sec;
+        public string vitesseinstantannee_mm_par_sec_txt
+        {
+            get
+            {
+                if (vitesseinstantannee_mm_par_sec == null)
+                    return "-";
+                else
+                    return ((float)vitesseinstantannee_mm_par_sec).ToString();
+            }
+        }
+        List<float> vitesses = new List<float>();
+        int vitesses_nbr_val = 9;
+        int vitesses_nbr_val_mini = 5;
+
+
+
 
         void NewPoint(DateTime t, int ecart_pix)
         {
@@ -2103,10 +2121,25 @@ namespace OpenCVSharpJJ
                     {
                         var Z = _points[_points.Count - 1];
                         var Y = _points[_points.Count - 2];
-                        vitesseinstantannee_mm_par_sec = (float)((Z.z_mm - Y.z_mm) / (Z.t - Y.t));
+                        float vitesse = (float)((Z.z_mm - Y.z_mm) / (Z.t - Y.t));
+                        vitesse = (float)Math.Round(vitesse, 3);
+
+                        //on ne garde pas de vitesse de décantation positive
+                        if (vitesse < 0)
+                            vitesses.Add(vitesse);
+
+                        // on ne garde que les X dernières valeurs
+                        while (vitesses.Count > vitesses_nbr_val)
+                            vitesses.RemoveAt(0);
+
+                        //calcul de la médiane si assez de valeurs
+                        if (vitesses.Count >= vitesses_nbr_val_mini)
+                            vitesseinstantannee_mm_par_sec = Mediane(vitesses);
                     }
                     else
                         vitesseinstantannee_mm_par_sec = null;
+
+                    OnPropertyChanged("vitesseinstantannee_mm_par_sec_txt");
                 }
             }
             else
@@ -2163,13 +2196,13 @@ namespace OpenCVSharpJJ
                     if (vitesseinstantannee_mm_par_sec != null)
                     {
                         // arbitrairement 1 seconde de temps de réaction
-                        float marge1 = (float)Math.Round((float)vitesseinstantannee_mm_par_sec * 1, 2);
+                        float marge1 = (float)vitesseinstantannee_mm_par_sec * 1;
                         deplacement_mm_commande_tmp += marge1;
                     }
 
                     //intégration de la bande morte : on souhaite se déplacer sous le front de décantation pour pouvoir enregistrer
                     //temps où le front sera exactement au niveau de la caméra
-                    float marge2 = (float)(-configuration.bande_morte_pix / configuration.ratio_pix_par_mm);
+                    float marge2 = (float)(-configuration.bande_morte_haut_pix / configuration.ratio_pix_par_mm);
                     marge2 /= 2;
                     deplacement_mm_commande_tmp += marge2;
 
@@ -2184,7 +2217,7 @@ namespace OpenCVSharpJJ
 
                 Debug_Newdeplacement_mm_commande(deplacement_mm_commande);
 
-                if (deplacement_mm_commande == 0 || 
+                if (deplacement_mm_commande == 0 ||
                     camera_pos_low_switch && deplacement_mm_commande < 0 ||
                     camera_pos_high_switch && deplacement_mm_commande > 0)
                 {
@@ -2232,6 +2265,7 @@ namespace OpenCVSharpJJ
         void Button_DATA_Clear_Click(object sender, MouseButtonEventArgs e)
         {
             _points.Clear();
+            vitesses.Clear();
             lastPoint = null;
             if (System.IO.File.Exists(data_filename))
                 System.IO.File.Delete(data_filename);
@@ -2372,6 +2406,17 @@ namespace OpenCVSharpJJ
             List<int> listToSort = valeurs.ToList();
             listToSort.Sort();
             return listToSort[listToSort.Count / 2];
+        }
+        static int Mediane(List<int> valeurs)
+        {
+            valeurs.Sort();
+            return valeurs[valeurs.Count / 2];
+        }
+
+        static float Mediane(List<float> valeurs)
+        {
+            valeurs.Sort();
+            return valeurs[valeurs.Count / 2];
         }
 
         static float Clamp(float value, float min, float max)
