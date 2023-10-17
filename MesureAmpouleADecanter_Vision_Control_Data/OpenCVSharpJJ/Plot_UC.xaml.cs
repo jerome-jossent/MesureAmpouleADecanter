@@ -146,7 +146,7 @@ namespace OpenCVSharpJJ
         #endregion
 
         #region ADD DATA
-        public void _Add(MesureAmpouleADecanter.PointJJ point)
+        public void _Add(PointJJ point)
         {
             _Add(point.t, point.z_mm);
         }

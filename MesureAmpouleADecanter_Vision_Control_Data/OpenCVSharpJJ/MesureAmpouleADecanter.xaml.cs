@@ -65,45 +65,7 @@ namespace OpenCVSharpJJ
             }
         }
 
-        public class PointJJ
-        {
-            public DateTime T { get; set; }
-            public double t { get; set; }
-            public string T_string
-            {
-                get
-                {
-                    string chaine = T.ToString("yyyy/MM/dd HH:mm:ss.fff");
-                    return chaine;
-                }
-            }
-            public float z_mm { get; set; }
 
-            public int erreur_pixel { get; set; }
-
-            public PointJJ(DateTime T, float z_mm, int erreur_pixel)
-            {
-                this.T = T;
-                this.z_mm = z_mm;
-                this.erreur_pixel = erreur_pixel;
-                this.t = (T - MesureAmpouleADecanter.t0).TotalSeconds;
-            }
-            public PointJJ(float z_mm, int erreur_pixel)
-            {
-                T = DateTime.Now;
-                this.z_mm = z_mm;
-                this.erreur_pixel = erreur_pixel;
-            }
-
-            public override string ToString()
-            {
-                return t.ToString().Replace(",", ".") + "," +
-                    z_mm + "," +
-                    "," +
-                    T_string + "," +
-                    erreur_pixel;
-            }
-        }
         #endregion
 
         #region ENUMERATIONS
@@ -2092,70 +2054,6 @@ namespace OpenCVSharpJJ
 
 
 
-        void NewPoint(DateTime t, int ecart_pix)
-        {
-            PointJJ newPoint = new PointJJ(t, (float)camera_pos_mm, ecart_pix);
-
-            if (lastPoint == null)
-            {
-                //t0 = t;
-                newPoint.t = 0;
-                lastPoint = newPoint;
-
-                //création du fichier de sauvegarde de l'expérience
-                string ligne = "t(s),z(mm),,date,erreur(pix)\n\r";
-                data_filename = AppDomain.CurrentDomain.BaseDirectory + "kynch " + t0.ToString("yyyy_MM_dd HH_mm_ss") + ".csv";
-                System.IO.File.AppendAllText(data_filename, ligne);
-            }
-
-            if (newPoint.z_mm == lastPoint.z_mm)
-            {
-                if (Math.Abs(newPoint.erreur_pixel) < Math.Abs(lastPoint.erreur_pixel))
-                {
-                    //le point est meilleur : on écrase l'ancien et on met le nouveau
-                    lastPoint = newPoint;
-
-                    //mesure vitesse instantanée
-
-                    if (_points.Count > 2)
-                    {
-                        var Z = _points[_points.Count - 1];
-                        var Y = _points[_points.Count - 2];
-                        float vitesse = (float)((Z.z_mm - Y.z_mm) / (Z.t - Y.t));
-                        vitesse = (float)Math.Round(vitesse, 3);
-
-                        //on ne garde pas de vitesse de décantation positive
-                        if (vitesse < 0)
-                            vitesses.Add(vitesse);
-
-                        // on ne garde que les X dernières valeurs
-                        while (vitesses.Count > vitesses_nbr_val)
-                            vitesses.RemoveAt(0);
-
-                        //calcul de la médiane si assez de valeurs
-                        if (vitesses.Count >= vitesses_nbr_val_mini)
-                            vitesseinstantannee_mm_par_sec = Mediane(vitesses);
-                    }
-                    else
-                        vitesseinstantannee_mm_par_sec = null;
-
-                    OnPropertyChanged("vitesseinstantannee_mm_par_sec_txt");
-                }
-            }
-            else
-            {
-                //sauvegarde/écriture dans fichier data du point précédent
-                string[] ligne = new string[1] { lastPoint.ToString() };
-                System.IO.File.AppendAllLines(data_filename, ligne);
-
-                _points.Add(lastPoint);
-                scv_data.ScrollToEnd();
-                plot._Add(lastPoint);
-
-                lastPoint = newPoint;
-            }
-        }
-
         void CameraDisplacement()
         {
             //distancepixel : valeur significative de déplacement. Issu d'un test de bande morte, filtrée et écrite.
@@ -2289,6 +2187,73 @@ namespace OpenCVSharpJJ
         private void btn_OpenDataFolder_click(object sender, MouseButtonEventArgs e)
         {
             System.Diagnostics.Process.Start(savedImagesPath);
+        }
+
+        void NewPoint(DateTime t, int ecart_pix)
+        {
+            PointJJ newPoint = new PointJJ(t, (float)camera_pos_mm, ecart_pix);
+
+            if (lastPoint == null)
+            {
+                newPoint.t = 0;
+                lastPoint = newPoint;
+
+                //création du fichier de sauvegarde de l'expérience
+                string ligne = "date,t(s),z(mm),erreur(pix)\n\r";
+
+                //si on sauvegarde les photos, alors choisir le même dossier
+                //sinon prendre le dossier de l'appli
+                string folder = (configuration.saveFrame == true)?savedImagesPath:AppDomain.CurrentDomain.BaseDirectory;
+
+                data_filename = folder + "kynch " + t0.ToString("yyyy_MM_dd HH_mm_ss") + ".csv";
+                System.IO.File.AppendAllText(data_filename, ligne);
+            }
+
+            if (newPoint.z_mm == lastPoint.z_mm)
+            {
+                if (Math.Abs(newPoint.erreur_pixel) < Math.Abs(lastPoint.erreur_pixel))
+                {
+                    //le point est meilleur : on écrase l'ancien et on met le nouveau
+                    lastPoint = newPoint;
+
+                    //mesure vitesse instantanée
+                    if (_points.Count > 2)
+                    {
+                        var Z = _points[_points.Count - 1];
+                        var Y = _points[_points.Count - 2];
+                        float vitesse = (float)((Z.z_mm - Y.z_mm) / (Z.t - Y.t));
+                        vitesse = (float)Math.Round(vitesse, 3);
+
+                        //on ne garde pas de vitesse de décantation positive
+                        if (vitesse < 0)
+                            vitesses.Add(vitesse);
+
+                        // on ne garde que les X dernières valeurs
+                        while (vitesses.Count > vitesses_nbr_val)
+                            vitesses.RemoveAt(0);
+
+                        //calcul de la médiane si assez de valeurs
+                        if (vitesses.Count >= vitesses_nbr_val_mini)
+                            vitesseinstantannee_mm_par_sec = Mediane(vitesses);
+                    }
+                    else
+                        vitesseinstantannee_mm_par_sec = null;
+
+                    OnPropertyChanged("vitesseinstantannee_mm_par_sec_txt");
+                }
+            }
+            else
+            {
+                //sauvegarde/écriture dans fichier data du point précédent
+                string[] ligne = new string[1] { lastPoint.ToString() };
+                System.IO.File.AppendAllLines(data_filename, ligne);
+
+                _points.Add(lastPoint);
+                scv_data.ScrollToEnd();
+                plot._Add(lastPoint);
+
+                lastPoint = newPoint;
+            }
         }
 
         #endregion

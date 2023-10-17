@@ -169,6 +169,7 @@
     <Compile Include="MesureAmpouleADecanter.xaml.cs">
       <DependentUpon>MesureAmpouleADecanter.xaml</DependentUpon>
     </Compile>
+    <Compile Include="PointJJ.cs" />
     <Compile Include="Processing\ImPr.cs" />
     <Compile Include="Processing\ImPr_Converter.cs" />
     <Compile Include="Processing\ImPr_Debug.xaml.cs">
