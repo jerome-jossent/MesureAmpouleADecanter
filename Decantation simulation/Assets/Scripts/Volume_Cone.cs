@@ -20,8 +20,8 @@ public    float H;
         //V = 1/3 * pi * (Mathf.Tan(angle_rad))² * H² * H
         //H = (3*V/(pi * (Mathf.Tan(angle_rad))² ) ^ (1/3)
 
-        H = Mathf.Pow(3 * volume_L/1000 / (Mathf.PI * Mathf.Pow(Mathf.Tan(angle_rad), 2)), 1f / 3);
-
+        H = Mathf.Pow(3 * volume_L/1000 / (Mathf.PI * Mathf.Pow(Mathf.Tan(angle_rad), 2)), 1f / 3f);
+        H /= 0.4f;
         Cone.localScale = new Vector3(H, H, H);
     }
 }
