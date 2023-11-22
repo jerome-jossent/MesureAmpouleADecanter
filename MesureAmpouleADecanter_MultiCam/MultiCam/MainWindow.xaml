@@ -7,19 +7,23 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="auto"/>
+        </Grid.ColumnDefinitions>
 
-        <Image Grid.Column="0" Grid.Row="0" x:Name="FrameImage1" ></Image>
-        <Image Grid.Column="1" Grid.Row="0" x:Name="FrameImage2" ></Image>
-        <Image Grid.Column="0" Grid.Row="1" x:Name="FrameImage3" ></Image>
-        <Image Grid.Column="1" Grid.Row="1" x:Name="FrameImage4" ></Image>
+        <local:Capture_UC Grid.Row="0" x:Name="CAPTURE1"/>
+        <local:Capture_UC Grid.Row="1" x:Name="CAPTURE2"/>
+        <local:Capture_UC Grid.Row="2" x:Name="CAPTURE3"/>
 
+        <StackPanel Grid.Column="1" Width="200" >
+            <Slider Value="{Binding epaisseur}" Minimum="1" Maximum="20" />
+            <CheckBox Content="Save to disk" IsChecked="{Binding toSave}"/>
+        </StackPanel>
     </Grid>
 </Window>
