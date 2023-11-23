@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows.Media;
 using OpenCvSharp.WpfExtensions;
 using System.Runtime.CompilerServices;
+using Xceed.Wpf.AvalonDock.Layout;
 
 namespace MultiCam
 {
@@ -35,40 +36,6 @@ namespace MultiCam
         VideoCapture cap2;
         VideoCapture cap3;
 
-        ////images IHM
-        //public ImageSource FrameImage1
-        //{
-        //    get { return frameImage1; }
-        //    set
-        //    {
-        //        frameImage1 = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
-        //ImageSource frameImage1;
-
-        //public ImageSource FrameImage2
-        //{
-        //    get => frameImage2;
-        //    set
-        //    {
-        //        frameImage2 = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
-        //ImageSource frameImage2;
-
-        //public ImageSource FrameImage3
-        //{
-        //    get => frameImage3;
-        //    set
-        //    {
-        //        frameImage3 = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
-        //ImageSource frameImage3;
-
         public bool? toSave
         {
             get => _toSave;
@@ -85,10 +52,6 @@ namespace MultiCam
         }
         bool? _toSave = false;
 
-
-        Dictionary<string, OpenCvSharp.Mat> images = new Dictionary<string, Mat>();
-        //Dictionary<int, DateTime> nextrecord = new Dictionary<int, DateTime>();
-
         public int epaisseur
         {
             get => _epaisseur;
@@ -101,6 +64,9 @@ namespace MultiCam
         }
         int _epaisseur = 5;
 
+        Dictionary<string, Mat> images = new Dictionary<string, Mat>();
+
+       public Dictionary<int, DirectShowLib.DsDevice> devices ;
 
         string _f = @"C:\_JJ\DATA\decantation\multicam\";
         public string f;
@@ -119,6 +85,21 @@ namespace MultiCam
 
         void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
+            devices = CameraSettings.GetDevices();
+
+            Capture_UC CAPTURE1 = new Capture_UC();
+            Capture_UC CAPTURE2 = new Capture_UC();
+            Capture_UC CAPTURE3 = new Capture_UC();
+
+            LayoutAnchorable c1 = new LayoutAnchorable(); c1.Content = CAPTURE1;
+            Avalon_Views.Children.Add(c1);
+            LayoutAnchorable c2 = new LayoutAnchorable(); c2.Content = CAPTURE2;
+            Avalon_Views.Children.Add(c2);
+            LayoutAnchorable c3 = new LayoutAnchorable(); c3.Content = CAPTURE3;
+            Avalon_Views.Children.Add(c3);
+
+
+
             cap1 = new VideoCapture();
             cap2 = new VideoCapture();
             cap3 = new VideoCapture();
@@ -126,9 +107,12 @@ namespace MultiCam
             new Thread(ThreadSave).Start();
 
             List<CaptureArguments> args = new List<CaptureArguments>();
-            args.Add(new CaptureArguments(videoCapture: cap1, index: 0, CaptureArguments.Position.Bas, CAPTURE1, cts, images, this));
-            args.Add(new CaptureArguments(videoCapture: cap2, index: 2, CaptureArguments.Position.Haut, CAPTURE2, cts, images, this));
-            args.Add(new CaptureArguments(videoCapture: cap3, index: 3, CaptureArguments.Position.Milieu, CAPTURE3, cts, images, this));
+            int index = 1;
+            args.Add(new CaptureArguments(videoCapture: cap1, index: index, devices[index], CaptureArguments.Position.Bas, CAPTURE1, cts, images, this));
+            index = 2;
+            args.Add(new CaptureArguments(videoCapture: cap2, index: index, devices[index], CaptureArguments.Position.Haut, CAPTURE2, cts, images, this));
+            index = 3;
+            args.Add(new CaptureArguments(videoCapture: cap3, index: index, devices[index], CaptureArguments.Position.Milieu, CAPTURE3, cts, images, this));
 
             foreach (CaptureArguments arg in args)
             {

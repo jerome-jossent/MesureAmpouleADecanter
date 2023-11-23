@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="dotnetCampus.DirectShowLib" Version="2.1.0.1" />
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.1" />
     <PackageReference Include="OpenCvSharp4.Windows" Version="4.8.0.20230708" />
     <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.8.0.20230708" />
   </ItemGroup>

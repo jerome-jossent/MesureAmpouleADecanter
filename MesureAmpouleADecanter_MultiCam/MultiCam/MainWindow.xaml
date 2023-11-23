@@ -3,25 +3,44 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+        
         xmlns:local="clr-namespace:MultiCam"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="auto"/>
         </Grid.ColumnDefinitions>
 
-        <local:Capture_UC Grid.Row="0" x:Name="CAPTURE1"/>
-        <local:Capture_UC Grid.Row="1" x:Name="CAPTURE2"/>
-        <local:Capture_UC Grid.Row="2" x:Name="CAPTURE3"/>
+        <Menu Height="20" VerticalAlignment="Center" IsEnabled="False">
+            <MenuItem Header="Add"/>
+            <MenuItem Header="Delete"/>
+            <MenuItem Header="Save"/>
+            <MenuItem Header="Load"/>
+        </Menu>
 
-        <StackPanel Grid.Column="1" Width="200" >
+        <xcad:DockingManager Grid.Row="1" x:Name="DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
+            <xcad:LayoutRoot x:Name="_layoutRoot">
+                <xcad:LayoutPanel Orientation="Horizontal">
+                    <xcad:LayoutDocumentPaneGroup >
+                        <xcad:LayoutDocumentPane x:Name="Avalon_Views">
+
+                        </xcad:LayoutDocumentPane>
+                    </xcad:LayoutDocumentPaneGroup >
+                </xcad:LayoutPanel>
+            </xcad:LayoutRoot>
+        </xcad:DockingManager>
+
+        <StackPanel Grid.Column="1" Grid.RowSpan="2" Width="200" >
             <Slider Value="{Binding epaisseur}" Minimum="1" Maximum="20" />
             <CheckBox Content="Save to disk" IsChecked="{Binding toSave}"/>
         </StackPanel>

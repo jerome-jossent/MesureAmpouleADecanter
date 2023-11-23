@@ -20,9 +20,6 @@ using System.Threading;
 
 namespace MultiCam
 {
-    /// <summary>
-    /// Logique d'interaction pour Capture_UC.xaml
-    /// </summary>
     public partial class Capture_UC : UserControl, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -41,25 +38,31 @@ namespace MultiCam
             }
         }
         ImageSource frameImage;
-        private CaptureArguments args;
+
+        public string info
+        {
+            get { return _info; }
+            set
+            {
+                _info = value;
+                OnPropertyChanged();
+            }
+        }
+        string _info;
+
+        CaptureArguments args;
 
         public Capture_UC()
         {
             InitializeComponent();
             DataContext = this;
-
-            Loaded += Capture_UC_Loaded;
-            
-        }
-
-        private void Capture_UC_Loaded(object sender, RoutedEventArgs e)
-        {
         }
 
         public void _Link(CaptureArguments args)
         {
             this.args = args;
             new Thread(() => Thread_cap(args)).Start();
+            info = args.index.ToString();
         }
 
         void Thread_cap(CaptureArguments arg)
@@ -89,7 +92,7 @@ namespace MultiCam
                     DateTime t = DateTime.Now;
                     if (arg.t < t && m != null && !m.Empty())
                     {
-                        arg.images.Add(arg.mainWindow.f + arg.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
+                        arg.images_to_save.Add(arg.mainWindow.f + arg.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
                         arg.t = t + TimeSpan.FromSeconds(1);
                     }
 
@@ -104,6 +107,13 @@ namespace MultiCam
                     });
                 }
             }
+        }
+
+
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            CameraSettings.CAMERA_SETTINGS(args.ds_device);
+
         }
     }
 }
