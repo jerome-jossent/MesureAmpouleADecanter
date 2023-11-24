@@ -5,10 +5,40 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MultiCam"
              mc:Ignorable="d" 
+             
+             MouseEnter="UserControl_MouseEnter"
+             MouseLeave="UserControl_MouseLeave"
+             
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Image RenderOptions.BitmapScalingMode="Fant" Source="{Binding FrameImage, Mode=OneWay, NotifyOnSourceUpdated=True}" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="{Binding settings_gridcolumnwidth}"/>
+        </Grid.ColumnDefinitions>
+        <Image RenderOptions.BitmapScalingMode="Fant" Source="{Binding FrameImage, Mode=OneWay, NotifyOnSourceUpdated=True}"
+               VerticalAlignment="Top"/>
         <Label Content="{Binding info}"/>
-        <Button Content="Settings" Width="100" Height="30" Click="Settings_Click"/>
+        <Image x:Name="img_settings" RenderOptions.BitmapScalingMode="Fant" Width="30" Source="/Resources/Settings.png" Height="30" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,10,10,0" MouseDown="Settings_Click" />
+
+        <StackPanel Grid.Column="1">
+            <ComboBox HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="150"
+              ItemsSource="{Binding positionEnum}" SelectedItem="{Binding position }"/>
+
+            <Button Content="Camera settings" Click="CameraSettings_Click"/>
+            <Button Content="Set Region Of Interest" Click="Set_ROI_Click"/>
+
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Exposition" Width="100"/>
+                <Slider x:Name="sld_exposition" Width="100" VerticalAlignment="Center"/>
+               
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Focus" Width="100"/>
+                <Slider x:Name="sld_focus" Width="100" VerticalAlignment="Center"/>
+            </StackPanel>
+            
+        </StackPanel>
     </Grid>
 </UserControl>

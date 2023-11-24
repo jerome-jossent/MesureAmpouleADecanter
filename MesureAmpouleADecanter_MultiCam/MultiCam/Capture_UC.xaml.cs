@@ -17,6 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Threading;
+using DirectShowLib;
 
 namespace MultiCam
 {
@@ -26,6 +27,24 @@ namespace MultiCam
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        public IEnumerable<int> positionEnum
+        {
+            get
+            {
+                return args.mainWindow.ARGS.Keys.ToArray();
+                //                return Enum.GetValues(typeof(CaptureArguments.Position)).Cast<CaptureArguments.Position>();
+            }
+        }
+
+        public int position
+        {
+            get => args.position;
+            set
+            {
+                args.mainWindow.SwitchCamera(args.position, value);
+            }
         }
 
         public ImageSource FrameImage
@@ -50,25 +69,66 @@ namespace MultiCam
         }
         string _info;
 
+        public GridLength settings_gridcolumnwidth
+        {
+            get => _settings_gridcolumnwidth;
+            set
+            {
+                _settings_gridcolumnwidth = value;
+                OnPropertyChanged();
+            }
+        }
+        GridLength _settings_gridcolumnwidth;
+
         CaptureArguments args;
 
         public Capture_UC()
         {
             InitializeComponent();
             DataContext = this;
+            img_settings.Visibility = Visibility.Hidden;
         }
 
         public void _Link(CaptureArguments args)
         {
             this.args = args;
-            new Thread(() => Thread_cap(args)).Start();
             info = args.index.ToString();
+            args.layoutAnchorable.Title = args.position.ToString();
+
+            SetTitleAndInfo();
+            GetCameraParameters();
+            new Thread(() => Thread_cap(args)).Start();
         }
 
-        void Thread_cap(CaptureArguments arg)
+
+        public void SetTitleAndInfo()
         {
-            var cap = arg.videoCapture;
-            int index = arg.index;
+            info = args.position.ToString();
+            args.layoutAnchorable.Title = "Caméra " + info;
+        }
+
+        void GetCameraParameters()
+        {
+            SetSlider(sld_exposition, CameraControlProperty.Exposure);
+            SetSlider(sld_focus, CameraControlProperty.Focus);
+        }
+
+        void SetSlider(Slider sld, CameraControlProperty cameraControlProperty)
+        {
+            CameraSettings.PropertyValues vals = CameraSettings.GetProperty(args.iamCameraControl, cameraControlProperty);
+            sld.Minimum = vals.min;
+            sld.Maximum = vals.max;
+            sld.SmallChange = vals.step;
+            sld.Value = vals.deflt;
+
+            sld.ValueChanged += (sender, e) => CameraSettings.SetProperty(args.iamCameraControl,
+                cameraControlProperty, (int)e.NewValue);
+        }
+
+        void Thread_cap(CaptureArguments args)
+        {
+            var cap = args.videoCapture;
+            int index = args.index;
 
             cap.Open(index, VideoCaptureAPIs.DSHOW);
             if (!cap.IsOpened())
@@ -82,38 +142,78 @@ namespace MultiCam
             cap.Set(VideoCaptureProperties.Fps, 30);
             cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
 
-            while (!arg.cts.IsCancellationRequested)
+            while (!args.cts.IsCancellationRequested)
             {
-                using (var frameMat = cap.RetrieveMat())
+                args.frameMat = cap.RetrieveMat();
+                Mat frameMat = args.frameMat;
+
+                //GC.Collect();
+                Mat m = frameMat.Clone();
+
+                DateTime t = DateTime.Now;
+                if (args.t < t && m != null && !m.Empty())
                 {
-                    //GC.Collect();
-                    Mat m = frameMat.Clone();
-
-                    DateTime t = DateTime.Now;
-                    if (arg.t < t && m != null && !m.Empty())
-                    {
-                        arg.images_to_save.Add(arg.mainWindow.f + arg.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
-                        arg.t = t + TimeSpan.FromSeconds(1);
-                    }
-
-                    //ligne au centre
-                    Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, arg.mainWindow.rouge, arg.mainWindow.epaisseur);
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        if (arg.position == CaptureArguments.Position.Haut) { arg.Update(frameMat.ToWriteableBitmap()); }
-                        if (arg.position == CaptureArguments.Position.Milieu) { arg.Update(frameMat.ToWriteableBitmap()); }
-                        if (arg.position == CaptureArguments.Position.Bas) { arg.Update(frameMat.ToWriteableBitmap()); }
-                    });
+                    args.images_to_save.Add(args.mainWindow.f + args.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
+                    args.t = t + TimeSpan.FromSeconds(1);
                 }
+
+                //ligne au centre
+                Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
+
+                //ROI
+                if (args.roi.Width > 0 && args.roi.Height > 0)
+                {
+                    Mat frame_roi = new Mat(frameMat, args.roi);
+                    frame_roi.CopyTo(frameMat);
+                }
+
+                Display(frameMat);
+
             }
         }
 
-
-        private void Settings_Click(object sender, RoutedEventArgs e)
+        private void Display(Mat frameMat)
         {
-            CameraSettings.CAMERA_SETTINGS(args.ds_device);
+            if (frameMat.Empty()) return;
 
+            Dispatcher.Invoke(() =>
+            {
+                args.Update(frameMat.ToWriteableBitmap());
+
+                //if (arg.position == CaptureArguments.Position.Haut) { arg.Update(frameMat.ToWriteableBitmap()); }
+                //if (arg.position == CaptureArguments.Position.Milieu) { arg.Update(frameMat.ToWriteableBitmap()); }
+                //if (arg.position == CaptureArguments.Position.Bas) { arg.Update(frameMat.ToWriteableBitmap()); }
+            });
+        }
+
+        private void Settings_Click(object sender, MouseButtonEventArgs e)
+        {
+            settings_gridcolumnwidth = (settings_gridcolumnwidth == GridLength.Auto) ? new GridLength(0, GridUnitType.Pixel) : GridLength.Auto;
+        }
+
+        private void UserControl_MouseEnter(object sender, MouseEventArgs e)
+        {
+            img_settings.Visibility = Visibility.Visible;
+        }
+
+        private void UserControl_MouseLeave(object sender, MouseEventArgs e)
+        {
+            img_settings.Visibility = Visibility.Hidden;
+        }
+
+        private void CameraSettings_Click(object sender, RoutedEventArgs e)
+        {
+            CameraSettings.ShowSettingsUI(args.ds_device);
+        }
+
+        private void Set_ROI_Click(object sender, RoutedEventArgs e)
+        {
+            string name = "Set ROI : Space to validate, Escape to cancel";
+            Mat cap = args.videoCapture.RetrieveMat();
+            Cv2.Line(cap, 0, cap.Rows / 2, cap.Cols, cap.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
+
+            args.roi = Cv2.SelectROI(name, cap);
+            Cv2.DestroyWindow(name);
         }
     }
 }

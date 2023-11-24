@@ -8,6 +8,9 @@ using System.Windows.Media;
 using OpenCvSharp.WpfExtensions;
 using System.Runtime.CompilerServices;
 using Xceed.Wpf.AvalonDock.Layout;
+using System.Windows.Controls;
+using System.Windows;
+using System.Text.RegularExpressions;
 
 namespace MultiCam
 {
@@ -32,9 +35,7 @@ namespace MultiCam
 
         //Token d'arrêt des threads
         CancellationTokenSource cts = new CancellationTokenSource();
-        VideoCapture cap1;
-        VideoCapture cap2;
-        VideoCapture cap3;
+        List<VideoCapture> videoCaptures = new List<VideoCapture>();
 
         public bool? toSave
         {
@@ -66,11 +67,14 @@ namespace MultiCam
 
         Dictionary<string, Mat> images = new Dictionary<string, Mat>();
 
-       public Dictionary<int, DirectShowLib.DsDevice> devices ;
+        public Dictionary<int, DirectShowLib.DsDevice> devices;
 
         string _f = @"C:\_JJ\DATA\decantation\multicam\";
         public string f;
         public Scalar rouge = new Scalar(0, 0, 255);
+
+        List<CaptureArguments> args;
+        public Dictionary<int, CaptureArguments> ARGS;
 
         public MainWindow()
         {
@@ -86,101 +90,81 @@ namespace MultiCam
         void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             devices = CameraSettings.GetDevices();
-
-            Capture_UC CAPTURE1 = new Capture_UC();
-            Capture_UC CAPTURE2 = new Capture_UC();
-            Capture_UC CAPTURE3 = new Capture_UC();
-
-            LayoutAnchorable c1 = new LayoutAnchorable(); c1.Content = CAPTURE1;
-            Avalon_Views.Children.Add(c1);
-            LayoutAnchorable c2 = new LayoutAnchorable(); c2.Content = CAPTURE2;
-            Avalon_Views.Children.Add(c2);
-            LayoutAnchorable c3 = new LayoutAnchorable(); c3.Content = CAPTURE3;
-            Avalon_Views.Children.Add(c3);
-
-
-
-            cap1 = new VideoCapture();
-            cap2 = new VideoCapture();
-            cap3 = new VideoCapture();
+            foreach (var device in devices)
+            {
+                MenuItem mi = new MenuItem();
+                mi.Header = device.Value.Name;
+                mi.Click += (sender, e) => Menu_Add_Click(this, new RoutedEventArgs(null, new Tuple<int, object>(device.Key, device.Value)));
+                menu_Add.Items.Add(mi);
+            }
 
             new Thread(ThreadSave).Start();
 
-            List<CaptureArguments> args = new List<CaptureArguments>();
-            int index = 1;
-            args.Add(new CaptureArguments(videoCapture: cap1, index: index, devices[index], CaptureArguments.Position.Bas, CAPTURE1, cts, images, this));
-            index = 2;
-            args.Add(new CaptureArguments(videoCapture: cap2, index: index, devices[index], CaptureArguments.Position.Haut, CAPTURE2, cts, images, this));
-            index = 3;
-            args.Add(new CaptureArguments(videoCapture: cap3, index: index, devices[index], CaptureArguments.Position.Milieu, CAPTURE3, cts, images, this));
+            args = new List<CaptureArguments>();
+            ARGS = new Dictionary<int, CaptureArguments>();
+        }
 
-            foreach (CaptureArguments arg in args)
-            {
-                arg.capture_UC._Link(arg);
-                //new Thread(() => Thread_cap(arg)).Start();
-            }
+        private void Menu_Add_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            var data = (Tuple<int, object>)e.Source;
+
+
+            Capture_UC uc = new Capture_UC();
+
+            LayoutAnchorable layoutAnchorable = new LayoutAnchorable();
+            layoutAnchorable.Content = uc;
+
+            if (Avalon_Views.Children.Count == 0)
+                Avalon_Views.Children.Add(layoutAnchorable);
+            else
+                layoutAnchorable.AddToLayout(DManager, AnchorableShowStrategy.Most);
+
+            var cap = new VideoCapture();
+            videoCaptures.Add(cap);
+
+            var arg = new CaptureArguments(layoutAnchorable,
+                                          videoCapture: cap,
+                                          index: data.Item1,
+                                          (DirectShowLib.DsDevice)data.Item2,
+                                          ARGS.Count,
+                                          uc,
+                                          cts,
+                                          images,
+                                          this);
+            arg.capture_UC._Link(arg);
+            args.Add(arg);
+            ARGS.Add(ARGS.Count, arg);
         }
 
         void MainWindow_Closing(object sender, CancelEventArgs e)
         {
             cts.Cancel();
             Thread.Sleep(500);
-            try { cap1?.Dispose(); } catch (Exception) { }
-            try { cap2?.Dispose(); } catch (Exception) { }
-            try { cap3?.Dispose(); } catch (Exception) { }
+            foreach (var cap in videoCaptures)
+            {
+                try { cap?.Dispose(); } catch (Exception) { }
+            }
         }
 
+        internal void SwitchCamera(int position_precedente, int position_prevue)
+        {
+            var temp = ARGS[position_prevue];
+            ARGS[position_prevue] = ARGS[position_precedente];
+            ARGS[position_precedente] = temp;
 
-        //void Thread_cap(CaptureArguments arg)
-        //{
-        //    var cap = arg.videoCapture;
-        //    int index = arg.index;
+            ARGS[position_prevue].position = position_prevue;
+            ARGS[position_precedente].position = position_precedente;
 
-        //    cap.Open(index, VideoCaptureAPIs.DSHOW);
-        //    if (!cap.IsOpened())
-        //    {
-        //        Close();
-        //        return;
-        //    }
+            ARGS[position_prevue].capture_UC.SetTitleAndInfo();
+            ARGS[position_precedente].capture_UC.SetTitleAndInfo();
+        }
 
-        //    cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
-        //    cap.Set(VideoCaptureProperties.FrameWidth, 1920);
-        //    cap.Set(VideoCaptureProperties.FrameHeight, 1080);
-        //    cap.Set(VideoCaptureProperties.Fps, 30);
-        //    cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
-
-        //    while (!cts.IsCancellationRequested)
-        //    {
-        //        using (var frameMat = cap.RetrieveMat())
-        //        {
-        //            //GC.Collect();
-        //            Mat m = frameMat.Clone();
-
-        //            DateTime t = DateTime.Now;
-        //            if (arg.t < t && m != null && !m.Empty())
-        //            {
-        //                images.Add(f + arg.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
-        //                arg.t = t + TimeSpan.FromSeconds(1);
-        //            }
-
-        //            //ligne au centre
-        //            Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, rouge, epaisseur);
-
-        //            Dispatcher.Invoke(() =>
-        //            {
-        //                if (arg.position == CaptureArguments.Position.Haut) { arg.Update(frameMat.ToWriteableBitmap()); }
-        //                if (arg.position == CaptureArguments.Position.Milieu) { arg.Update(frameMat.ToWriteableBitmap()); }
-        //                if (arg.position == CaptureArguments.Position.Bas) { arg.Update(frameMat.ToWriteableBitmap()); }
-        //            });
-        //        }
-        //    }
-        //}
+        #region a mettre dans une classe séparée
 
         int error = 0;
 
         void ThreadSave()
         {
-
             while (!cts.IsCancellationRequested)
             {
                 if (toSave == true)
@@ -204,11 +188,10 @@ namespace MultiCam
                 {
                     images.Clear();
                 }
-
                 Thread.Sleep(10);
             }
-
         }
+        #endregion
 
     }
 }

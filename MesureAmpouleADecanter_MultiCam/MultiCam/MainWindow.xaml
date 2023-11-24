@@ -21,11 +21,11 @@
             <ColumnDefinition Width="auto"/>
         </Grid.ColumnDefinitions>
 
-        <Menu Height="20" VerticalAlignment="Center" IsEnabled="False">
-            <MenuItem Header="Add"/>
-            <MenuItem Header="Delete"/>
-            <MenuItem Header="Save"/>
-            <MenuItem Header="Load"/>
+        <Menu Height="20" VerticalAlignment="Center" >
+            <MenuItem Header="Add" Name="menu_Add"/>
+            <MenuItem Header="Delete" IsEnabled="False"/>
+            <MenuItem Header="Save" IsEnabled="False"/>
+            <MenuItem Header="Load" IsEnabled="False"/>
         </Menu>
 
         <xcad:DockingManager Grid.Row="1" x:Name="DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
