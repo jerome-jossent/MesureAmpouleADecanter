@@ -36,7 +36,8 @@ namespace MultiCam
             public CameraControlFlags flags;
         }
 
-        public static Dictionary<int, DsDevice> GetDevices()
+
+        public static Dictionary<int, DsDevice> GetDsDevices()
         {
             Dictionary<int, DsDevice> devices = new Dictionary<int, DsDevice>();
 
@@ -56,6 +57,28 @@ namespace MultiCam
             return devices;
         }
 
+        public static Dictionary<int, IAMCameraControl> GetIAMCameraControls()
+        {
+            Dictionary<int, IAMCameraControl> devices = new Dictionary<int, IAMCameraControl>();
+
+            var rawdevices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
+            for (int i = 0; i < rawdevices.Length; i++)
+            {
+                DsDevice device = rawdevices[i];
+                try
+                {
+                    devices.Add(i, DsDevise_to_IAMCameraControl(device));
+                }
+                catch (Exception ex)
+                {
+                    devices.Add(i, null);
+                }
+            }
+            return devices;
+        }
+
+
+
         public static IBaseFilter DsDevice_to_BaseFilter(DsDevice dsDevice)
         {
             Guid iid = typeof(IBaseFilter).GUID;
@@ -72,6 +95,7 @@ namespace MultiCam
         {
             return baseFilter as IAMCameraControl;
         }
+
 
 
         public static void ShowSettingsUI(DsDevice dsDevice)
@@ -125,7 +149,6 @@ namespace MultiCam
                 System.Runtime.InteropServices.Marshal.ReleaseComObject(filterInfo.pGraph);
             }
         }
-
 
 
 

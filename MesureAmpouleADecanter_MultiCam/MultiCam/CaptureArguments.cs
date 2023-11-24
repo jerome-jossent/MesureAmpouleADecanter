@@ -18,7 +18,6 @@ namespace MultiCam
         public int position;
 
         public Capture_UC capture_UC;
-        public CancellationTokenSource cts;
 
         public Dictionary<string, Mat> images_to_save;
         public MainWindow mainWindow;
@@ -28,6 +27,8 @@ namespace MultiCam
         public Mat frameMat;
         public Rect roi;
 
+        public CancellationTokenSource cts = new CancellationTokenSource();
+
         public CaptureArguments(
             LayoutAnchorable layoutAnchorable,
             VideoCapture videoCapture, 
@@ -35,7 +36,6 @@ namespace MultiCam
             DirectShowLib.DsDevice ds_device, 
             int position, 
             Capture_UC capture_UC,
-            CancellationTokenSource cts,
             Dictionary<string, Mat> images_to_save, MainWindow mainWindow)
         {
             t = DateTime.Now;
@@ -44,7 +44,6 @@ namespace MultiCam
             this.index = index;
             this.position = position;
             this.capture_UC = capture_UC;
-            this.cts = cts;
             this.images_to_save = images_to_save;
             this.mainWindow = mainWindow;
             this.ds_device = ds_device;

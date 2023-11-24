@@ -23,7 +23,7 @@
 
         <Menu Height="20" VerticalAlignment="Center" >
             <MenuItem Header="Add" Name="menu_Add"/>
-            <MenuItem Header="Delete" IsEnabled="False"/>
+            <MenuItem Header="Delete" Click="Menu_Delete_Click"/>
             <MenuItem Header="Save" IsEnabled="False"/>
             <MenuItem Header="Load" IsEnabled="False"/>
         </Menu>
@@ -40,9 +40,16 @@
             </xcad:LayoutRoot>
         </xcad:DockingManager>
 
-        <StackPanel Grid.Column="1" Grid.RowSpan="2" Width="200" >
-            <Slider Value="{Binding epaisseur}" Minimum="1" Maximum="20" />
+        <StackPanel Grid.Column="1" Grid.RowSpan="2" x:Name="_sp">
+            <StackPanel Orientation="Horizontal" >
+                <Label Content="Epaisseur" Width="100"/>
+                <Slider Value="{Binding epaisseur}" Minimum="0" Maximum="20" Width="100" />
+            </StackPanel>
             <CheckBox Content="Save to disk" IsChecked="{Binding toSave}"/>
+            <StackPanel Orientation="Horizontal" >
+                <Label Content="Time" ToolTip="Time between each frame to save" Width="100"/>
+                <xctk:TimeSpanUpDown Value="{Binding _timeBetweenFrameToSave}" Width="100" Minimum="0" ShowDays="False" ShowHours="False" CurrentDateTimePart="Millisecond"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>

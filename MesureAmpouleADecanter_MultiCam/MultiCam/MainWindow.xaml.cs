@@ -33,7 +33,7 @@ namespace MultiCam
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        //Token d'arrêt des threads
+        //Token d'arrêt de thread
         CancellationTokenSource cts = new CancellationTokenSource();
         List<VideoCapture> videoCaptures = new List<VideoCapture>();
 
@@ -47,6 +47,10 @@ namespace MultiCam
                 {
                     f = _f + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss") + "\\";
                     System.IO.Directory.CreateDirectory(f);
+                }
+                else
+                {
+                    images.Clear();
                 }
                 OnPropertyChanged();
             }
@@ -63,7 +67,7 @@ namespace MultiCam
 
             }
         }
-        int _epaisseur = 5;
+        int _epaisseur = 1;
 
         Dictionary<string, Mat> images = new Dictionary<string, Mat>();
 
@@ -89,7 +93,7 @@ namespace MultiCam
 
         void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            devices = CameraSettings.GetDevices();
+            devices = CameraSettings.GetDsDevices();
             foreach (var device in devices)
             {
                 MenuItem mi = new MenuItem();
@@ -112,12 +116,14 @@ namespace MultiCam
             Capture_UC uc = new Capture_UC();
 
             LayoutAnchorable layoutAnchorable = new LayoutAnchorable();
+            layoutAnchorable.CanClose = false;
+            layoutAnchorable.CanHide = false;
             layoutAnchorable.Content = uc;
 
-            if (Avalon_Views.Children.Count == 0)
+            //if (Avalon_Views.Children.Count == 0)
                 Avalon_Views.Children.Add(layoutAnchorable);
-            else
-                layoutAnchorable.AddToLayout(DManager, AnchorableShowStrategy.Most);
+            //else
+            //    layoutAnchorable.AddToLayout(DManager, AnchorableShowStrategy.Most);
 
             var cap = new VideoCapture();
             videoCaptures.Add(cap);
@@ -128,7 +134,6 @@ namespace MultiCam
                                           (DirectShowLib.DsDevice)data.Item2,
                                           ARGS.Count,
                                           uc,
-                                          cts,
                                           images,
                                           this);
             arg.capture_UC._Link(arg);
@@ -162,6 +167,16 @@ namespace MultiCam
         #region a mettre dans une classe séparée
 
         int error = 0;
+        public TimeSpan? _timeBetweenFrameToSave
+        {
+            get => timeBetweenFrameToSave;
+            set
+            {
+                timeBetweenFrameToSave = value;
+                OnPropertyChanged();
+            }
+        }
+        TimeSpan? timeBetweenFrameToSave = TimeSpan.FromSeconds(0.1);
 
         void ThreadSave()
         {
@@ -193,5 +208,12 @@ namespace MultiCam
         }
         #endregion
 
+        private void Menu_Delete_Click(object sender, RoutedEventArgs e)
+        {
+            if (Avalon_Views.SelectedContent == null) return;
+            Capture_UC cuc = (Capture_UC)Avalon_Views.SelectedContent.Content;
+            cuc._Delete();
+            //Avalon_Views.Children.Remove(Avalon_Views.SelectedContent);
+        }
     }
 }

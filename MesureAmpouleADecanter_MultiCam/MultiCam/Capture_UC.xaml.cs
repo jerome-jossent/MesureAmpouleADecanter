@@ -18,6 +18,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Threading;
 using DirectShowLib;
+using Xceed.Wpf.AvalonDock.Layout;
 
 namespace MultiCam
 {
@@ -31,11 +32,7 @@ namespace MultiCam
 
         public IEnumerable<int> positionEnum
         {
-            get
-            {
-                return args.mainWindow.ARGS.Keys.ToArray();
-                //                return Enum.GetValues(typeof(CaptureArguments.Position)).Cast<CaptureArguments.Position>();
-            }
+            get { return args.mainWindow.ARGS.Keys.ToArray(); }
         }
 
         public int position
@@ -58,16 +55,6 @@ namespace MultiCam
         }
         ImageSource frameImage;
 
-        public string info
-        {
-            get { return _info; }
-            set
-            {
-                _info = value;
-                OnPropertyChanged();
-            }
-        }
-        string _info;
 
         public GridLength settings_gridcolumnwidth
         {
@@ -80,7 +67,7 @@ namespace MultiCam
         }
         GridLength _settings_gridcolumnwidth;
 
-        CaptureArguments args;
+        public CaptureArguments args;
 
         public Capture_UC()
         {
@@ -92,7 +79,6 @@ namespace MultiCam
         public void _Link(CaptureArguments args)
         {
             this.args = args;
-            info = args.index.ToString();
             args.layoutAnchorable.Title = args.position.ToString();
 
             SetTitleAndInfo();
@@ -103,8 +89,7 @@ namespace MultiCam
 
         public void SetTitleAndInfo()
         {
-            info = args.position.ToString();
-            args.layoutAnchorable.Title = "Caméra " + info;
+            args.layoutAnchorable.Title = "Caméra " + args.position.ToString();
         }
 
         void GetCameraParameters()
@@ -121,16 +106,14 @@ namespace MultiCam
             sld.SmallChange = vals.step;
             sld.Value = vals.deflt;
 
-            sld.ValueChanged += (sender, e) => CameraSettings.SetProperty(args.iamCameraControl,
-                cameraControlProperty, (int)e.NewValue);
+            sld.ValueChanged += (sender, e) => CameraSettings.SetProperty(args.iamCameraControl, cameraControlProperty, (int)e.NewValue);
         }
 
         void Thread_cap(CaptureArguments args)
         {
             var cap = args.videoCapture;
-            int index = args.index;
 
-            cap.Open(index, VideoCaptureAPIs.DSHOW);
+            cap.Open(args.index, VideoCaptureAPIs.DSHOW);
             if (!cap.IsOpened())
             {
                 return;
@@ -144,6 +127,7 @@ namespace MultiCam
 
             while (!args.cts.IsCancellationRequested)
             {
+                if (cap.IsDisposed) break;
                 args.frameMat = cap.RetrieveMat();
                 Mat frameMat = args.frameMat;
 
@@ -154,11 +138,12 @@ namespace MultiCam
                 if (args.t < t && m != null && !m.Empty())
                 {
                     args.images_to_save.Add(args.mainWindow.f + args.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
-                    args.t = t + TimeSpan.FromSeconds(1);
+                    args.t = t + (TimeSpan)args.mainWindow._timeBetweenFrameToSave;
                 }
 
                 //ligne au centre
-                Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
+                if (args.mainWindow.epaisseur > 0)
+                    Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
 
                 //ROI
                 if (args.roi.Width > 0 && args.roi.Height > 0)
@@ -168,8 +153,8 @@ namespace MultiCam
                 }
 
                 Display(frameMat);
-
             }
+            cap.Dispose();
         }
 
         private void Display(Mat frameMat)
@@ -210,10 +195,18 @@ namespace MultiCam
         {
             string name = "Set ROI : Space to validate, Escape to cancel";
             Mat cap = args.videoCapture.RetrieveMat();
-            Cv2.Line(cap, 0, cap.Rows / 2, cap.Cols, cap.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
+
+            if (args.mainWindow.epaisseur > 0)
+                Cv2.Line(cap, 0, cap.Rows / 2, cap.Cols, cap.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
 
             args.roi = Cv2.SelectROI(name, cap);
             Cv2.DestroyWindow(name);
+        }
+
+        internal void _Delete()
+        {
+            args.cts.Cancel();
+            args.layoutAnchorable.Close();
         }
     }
 }

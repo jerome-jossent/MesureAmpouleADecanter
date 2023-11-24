@@ -19,25 +19,27 @@
         </Grid.ColumnDefinitions>
         <Image RenderOptions.BitmapScalingMode="Fant" Source="{Binding FrameImage, Mode=OneWay, NotifyOnSourceUpdated=True}"
                VerticalAlignment="Top"/>
-        <Label Content="{Binding info}"/>
         <Image x:Name="img_settings" RenderOptions.BitmapScalingMode="Fant" Width="30" Source="/Resources/Settings.png" Height="30" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,10,10,0" MouseDown="Settings_Click" />
 
-        <StackPanel Grid.Column="1">
+        <StackPanel Grid.Column="1" x:Name="_sp">
             <ComboBox HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="150"
               ItemsSource="{Binding positionEnum}" SelectedItem="{Binding position }"/>
 
             <Button Content="Camera settings" Click="CameraSettings_Click"/>
             <Button Content="Set Region Of Interest" Click="Set_ROI_Click"/>
 
+            
+            
             <StackPanel Orientation="Horizontal">
                 <Label Content="Exposition" Width="100"/>
-                <Slider x:Name="sld_exposition" Width="100" VerticalAlignment="Center"/>
-               
+                <Slider x:Name="sld_exposition" Width="100" VerticalAlignment="Center"/>               
             </StackPanel>
+            
             <StackPanel Orientation="Horizontal">
                 <Label Content="Focus" Width="100"/>
                 <Slider x:Name="sld_focus" Width="100" VerticalAlignment="Center"/>
             </StackPanel>
+            
             
         </StackPanel>
     </Grid>
