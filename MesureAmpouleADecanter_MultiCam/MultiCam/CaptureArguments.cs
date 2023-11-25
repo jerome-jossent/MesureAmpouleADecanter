@@ -31,7 +31,6 @@ namespace MultiCam
 
         public CaptureArguments(
             LayoutAnchorable layoutAnchorable,
-            VideoCapture videoCapture, 
             int index, 
             DirectShowLib.DsDevice ds_device, 
             int position, 
@@ -40,7 +39,6 @@ namespace MultiCam
         {
             t = DateTime.Now;
             this.layoutAnchorable = layoutAnchorable;
-            this.videoCapture = videoCapture;
             this.index = index;
             this.position = position;
             this.capture_UC = capture_UC;

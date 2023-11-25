@@ -23,7 +23,7 @@
 
         <Menu Height="20" VerticalAlignment="Center" >
             <MenuItem Header="Add" Name="menu_Add"/>
-            <MenuItem Header="Delete" Click="Menu_Delete_Click"/>
+            <!--<MenuItem Header="Delete" Click="Menu_Delete_Click"/>-->
             <MenuItem Header="Save" IsEnabled="False"/>
             <MenuItem Header="Load" IsEnabled="False"/>
         </Menu>

@@ -35,7 +35,6 @@ namespace MultiCam
 
         //Token d'arrêt de thread
         CancellationTokenSource cts = new CancellationTokenSource();
-        List<VideoCapture> videoCaptures = new List<VideoCapture>();
 
         public bool? toSave
         {
@@ -77,7 +76,6 @@ namespace MultiCam
         public string f;
         public Scalar rouge = new Scalar(0, 0, 255);
 
-        List<CaptureArguments> args;
         public Dictionary<int, CaptureArguments> ARGS;
 
         public MainWindow()
@@ -104,7 +102,6 @@ namespace MultiCam
 
             new Thread(ThreadSave).Start();
 
-            args = new List<CaptureArguments>();
             ARGS = new Dictionary<int, CaptureArguments>();
         }
 
@@ -116,20 +113,17 @@ namespace MultiCam
             Capture_UC uc = new Capture_UC();
 
             LayoutAnchorable layoutAnchorable = new LayoutAnchorable();
-            layoutAnchorable.CanClose = false;
+            layoutAnchorable.CanClose = true;
             layoutAnchorable.CanHide = false;
             layoutAnchorable.Content = uc;
 
             //if (Avalon_Views.Children.Count == 0)
-                Avalon_Views.Children.Add(layoutAnchorable);
+            Avalon_Views.Children.Add(layoutAnchorable);
             //else
             //    layoutAnchorable.AddToLayout(DManager, AnchorableShowStrategy.Most);
 
-            var cap = new VideoCapture();
-            videoCaptures.Add(cap);
 
             var arg = new CaptureArguments(layoutAnchorable,
-                                          videoCapture: cap,
                                           index: data.Item1,
                                           (DirectShowLib.DsDevice)data.Item2,
                                           ARGS.Count,
@@ -137,7 +131,6 @@ namespace MultiCam
                                           images,
                                           this);
             arg.capture_UC._Link(arg);
-            args.Add(arg);
             ARGS.Add(ARGS.Count, arg);
         }
 
@@ -145,10 +138,9 @@ namespace MultiCam
         {
             cts.Cancel();
             Thread.Sleep(500);
-            foreach (var cap in videoCaptures)
-            {
-                try { cap?.Dispose(); } catch (Exception) { }
-            }
+
+            foreach (var ARG in ARGS)
+                ARG.Value.capture_UC._Stop();
         }
 
         internal void SwitchCamera(int position_precedente, int position_prevue)
@@ -208,12 +200,12 @@ namespace MultiCam
         }
         #endregion
 
-        private void Menu_Delete_Click(object sender, RoutedEventArgs e)
-        {
-            if (Avalon_Views.SelectedContent == null) return;
-            Capture_UC cuc = (Capture_UC)Avalon_Views.SelectedContent.Content;
-            cuc._Delete();
-            //Avalon_Views.Children.Remove(Avalon_Views.SelectedContent);
-        }
+        //private void Menu_Delete_Click(object sender, RoutedEventArgs e)
+        //{
+        //    if (Avalon_Views.SelectedContent == null) return;
+        //    Capture_UC cuc = (Capture_UC)Avalon_Views.SelectedContent.Content;
+        //    cuc._Delete();
+        //    //Avalon_Views.Children.Remove(Avalon_Views.SelectedContent);
+        //}
     }
 }
