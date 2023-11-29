@@ -1,0 +1,157 @@
+﻿<Window x:Class="Tools_ImageProcessing.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Tools_ImageProcessing"
+        mc:Ignorable="d"
+        Title="{Binding titre}" Height="auto" Width="800">
+    <StackPanel Orientation="Vertical">
+        <GroupBox VerticalAlignment="Top" Margin="10">
+            <GroupBox.Header>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock FontWeight="Bold" Foreground="CornflowerBlue" Text="ROI"/>
+                </StackPanel>
+            </GroupBox.Header>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Images source"  Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_source" VerticalContentAlignment="Center"
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\1_raw\Bas"/>
+                    </Grid>
+
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Images destination" Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_destination" VerticalContentAlignment="Center"
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\2_roi\Bas"/>
+                    </Grid>
+                </StackPanel>
+
+                <Button Content="ROI" Grid.Column="1" Click="Process_ROI_Click" Width="70"/>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox VerticalAlignment="Top" Margin="10">
+            <GroupBox.Header>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock FontWeight="Bold" Foreground="CornflowerBlue" Text="Motion detection"/>
+                </StackPanel>
+            </GroupBox.Header>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Images source" Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_MotionDetection_source" VerticalContentAlignment="Center" 
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\2_roi\Bas" />
+                    </Grid>
+
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Images destination" Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_MotionDetection_destination" VerticalContentAlignment="Center" 
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\3_motiondetection\Bas" />
+                    </Grid>
+
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Data destination"  Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_MotionDetection_data" VerticalContentAlignment="Center" 
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\Bas.csv" />
+                    </Grid>
+                </StackPanel>
+
+                <Button Click="Process_MotionDetection_Click" Grid.Column="1" Grid.RowSpan="3"  Width="70">
+                    <TextBlock Text="MOTION DETECTION" TextWrapping="Wrap" TextAlignment="Center"/>
+                </Button>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox  Margin="10"  VerticalAlignment="Top">
+            <GroupBox.Header>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock FontWeight="Bold" Foreground="CornflowerBlue" Text="Video"/>
+                </StackPanel>
+            </GroupBox.Header>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Images source" Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_video_source" VerticalContentAlignment="Center" 
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\3_motiondetection\Bas"/>
+                    </Grid>
+
+                    <!--<Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Content="Source 2" Width="111" x:Name="ckb_video_source2"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_video_source2" VerticalContentAlignment="Center" 
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\3_motiondetection\Bas"/>
+                    </Grid>-->
+
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Vidéo destination" Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_video_destination" VerticalContentAlignment="Center" 
+                                 Text="D:\Projets\MesureAmpouleADecanter\DATA\multicam 02 ALU sensibilite fixe\Bas.mp4"/>
+                    </Grid>
+
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="FPS" Width="111"/>
+                        <TextBox Grid.Column="1" x:Name="tbx_video_fps" VerticalContentAlignment="Center" 
+                                 Text="30"/>
+                    </Grid>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="VIDEO" Click="Make_Video_Click" Width="70"/>
+            </Grid>
+        </GroupBox>
+
+    </StackPanel>
+</Window>
