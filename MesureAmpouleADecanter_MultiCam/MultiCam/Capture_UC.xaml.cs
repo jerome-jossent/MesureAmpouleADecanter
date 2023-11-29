@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 using System.Threading;
 using DirectShowLib;
 using Xceed.Wpf.AvalonDock.Layout;
+using System.Xml.Linq;
 
 namespace MultiCam
 {
@@ -32,15 +33,16 @@ namespace MultiCam
 
         public IEnumerable<int> positionEnum
         {
-            get { return args.mainWindow.ARGS.Keys.ToArray(); }
+            get { return Enumerable.Range(0, 10); }
+            //get { return args.mainWindow.ARGS.Keys.ToArray(); }
         }
 
         public int position
         {
-            get => args.position;
+            get => captureParameters.ac_data.position;
             set
             {
-                args.mainWindow.SwitchCamera(args.position, value);
+                captureParameters.MainWindow().SwitchPositions(captureParameters.ac_data.position, value);
             }
         }
 
@@ -67,7 +69,7 @@ namespace MultiCam
         }
         GridLength _settings_gridcolumnwidth;
 
-        public CaptureArguments args;
+        public CaptureArguments captureParameters;
 
         public Capture_UC()
         {
@@ -76,16 +78,16 @@ namespace MultiCam
             img_settings.Visibility = Visibility.Hidden;
         }
 
-        public void _Link(CaptureArguments args)
+        public void _Link(CaptureArguments captureParameters)
         {
-            this.args = args;
-            args.layoutAnchorable.Title = args.position.ToString();
+            this.captureParameters = captureParameters;
+            captureParameters.layoutAnchorable.Title = captureParameters.ac_data.position.ToString();
 
-            args.layoutAnchorable.Closing += LayoutAnchorable_Closing;
+            captureParameters.layoutAnchorable.Closing += LayoutAnchorable_Closing;
 
-            SetTitleAndInfo();
+            SetTitle();
             GetCameraParameters();
-            new Thread(() => Thread_cap(args)).Start();
+            new Thread(() => Thread_cap(captureParameters)).Start();
         }
 
         private void LayoutAnchorable_Closing(object? sender, CancelEventArgs e)
@@ -93,9 +95,9 @@ namespace MultiCam
             _Stop();
         }
 
-        public void SetTitleAndInfo()
+        public void SetTitle()
         {
-            args.layoutAnchorable.Title = "Caméra " + args.position.ToString();
+            captureParameters.layoutAnchorable.Title = captureParameters.name + " - position " + captureParameters.ac_data.position.ToString();
         }
 
         void GetCameraParameters()
@@ -106,84 +108,137 @@ namespace MultiCam
 
         void SetSlider(Slider sld, CameraControlProperty cameraControlProperty)
         {
-            CameraSettings.PropertyValues vals = CameraSettings.GetProperty(args.iamCameraControl, cameraControlProperty);
+            CameraSettings.PropertyValues vals = CameraSettings.GetProperty(captureParameters.iamCameraControl, cameraControlProperty);
             sld.Minimum = vals.min;
             sld.Maximum = vals.max;
             sld.SmallChange = vals.step;
             sld.Value = vals.deflt;
 
-            sld.ValueChanged += (sender, e) => CameraSettings.SetProperty(args.iamCameraControl, cameraControlProperty, (int)e.NewValue);
+            sld.ValueChanged += (sender, e) => CameraSettings.SetProperty(captureParameters.iamCameraControl, cameraControlProperty, (int)e.NewValue);
         }
 
-        void Thread_cap(CaptureArguments args)
+        void Thread_cap(CaptureArguments ca)
         {
-            args.videoCapture = new VideoCapture();
+            ca.videoCapture = new VideoCapture();
 
-            VideoCapture cap = args.videoCapture;
+            VideoCapture cap = ca.videoCapture;
 
-            cap.Open(args.index, VideoCaptureAPIs.DSHOW);
+            int tentative = 0;
+            while (tentative < 10)
+            {
+                tentative++;
+
+                if (cap == null)
+                    return;
+
+                if (cap.IsOpened())
+                    break;
+
+                cap.Open(ca.ac_data.deviceIndex, VideoCaptureAPIs.DSHOW);
+                Thread.Sleep(100);
+            }
+
             if (!cap.IsOpened())
             {
+                MessageBox.Show("Impossible to open this device :\n" + ca.name,
+                    "Open Device Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _Stop();
                 return;
             }
 
+            //List<string> codecs = GetAvailableCodecs(cap);
             cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
             cap.Set(VideoCaptureProperties.FrameWidth, 1920);
             cap.Set(VideoCaptureProperties.FrameHeight, 1080);
             cap.Set(VideoCaptureProperties.Fps, 30);
             cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
 
-            while (!args.cts.IsCancellationRequested)
+
+            while (!ca.cts.IsCancellationRequested)
             {
                 if (cap.IsDisposed) break;
-                args.frameMat = cap.RetrieveMat();
+                ca.frameMat = cap.RetrieveMat();
 
-                if (args.frameMat.Empty())
-                {
-                    Thread.Sleep(100);
+                if (ca.frameMat.Empty())
                     continue;
-                }
-                Mat frameMat = args.frameMat;
+
+                Mat frameMat = ca.frameMat;
                 Mat m = frameMat.Clone();
 
-                //GC.Collect();
-
                 DateTime t = DateTime.Now;
-                if (args.t < t && m != null && !m.Empty())
+                if (ca.t < t && m != null && !m.Empty())
                 {
-                    args.images_to_save.Add(args.mainWindow.f + args.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
-                    args.t = t + (TimeSpan)args.mainWindow._timeBetweenFrameToSave;
+                    ca.images_to_save.Add(ca.MainWindow().f + ca.ac_data.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
+                    ca.t = t + (TimeSpan)ca.MainWindow()._timeBetweenFrameToSave;
                 }
 
                 //ligne au centre
-                if (args.mainWindow.epaisseur > 0)
-                    Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
+                if (ca.MainWindow().epaisseur > 0)
+                    Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, ca.MainWindow().rouge, ca.MainWindow().epaisseur);
 
                 //ROI
-                if (args.roi.Width > 0 && args.roi.Height > 0)
+                if (ca.ac_data.roi.Width > 0 && ca.ac_data.roi.Height > 0)
                 {
-                    Mat frame_roi = new Mat(frameMat, args.roi);
+                    Mat frame_roi = new Mat(frameMat, ca.ac_data.roi);
                     frame_roi.CopyTo(frameMat);
                 }
+
+
+                
 
                 Display(frameMat);
             }
             cap.Dispose();
         }
-       public void _Stop()
-        {
-            args.cts.Cancel();
-            Thread.Sleep(100);
-            args.videoCapture?.Dispose();
 
-            args.mainWindow.ARGS.Remove(args.index);
+        List<string> GetAvailableCodecs(VideoCapture cap)
+        {
+
+
+            List<string> codecs_to_test = new List<string>() { "DIVX", "XVID", "MJPG", "X264", "WMV1", "WMV2", "FMP4", "mp4v", "avc1", "I420", "IYUV", "mpg1", "H264" };
+            List<string> available_codecs = new List<string>();
+            foreach (string codec in codecs_to_test)
+                if (TestFourCC(cap, codec)) available_codecs.Add(codec);
+            return available_codecs;
+        }
+
+        bool TestFourCC(VideoCapture cap, string codec)
+        {
+            try
+            {
+                cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString(codec));
+                Mat mat = new Mat();
+                int nbr_test = 10;
+                while (nbr_test-- > 0)
+                {
+                    mat = cap.RetrieveMat();
+                    Thread.Sleep(100);
+                }
+                return !mat.Empty();
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+        }
+
+        public void _Stop()
+        {
+            captureParameters.cts.Cancel();
+            Thread.Sleep(100);
+            captureParameters.videoCapture?.Dispose();
+
+            captureParameters.MainWindow().capturesParameters.Remove(captureParameters.ac_data.deviceIndex);
             GC.Collect();
+
+            //captureParameters.SetMenuItem(true);
         }
 
         void Display(Mat frameMat)
         {
             if (frameMat.Empty()) return;
-            Dispatcher.Invoke(() => { args.Update(frameMat.ToWriteableBitmap()); });
+            Dispatcher.Invoke(() => { captureParameters.Update(frameMat.ToWriteableBitmap()); });
         }
 
         void Settings_Click(object sender, MouseButtonEventArgs e)
@@ -193,28 +248,28 @@ namespace MultiCam
 
         void UserControl_MouseEnter(object sender, MouseEventArgs e)
         {
-            img_settings.Visibility = Visibility.Visible;
+            //img_settings.Visibility = Visibility.Visible;
         }
 
         void UserControl_MouseLeave(object sender, MouseEventArgs e)
         {
-            img_settings.Visibility = Visibility.Hidden;
+            //img_settings.Visibility = Visibility.Hidden;
         }
 
         void CameraSettings_Click(object sender, RoutedEventArgs e)
         {
-            CameraSettings.ShowSettingsUI(args.ds_device);
+            CameraSettings.ShowSettingsUI(captureParameters.ds_device);
         }
 
         void Set_ROI_Click(object sender, RoutedEventArgs e)
         {
-            string name = "Set ROI : Space to validate, Escape to cancel";
-            Mat cap = args.videoCapture.RetrieveMat();
+            string name = "Set ROI : 'Space' to validate, 'Escape' to cancel";
+            Mat cap = captureParameters.videoCapture.RetrieveMat();
 
-            if (args.mainWindow.epaisseur > 0)
-                Cv2.Line(cap, 0, cap.Rows / 2, cap.Cols, cap.Rows / 2, args.mainWindow.rouge, args.mainWindow.epaisseur);
+            if (captureParameters.MainWindow().epaisseur > 0)
+                Cv2.Line(cap, 0, cap.Rows / 2, cap.Cols, cap.Rows / 2, captureParameters.MainWindow().rouge, captureParameters.MainWindow().epaisseur);
 
-            args.roi = Cv2.SelectROI(name, cap);
+            captureParameters.ac_data.roi = Cv2.SelectROI(name, cap);
             Cv2.DestroyWindow(name);
         }
 
