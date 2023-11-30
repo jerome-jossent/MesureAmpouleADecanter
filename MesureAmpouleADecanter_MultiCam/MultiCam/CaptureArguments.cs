@@ -11,16 +11,7 @@ using Xceed.Wpf.AvalonDock.Layout;
 
 namespace MultiCam
 {
-    public class CaptureArguments_data
-    {
-        //exposure
-        //focus
-        //hauteur
-
-        public int deviceIndex { get; set; }
-        public int position { get; set; }
-        public Rect roi { get; set; }
-    }
+    
 
     public class CaptureArguments
     {

@@ -147,11 +147,6 @@ namespace MultiCam
             }
 
             int fps = 30;
-<<<<<<< .mine
-
-=======
-
->>>>>>> .theirs
             cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
             cap.Set(VideoCaptureProperties.FrameWidth, 1920);
             cap.Set(VideoCaptureProperties.FrameHeight, 1080);
@@ -164,19 +159,18 @@ namespace MultiCam
                 if (cap.IsDisposed) break;
                 ca.frameMat = cap.RetrieveMat();
 
-                if (args.frameMat.Empty())
+                if (ca.frameMat.Empty())
                 {
                     //attente d'1 frame
                     Thread.Sleep(1000 / fps);
                     continue;
                 }
 
-                Mat frameMat = args.frameMat;
-                Mat m = frameMat.Clone();
+                Mat m = ca.frameMat.Clone();
 
                 //To save
                 DateTime t = DateTime.Now;
-                if (args.t < t && m != null)
+                if (ca.t < t)
                 {
                     ca.images_to_save.Add(ca.MainWindow().f + ca.ac_data.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
                     ca.t = t + (TimeSpan)ca.MainWindow()._timeBetweenFrameToSave;
@@ -184,13 +178,13 @@ namespace MultiCam
 
                 //ligne au centre
                 if (ca.MainWindow().epaisseur > 0)
-                    Cv2.Line(frameMat, 0, frameMat.Rows / 2, frameMat.Cols, frameMat.Rows / 2, ca.MainWindow().rouge, ca.MainWindow().epaisseur);
+                    Cv2.Line(ca.frameMat, 0, ca.frameMat.Rows / 2, ca.frameMat.Cols, ca.frameMat.Rows / 2, ca.MainWindow().rouge, ca.MainWindow().epaisseur);
 
                 //ROI
                 if (ca.ac_data.roi.Width > 0 && ca.ac_data.roi.Height > 0)
                 {
-                    Mat frame_roi = new Mat(frameMat, ca.ac_data.roi);
-                    frame_roi.CopyTo(frameMat);
+                    Mat frame_roi = new Mat(ca.frameMat, ca.ac_data.roi);
+                    frame_roi.CopyTo(ca.frameMat);
                 }
 
 
@@ -200,16 +194,10 @@ namespace MultiCam
             }
             cap.Dispose();
         }
-<<<<<<< .mine
-        public void _Stop()
 
-=======
 
         List<string> GetAvailableCodecs(VideoCapture cap)
->>>>>>> .theirs
         {
-
-
             List<string> codecs_to_test = new List<string>() { "DIVX", "XVID", "MJPG", "X264", "WMV1", "WMV2", "FMP4", "mp4v", "avc1", "I420", "IYUV", "mpg1", "H264" };
             List<string> available_codecs = new List<string>();
             foreach (string codec in codecs_to_test)

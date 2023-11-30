@@ -25,6 +25,7 @@
             <MenuItem Header="Add" Name="menu_Add" Click="RefreshDeviceList_Click"/>
             <MenuItem Header="Save" Click="Save_Click"/>
             <MenuItem Header="Load" Click="Load_Click" />
+            <MenuItem Header="SetSaveFolder" Click="SetSaveFolder_Click" />
         </Menu>
 
         <xcad:DockingManager Grid.Row="1" x:Name="DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">

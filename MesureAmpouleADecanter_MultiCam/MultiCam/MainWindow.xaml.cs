@@ -21,13 +21,13 @@ namespace MultiCam
     {
         //IDEES :
         //
-        // un UC par capture
         // afficher par UC les réglages caméras
-        // définir la position du capteur(haut, milieu, bas) : permutation des caméras
-        // ROI
+        // définir la position du capteur en mm
+
         // Binarisation (rgb => gris => bw threshold)
         // 2D => 1D (somme)
         // detection du front, 2 sens ("sens par le haut", "sens par le bas")
+
         // enregistrement bouton Record/Stop + création d'un dossier
 
         public Dictionary<int, DirectShowLib.DsDevice> devices;
@@ -68,6 +68,16 @@ namespace MultiCam
             }
         }
         bool? _toSave = false;
+
+
+        void SetFolderToSave()
+        {
+           _f = Properties.Settings.Default.folder;
+//            Properties.Settings.Default.Save();
+        
+
+        }
+
 
         public int epaisseur
         {
@@ -299,6 +309,11 @@ namespace MultiCam
             arg.capture_UC._Link(arg);
 
             return arg;
+        }
+
+        private void SetSaveFolder_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
