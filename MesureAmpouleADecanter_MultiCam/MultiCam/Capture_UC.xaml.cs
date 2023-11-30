@@ -127,10 +127,12 @@ namespace MultiCam
                 return;
             }
 
+            int fps = 30;
+
             cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
             cap.Set(VideoCaptureProperties.FrameWidth, 1920);
             cap.Set(VideoCaptureProperties.FrameHeight, 1080);
-            cap.Set(VideoCaptureProperties.Fps, 30);
+            cap.Set(VideoCaptureProperties.Fps, fps);
             cap.Set(VideoCaptureProperties.FourCC, FourCC.FromString("MJPG"));
 
             while (!args.cts.IsCancellationRequested)
@@ -140,16 +142,19 @@ namespace MultiCam
 
                 if (args.frameMat.Empty())
                 {
-                    Thread.Sleep(100);
+                    //attente d'1 frame
+                    Thread.Sleep(1000 / fps);
                     continue;
                 }
+
                 Mat frameMat = args.frameMat;
                 Mat m = frameMat.Clone();
 
                 //GC.Collect();
 
+                //To save
                 DateTime t = DateTime.Now;
-                if (args.t < t && m != null && !m.Empty())
+                if (args.t < t && m != null)
                 {
                     args.images_to_save.Add(args.mainWindow.f + args.position.ToString() + DateTime.Now.ToString("hh_mm_ss.fff") + ".jpg", m);
                     args.t = t + (TimeSpan)args.mainWindow._timeBetweenFrameToSave;
@@ -170,7 +175,7 @@ namespace MultiCam
             }
             cap.Dispose();
         }
-       public void _Stop()
+        public void _Stop()
         {
             args.cts.Cancel();
             Thread.Sleep(100);
