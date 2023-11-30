@@ -39,8 +39,19 @@
                 <Label Content="Focus" Width="100"/>
                 <Slider x:Name="sld_focus" Width="100" VerticalAlignment="Center"/>
             </StackPanel>
+
+            <!--<StackPanel Orientation="Horizontal">
+                <Label Content="Codec" Width="100"/>
+                <ComboBox HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="150"
+  ItemsSource="{Binding codecs}" SelectedItem="{Binding codec}"/>
+            </StackPanel>
             
-            
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Rsolution" Width="100"/>
+                <ComboBox HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="150"
+  ItemsSource="{Binding resolutions}" SelectedItem="{Binding resolution }"/>
+            </StackPanel>-->
+
         </StackPanel>
     </Grid>
 </UserControl>

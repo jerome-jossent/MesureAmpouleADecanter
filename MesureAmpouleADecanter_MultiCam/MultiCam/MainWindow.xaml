@@ -9,7 +9,7 @@
         
         xmlns:local="clr-namespace:MultiCam"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Decantation - Multicam" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -22,10 +22,9 @@
         </Grid.ColumnDefinitions>
 
         <Menu Height="20" VerticalAlignment="Center" >
-            <MenuItem Header="Add" Name="menu_Add"/>
-            <!--<MenuItem Header="Delete" Click="Menu_Delete_Click"/>-->
-            <MenuItem Header="Save" IsEnabled="False"/>
-            <MenuItem Header="Load" IsEnabled="False"/>
+            <MenuItem Header="Add" Name="menu_Add" Click="RefreshDeviceList_Click"/>
+            <MenuItem Header="Save" Click="Save_Click"/>
+            <MenuItem Header="Load" Click="Load_Click" />
         </Menu>
 
         <xcad:DockingManager Grid.Row="1" x:Name="DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
