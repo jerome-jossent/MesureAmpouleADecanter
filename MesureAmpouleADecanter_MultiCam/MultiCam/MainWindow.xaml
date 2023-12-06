@@ -45,11 +45,23 @@
                 <Label Content="Epaisseur" Width="100"/>
                 <Slider Value="{Binding epaisseur}" Minimum="0" Maximum="20" Width="100" />
             </StackPanel>
-            <CheckBox Content="Save to disk" IsChecked="{Binding toSave}"/>
-            <StackPanel Orientation="Horizontal" >
-                <Label Content="Time" ToolTip="Time between each frame to save" Width="100"/>
-                <xctk:TimeSpanUpDown Value="{Binding _timeBetweenFrameToSave}" Width="100" Minimum="0" ShowDays="False" ShowHours="False" CurrentDateTimePart="Millisecond"/>
-            </StackPanel>
+
+            <GroupBox>
+                <StackPanel Orientation="Vertical">
+                    <CheckBox Content="Save to disk" IsChecked="{Binding toSave}"/>
+                    
+                    <StackPanel Orientation="Horizontal" >
+                        <Image Width="30" RenderOptions.BitmapScalingMode="Fant"/>
+                        <Label Content="{Binding folder}"/>
+                    </StackPanel>
+
+
+                    <StackPanel Orientation="Horizontal" >
+                        <Label Content="Time" ToolTip="Time between each frame to save" Width="100"/>
+                        <xctk:TimeSpanUpDown Value="{Binding _timeBetweenFrameToSave}" Width="100" Minimum="0" ShowDays="False" ShowHours="False" CurrentDateTimePart="Millisecond"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
         </StackPanel>
     </Grid>
 </Window>

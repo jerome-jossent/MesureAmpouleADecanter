@@ -32,7 +32,6 @@ namespace MultiCam
 
         public Dictionary<int, DirectShowLib.DsDevice> devices;
 
-        string _f = @"C:\_JJ\DATA\decantation\multicam\";
         public string f;
         public Scalar rouge = new Scalar(0, 0, 255);
         public Dictionary<int, CaptureArguments> capturesParameters; //clef = index device
@@ -57,7 +56,7 @@ namespace MultiCam
                 _toSave = value;
                 if (value == true)
                 {
-                    f = _f + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss") + "\\";
+                    f = folder + DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss") + "\\";
                     System.IO.Directory.CreateDirectory(f);
                 }
                 else
@@ -69,15 +68,18 @@ namespace MultiCam
         }
         bool? _toSave = false;
 
-
-        void SetFolderToSave()
+        public string folder
         {
-           _f = Properties.Settings.Default.folder;
-//            Properties.Settings.Default.Save();
-        
-
+            get => _folder;
+            set
+            {
+                _folder = value;
+                Properties.Settings.Default.folder = _folder;
+                Properties.Settings.Default.Save();
+                OnPropertyChanged();
+            }
         }
-
+        string _folder = Properties.Settings.Default.folder;
 
         public int epaisseur
         {
@@ -104,6 +106,15 @@ namespace MultiCam
 
         void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e) { INITS(); }
 
+        void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            cts.Cancel();
+            Thread.Sleep(500);
+
+            foreach (var ARG in capturesParameters)
+                ARG.Value.capture_UC._Stop();
+        }
+
         void INITS()
         {
             capturesParameters = new Dictionary<int, CaptureArguments>();
@@ -113,6 +124,7 @@ namespace MultiCam
         }
 
         void RefreshDeviceList_Click(object sender, RoutedEventArgs e) { RefreshDeviceList(); }
+
         void RefreshDeviceList()
         {
             menu_Add.Items.Clear();
@@ -128,18 +140,16 @@ namespace MultiCam
                 if (capturesParameters.ContainsKey(device.Key))
                     mi.IsEnabled = false;
                 else
-                    mi.Click += (mi, e) => Menu_Add_Click(mi, new RoutedEventArgs(null, new Tuple<int, object>(device.Key, device.Value)));
+                    mi.Click += (mi, e) => Menu_AddCamera_Click(mi, new RoutedEventArgs(null, new Tuple<int, object>(device.Key, device.Value)));
 
                 //var v = CameraSettings.GetAllAvailableResolution(device.Value);
             }
         }
 
-        void Menu_Add_Click(object sender, System.Windows.RoutedEventArgs e)
+        void Menu_AddCamera_Click(object sender, System.Windows.RoutedEventArgs e) { AddCamera((MenuItem)sender, (Tuple<int, object>)e.Source); }
+
+        void AddCamera(MenuItem mi, Tuple<int, object> data)
         {
-            MenuItem mi = (MenuItem)sender;
-
-            var data = (Tuple<int, object>)e.Source;
-
             Capture_UC uc = new Capture_UC();
 
             LayoutAnchorable layoutAnchorable = new LayoutAnchorable();
@@ -150,7 +160,7 @@ namespace MultiCam
             Avalon_Views.Children.Add(layoutAnchorable);
 
             var arg = new CaptureArguments(data.Item1,
-                                          (DirectShowLib.DsDevice)data.Item2,
+                                          (DsDevice)data.Item2,
                                           GetFirstAvailablePosition());
 
             arg._LinkWithIHM(layoutAnchorable, uc, images, this, mi);
@@ -167,8 +177,6 @@ namespace MultiCam
             capturesParameters.Add(arg.ac_data.deviceIndex, arg);
         }
 
-
-
         int GetFirstAvailablePosition()
         {
             List<int> positions = new List<int>();
@@ -182,14 +190,6 @@ namespace MultiCam
             return position;
         }
 
-        void MainWindow_Closing(object sender, CancelEventArgs e)
-        {
-            cts.Cancel();
-            Thread.Sleep(500);
-
-            foreach (var ARG in capturesParameters)
-                ARG.Value.capture_UC._Stop();
-        }
 
         internal void SwitchPositions(int position_precedente, int position_prevue)
         {

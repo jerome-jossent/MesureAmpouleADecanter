@@ -190,7 +190,7 @@ namespace MultiCam
 
                 
 
-                Display(frameMat);
+                Display(ca.frameMat);
             }
             cap.Dispose();
         }

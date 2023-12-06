@@ -49,8 +49,8 @@ namespace MultiCam
             else
                 this.ac_data = ac_data;
 
-            ac_data.deviceIndex = deviceIndex;
-            ac_data.position = position;
+            this.ac_data.deviceIndex = deviceIndex;
+            this.ac_data.position = position;
 
             this.ds_device = ds_device;
 
