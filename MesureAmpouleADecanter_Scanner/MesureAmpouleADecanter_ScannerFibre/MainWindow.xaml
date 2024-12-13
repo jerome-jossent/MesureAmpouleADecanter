@@ -1,0 +1,26 @@
+﻿<Window x:Class="MesureAmpouleADecanter_ScannerFibre.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"
+        mc:Ignorable="d"
+        Loaded="Window_Loaded"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Image Grid.Column="0"
+            Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
+               Stretch="Uniform"
+               RenderOptions.BitmapScalingMode="Fant"
+               />
+        <Image Grid.Column="1"
+            Source="{Binding _image1, UpdateSourceTrigger=PropertyChanged}"
+               Stretch="Uniform"
+               RenderOptions.BitmapScalingMode="Fant"
+               />
+    </Grid>
+</Window>
