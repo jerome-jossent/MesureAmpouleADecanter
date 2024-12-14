@@ -3,21 +3,62 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"
+        xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"        
+        xmlns:wpftk="http://schemas.xceed.com/wpf/xaml/toolkit"        
         mc:Ignorable="d"
-        Loaded="Window_Loaded"
-        Title="MainWindow" Height="450" Width="800">
+        Loaded="Window_Loaded" Closing="Window_Closing"
+        Title="MainWindow" Height="900" Width="1800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Image Grid.Column="0"
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <Slider Grid.Row="0" Minimum="0" Maximum="10" Value="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}"/>
+            <Slider Grid.Row="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}"/>
+            <Slider Grid.Row="2" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        
+        <Grid Grid.Column="0" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+
+            <Image Grid.Column="1"
             Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
                Stretch="Uniform"
                RenderOptions.BitmapScalingMode="Fant"
                />
-        <Image Grid.Column="1"
+
+            <wpftk:RangeSlider Grid.Column="0" Orientation="Vertical" Step="1"
+                               LowerValue="{Binding _roi_bottom, UpdateSourceTrigger=PropertyChanged}" 
+                               HigherValue="{Binding _roi_top, UpdateSourceTrigger=PropertyChanged}"
+                               Minimum="0" Maximum="{Binding _roi_height_maximum, UpdateSourceTrigger=PropertyChanged}"  
+                               />
+            
+            <wpftk:RangeSlider Grid.Column="1" Grid.Row="1" Step="1"
+                               LowerValue="{Binding _roi_left, UpdateSourceTrigger=PropertyChanged}"
+                               HigherValue="{Binding _roi_right, UpdateSourceTrigger=PropertyChanged}" 
+                               Minimum="0" Maximum="{Binding _roi_width_maximum, UpdateSourceTrigger=PropertyChanged}"                               
+                               />
+
+        </Grid>
+        <Image Grid.Column="1" Grid.Row="1"
             Source="{Binding _image1, UpdateSourceTrigger=PropertyChanged}"
                Stretch="Uniform"
                RenderOptions.BitmapScalingMode="Fant"

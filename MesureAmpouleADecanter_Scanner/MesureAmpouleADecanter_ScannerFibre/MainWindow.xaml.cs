@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using MesureAmpouleADecanter_ScannerFibre.Properties;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 
@@ -38,8 +39,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
             }
         }
-        ImageSource image;   
-        
+        ImageSource image;
+
         public ImageSource _image1
         {
             get => image1;
@@ -51,10 +52,130 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ImageSource image1;
 
-        string file = @"D:\DATA\decantation\videos\20241212_224353.mp4";
+        #region ROI
+        public double _roi_left
+        {
+            get => roi_left;
+            set
+            {
+                roi_left = value;
+                OnPropertyChanged();
+                Settings.Default.roi_left = roi_left;
+                Settings.Default.Save();
+            }
+        }
+        double roi_left =Settings.Default.roi_left;
+
+        public double _roi_right
+        {
+            get => roi_right;
+            set
+            {
+                roi_right = value;
+                OnPropertyChanged();
+                Settings.Default.roi_right = roi_right;
+                Settings.Default.Save();
+            }
+        }
+        double roi_right = Settings.Default.roi_right;
+
+        public double _roi_width_maximum
+        {
+            get => roi_width_maximum;
+            set
+            {
+                roi_width_maximum = value;
+                OnPropertyChanged();
+            }
+        }
+        double roi_width_maximum;
+
+
+        public double _roi_top
+        {
+            get => roi_top;
+            set
+            {
+                roi_top = value;
+                OnPropertyChanged();
+                Settings.Default.roi_top = roi_top;
+                Settings.Default.Save();
+            }
+        }
+        double roi_top = Settings.Default.roi_top;
+
+        public double _roi_bottom
+        {
+            get => roi_bottom;
+            set
+            {
+                roi_bottom = value;
+                OnPropertyChanged();
+                Settings.Default.roi_bottom = roi_bottom;
+                Settings.Default.Save();
+            }
+        }
+        double roi_bottom = Settings.Default.roi_bottom;
+
+        public double _roi_height_maximum
+        {
+            get => roi_height_maximum;
+            set
+            {
+                roi_height_maximum = value;
+                OnPropertyChanged();
+            }
+        }
+        double roi_height_maximum;
+        #endregion
+
+        public double _houghcircle_dp
+        {
+            get => houghcircle_dp;
+            set
+            {
+                houghcircle_dp = value;
+                OnPropertyChanged();
+                Settings.Default.houghcircle_dp = houghcircle_dp;
+                Settings.Default.Save();
+            }
+        }
+        double houghcircle_dp = Settings.Default.houghcircle_dp;
+
+        public double _houghcircle_param1
+        {
+            get => houghcircle_param1;
+            set
+            {
+                houghcircle_param1 = value;
+                Settings.Default.houghcircle_param1 = houghcircle_param1;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+        double houghcircle_param1 = Settings.Default.houghcircle_param1;
+
+        public double _houghcircle_param2
+        {
+            get => houghcircle_param2;
+            set
+            {
+                houghcircle_param2 = value;
+                Settings.Default.houghcircle_param2 = houghcircle_param2;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+        double houghcircle_param2 = Settings.Default.houghcircle_param2;
+
+
+        //string file = @"D:\DATA\decantation\videos\20241212_224353.mp4";
+        string file = @"D:\DATA\decantation\videos\2024-12-13 22-22-30.mp4";
 
         VideoCapture capVideo;
         int sleepTime;
+        Thread videoThread;
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public MainWindow()
         {
@@ -67,11 +188,23 @@ namespace MesureAmpouleADecanter_ScannerFibre
             ProcessFile(file);
         }
 
+        void Window_Closing(object sender, CancelEventArgs e)
+        {
+            StopAll();
+        }
+
+        void StopAll()
+        {
+            cancellationTokenSource.Cancel();
+        }
+
         void ProcessFile(string filePath)
         {
             capVideo = new VideoCapture(filePath);
             sleepTime = (int)Math.Round(1000 / capVideo.Fps);
-            new Thread(PlayVideo).Start();
+
+            CancellationToken token = cancellationTokenSource.Token;
+            Task.Factory.StartNew(() => PlayVideo(token), token);
         }
 
         Mat ToGray(Mat src)
@@ -83,10 +216,17 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         Mat ROI(Mat src)
         {
-            int left = 20;
-            int top = 1720;
-            int right = 150;
-            int bottom = 100;           
+            int left = (int)_roi_left;// 20;
+            int right = (int)(_roi_width_maximum - _roi_right);//150;
+            int top = (int)(_roi_height_maximum - _roi_top);//1720;
+            int bottom = (int)(_roi_bottom);//100;
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                //Title = left + " ↔ " + right + "\t" + top + " ↨ " + bottom;
+                Title = _houghcircle_dp.ToString("0.00") + "\t" + _houghcircle_param1.ToString("0.00") + "\t" + _houghcircle_param2.ToString("0.00");
+            });
+
             return ROI(src, left, top, right, bottom);
         }
 
@@ -109,53 +249,90 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return res;
         }
 
-        void PlayVideo()
+
+        void PlayVideo(object? obj)
         {
+            CancellationToken token = (CancellationToken)obj;
             int framestart = 1190;
             capVideo.PosFrames = framestart;
 
-            while (!capVideo.IsDisposed)
+            _roi_width_maximum = capVideo.FrameWidth;
+            _roi_height_maximum = capVideo.FrameHeight;
+
+            _roi_right = _roi_width_maximum;
+            _roi_top = _roi_height_maximum;
+
+            bool loop = true;
+            while (loop)
             {
-                Mat frame = new Mat();
-                capVideo.Read(frame);
-                if (frame.Empty())
-                    break;
-                //Thread.Sleep(sleepTime);
-                Thread.Sleep(1);
-
-                Mat R = ROI(frame);
-                Mat G = ToGray(R);
-
-                CircleSegment[] circleSegments = Cv2.HoughCircles(G, HoughModes.Gradient, 1.9, 1);
-
-                CirclesAdd(circleSegments, R.Width, R.Height);
-
-                for (int i = 0; i < circleSegments.Length; i++)
+                capVideo.PosFrames = 0;
+                Cercles = new Mat();
+                while (!capVideo.IsDisposed && !token.IsCancellationRequested)
                 {
-                    Cv2.Circle(R, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), -1);
+                    Mat frame = new Mat();
+                    capVideo.Read(frame);
+                    if (frame.Empty())
+                        break;
+                    //Thread.Sleep(sleepTime);
+                    Thread.Sleep(1);
+                    try
+                    {
+                        Mat R = ROI(frame);
+                        Mat G = ToGray(R);
+
+                        CircleSegment[] circleSegments = Cv2.HoughCircles(G,
+                            method: HoughModes.Gradient,
+                            dp: _houghcircle_dp, //1.9 4k vertical
+                            minDist: 1,    //1
+                            param1: _houghcircle_param1,   //100
+                            param2: _houghcircle_param2,   //37
+                            minRadius: 0,  //0
+                            maxRadius: 20); //20 
+
+                        CirclesAdd(circleSegments, R.Width, R.Height);
+
+                        for (int i = 0; i < circleSegments.Length; i++)
+                            Cv2.Circle(R, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), 1);
+
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            try
+                            {
+                                _image = Convert(R.ToBitmap());
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        }));
+                    }
+                    catch (Exception ex)
+                    {
+                        ;
+                    }
                 }
-
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    _image = Convert(R.ToBitmap());
-                }));
             }
         }
 
         Mat Cercles = new Mat();
         void CirclesAdd(CircleSegment[] circleSegments, int width, int height)
         {
-            if (Cercles.Empty())            
+            if (Cercles.Empty())
                 Cercles = new Mat(height, width, MatType.CV_8UC3);
 
             for (int i = 0; i < circleSegments.Length; i++)
-            {
                 Cv2.Circle(Cercles, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), -1);
-            }
 
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                _image1 = Convert(Cercles.ToBitmap());
+                try
+                {
+                    _image1 = Convert(Cercles.ToBitmap());
+                }
+                catch (Exception ex)
+                {
+
+                }
             }));
         }
 
@@ -170,5 +347,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             image.EndInit();
             return image;
         }
+
     }
 }
