@@ -52,7 +52,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ImageSource image1;
 
-        #region ROI
+
+        Mat Cercles = new Mat();
+        List<Cercle> cercles;
+
+        #region ROI Parameters
         public double _roi_left
         {
             get => roi_left;
@@ -64,7 +68,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 Settings.Default.Save();
             }
         }
-        double roi_left =Settings.Default.roi_left;
+        double roi_left = Settings.Default.roi_left;
 
         public double _roi_right
         {
@@ -129,6 +133,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         double roi_height_maximum;
         #endregion
 
+        #region HoughCircle Parameters
         public double _houghcircle_dp
         {
             get => houghcircle_dp;
@@ -167,10 +172,23 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
         double houghcircle_param2 = Settings.Default.houghcircle_param2;
-
+        #endregion
 
         //string file = @"D:\DATA\decantation\videos\20241212_224353.mp4";
-        string file = @"D:\DATA\decantation\videos\2024-12-13 22-22-30.mp4";
+
+        public string _file
+        {
+            get => file;
+            set
+            {
+                file = value;
+                OnPropertyChanged();
+                Settings.Default.file = file;
+                Settings.Default.Save();
+            }
+        }
+        string file = Settings.Default.file;
+
 
         VideoCapture capVideo;
         int sleepTime;
@@ -200,11 +218,21 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void ProcessFile(string filePath)
         {
+            if (!System.IO.File.Exists(filePath))
+                return;
+
+            VideoStop();
+
             capVideo = new VideoCapture(filePath);
             sleepTime = (int)Math.Round(1000 / capVideo.Fps);
 
             CancellationToken token = cancellationTokenSource.Token;
             Task.Factory.StartNew(() => PlayVideo(token), token);
+        }
+
+        void VideoStop()
+        {
+            capVideo?.Dispose();
         }
 
         Mat ToGray(Mat src)
@@ -265,8 +293,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
             bool loop = true;
             while (loop)
             {
+                //init
                 capVideo.PosFrames = 0;
                 Cercles = new Mat();
+                cercles = new List<Cercle>();
+
                 while (!capVideo.IsDisposed && !token.IsCancellationRequested)
                 {
                     Mat frame = new Mat();
@@ -308,20 +339,45 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     }
                     catch (Exception ex)
                     {
-                        ;
+
                     }
                 }
             }
         }
 
-        Mat Cercles = new Mat();
         void CirclesAdd(CircleSegment[] circleSegments, int width, int height)
         {
             if (Cercles.Empty())
                 Cercles = new Mat(height, width, MatType.CV_8UC3);
 
             for (int i = 0; i < circleSegments.Length; i++)
-                Cv2.Circle(Cercles, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), -1);
+            {
+                bool dejapresent = Cercle.IsDejaPresent(circleSegments[i].Center, ref Cercles);
+
+                if (!dejapresent)
+                {
+                    //new circle
+                    Cercle? c = new Cercle(circleSegments[i], cercles.Count);
+                    cercles.Add(c);
+
+                    //dessin du cercle
+                    int rayon = 15; // (int)circleSegments[i].Radius;
+                    Cv2.Circle(Cercles, (OpenCvSharp.Point)circleSegments[i].Center, rayon, Cercle.couleur, -1);
+
+                    OpenCvSharp.Point xy = new OpenCvSharp.Point(c.circleSegment.Center.X, c.circleSegment.Center.Y);
+                    xy.Y += 5;
+                    string text = c.numero.ToString();
+                    if (text.Length == 1)
+                        xy.X += -5;
+                    else if (text.Length == 2)
+                        xy.X += -10;
+                    else
+                        xy.X += -15;
+
+                    Cv2.PutText(Cercles, text, xy, HersheyFonts.HersheySimplex,
+                        0.5, Cercle.couleurTexte, thickness: 1);
+                }
+            }
 
             Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -348,5 +404,23 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return image;
         }
 
+        void Folder_Click(object sender, MouseButtonEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.FileName = "Video"; // Default file name
+            dialog.DefaultExt = ".mp4"; // Default file extension
+            dialog.Filter = "Videos (.mp4)|*.mp4"; // Filter files by extension
+
+            // Show open file dialog box
+            bool? result = dialog.ShowDialog();
+
+            // Process open file dialog box results
+            if (result == true)
+            {
+                // Open document
+                file = dialog.FileName;
+                ProcessFile(file);
+            }
+        }
     }
 }

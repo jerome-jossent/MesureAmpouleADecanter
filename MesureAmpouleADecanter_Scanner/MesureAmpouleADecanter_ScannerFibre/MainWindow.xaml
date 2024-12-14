@@ -11,6 +11,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -18,7 +19,15 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Grid>
+        <!--MENU-->
+        <Grid Grid.Row="0">
+            <StackPanel HorizontalAlignment="Left">
+                <Image Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                      MouseDown="Folder_Click" />
+            </StackPanel>
+        </Grid>
+        
+        <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="auto"/>
@@ -29,7 +38,7 @@
             <Slider Grid.Row="2" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
         </Grid>
         
-        <Grid Grid.Column="0" Grid.Row="1">
+        <Grid Grid.Column="0" Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
@@ -58,7 +67,7 @@
                                />
 
         </Grid>
-        <Image Grid.Column="1" Grid.Row="1"
+        <Image Grid.Column="1" Grid.Row="2"
             Source="{Binding _image1, UpdateSourceTrigger=PropertyChanged}"
                Stretch="Uniform"
                RenderOptions.BitmapScalingMode="Fant"
