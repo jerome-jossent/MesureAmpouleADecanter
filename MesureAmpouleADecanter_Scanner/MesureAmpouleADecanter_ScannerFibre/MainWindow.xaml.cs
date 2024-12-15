@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -13,14 +15,18 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using MesureAmpouleADecanter_ScannerFibre.Images;
 using MesureAmpouleADecanter_ScannerFibre.Properties;
+using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace MesureAmpouleADecanter_ScannerFibre
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        #region Parameters Binding
         void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -49,10 +55,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ImageSource image1;
 
-        Mat frame;
-        Mat cercles_mat = new Mat();
-        List<Cercle> cercles;
-        bool circle_Recompute;
 
         public string _file
         {
@@ -70,10 +72,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         string file = Settings.Default.file;
 
-        VideoCapture capVideo;
-        int sleepTime;
-        Thread videoThread;
-        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public bool _play
         {
@@ -282,7 +280,26 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
         int rayon = Settings.Default.rayon;
+        #endregion
 
+        public ObservableCollection<Sensor> _sensors { get; set; } = new ObservableCollection<Sensor>();
+
+        #region Parameters local
+        Mat frame;
+        Mat ROI_mat;
+        Mat cercles_mat = new Mat();
+        List<Cercle> cercles;
+        bool circle_Recompute;
+        VideoCapture capVideo;
+        int sleepTime;
+        Thread videoThread;
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        Scalar CirclesReset_color = Scalar.Black;
+
+        SensorMap sensorMap;
+        #endregion
+
+        #region Window
         public MainWindow()
         {
             InitializeComponent();
@@ -301,38 +318,31 @@ namespace MesureAmpouleADecanter_ScannerFibre
             StopAll();
         }
 
-        void StopAll()
+        void DisplayCrop(bool status)
         {
-            cancellationTokenSource.Cancel();
+            if (status)
+            {
+                grid_column_crop.Width = new GridLength(1, GridUnitType.Auto);
+                grid_row_crop.Height = new GridLength(1, GridUnitType.Auto);
+            }
+            else
+            {
+                grid_column_crop.Width = new GridLength(0);
+                grid_row_crop.Height = new GridLength(0);
+            }
         }
 
-        void ResetROI()
+        void DisplayHoughCircle(bool status)
         {
-            _roi_left = 0;
-            _roi_top = 0;
-            _roi_right = 0;
-            _roi_bottom = 0;
+            if (status)
+                grid_row_houghcircle.Height = new GridLength(1, GridUnitType.Auto);
+            else
+                grid_row_houghcircle.Height = new GridLength(0);
         }
 
-        void ProcessFile(string filePath)
-        {
-            if (!System.IO.File.Exists(filePath))
-                return;
+        #endregion
 
-            VideoStop();
-
-            capVideo = new VideoCapture(filePath);
-            sleepTime = (int)Math.Round(1000 / capVideo.Fps);
-            OnPropertyChanged("_videoTotalFrames");
-
-            CancellationToken token = cancellationTokenSource.Token;
-            Task.Factory.StartNew(() => PlayVideo(token), token);
-        }
-
-        void VideoStop()
-        {
-            capVideo?.Dispose();
-        }
+        #region Image & Mat Operations
 
         Mat ToGray(Mat src)
         {
@@ -376,9 +386,69 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return res;
         }
 
-        void PlayVideo(object? obj)
+        BitmapImage Convert(Bitmap src)
         {
-            CancellationToken token = (CancellationToken)obj;
+            MemoryStream ms = new MemoryStream();
+            src.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
+            BitmapImage image = new BitmapImage();
+            image.BeginInit();
+            ms.Seek(0, SeekOrigin.Begin);
+            image.StreamSource = ms;
+            image.EndInit();
+            return image;
+        }
+
+        #endregion
+
+        void StopAll()
+        {
+            cancellationTokenSource.Cancel();
+        }
+
+        void ResetROI()
+        {
+            _roi_left = 0;
+            _roi_top = 0;
+            _roi_right = 0;
+            _roi_bottom = 0;
+        }
+
+        void ProcessFile(string filePath)
+        {
+            if (!System.IO.File.Exists(filePath))
+                return;
+
+            VideoStop();
+
+            capVideo = new VideoCapture(filePath);
+            sleepTime = (int)Math.Round(1000 / capVideo.Fps);
+            OnPropertyChanged("_videoTotalFrames");
+
+            CancellationToken token = cancellationTokenSource.Token;
+            Task.Factory.StartNew(() => PlayVideo(token), token);
+        }
+
+        void VideoStop()
+        {
+            capVideo?.Dispose();
+        }
+
+        void CirclesReset()
+        {
+            int left = (int)_roi_left;// 20;
+            int right = (int)(_roi_width_maximum - _roi_right);//150;
+            int top = (int)(_roi_height_maximum - _roi_top);//1720;
+            int bottom = (int)(_roi_bottom);//100;
+
+            int w = capVideo.FrameWidth - left - right;
+            int h = capVideo.FrameHeight - top - bottom;
+
+            cercles = new List<Cercle>();
+            _sensors = new ObservableCollection<Sensor>();
+        }
+
+        void PlayVideo(CancellationToken cancellationToken)
+        {
             int framestart = 1190;
             capVideo.PosFrames = framestart;
 
@@ -398,7 +468,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 CirclesReset();
 
                 while (!capVideo.IsDisposed &&
-                    !token.IsCancellationRequested)
+                    !cancellationToken.IsCancellationRequested)
                 {
                     frame = new Mat();
 
@@ -424,8 +494,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     ProcessFrame(frame);
 
-                    //si pause
-                    while (!_play)
+                    //si pause & pas fermeture de la fenêtre
+                    while (!_play &&
+                           !cancellationToken.IsCancellationRequested)
                     {
                         Thread.Sleep(10);
 
@@ -448,22 +519,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        Scalar CirclesReset_color = Scalar.Black;
-
-        void CirclesReset()
-        {
-            int left = (int)_roi_left;// 20;
-            int right = (int)(_roi_width_maximum - _roi_right);//150;
-            int top = (int)(_roi_height_maximum - _roi_top);//1720;
-            int bottom = (int)(_roi_bottom);//100;
-
-            int w = capVideo.FrameWidth - left - right;
-            int h = capVideo.FrameHeight - top - bottom;
-
-            //Cercles = new Mat(new OpenCvSharp.Size(w, h), MatType.CV_8UC3, CirclesReset_color);
-            cercles = new List<Cercle>();
-        }
-
         void ProcessFrame(Mat frame)
         {
             Mat frame_copy = frame.Clone();
@@ -471,8 +526,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
             houghCircle_change = false;
             try
             {
-                Mat R = ROI(frame_copy);
-                Mat G = ToGray(R);
+                ROI_mat = ROI(frame_copy);
+                Mat G = ToGray(ROI_mat);
 
                 CircleSegment[] circleSegments = Cv2.HoughCircles(G,
                     method: HoughModes.Gradient,
@@ -483,19 +538,21 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     minRadius: _houghcircle_radius_min,  //0
                     maxRadius: _houghcircle_radius_max); //20 
 
-                CapteursAdd(circleSegments, R.Width, R.Height);
 
-                CapteursUpdate(G.Width, G.Height);
+
+                SensorsAdd(circleSegments, ROI_mat.Width, ROI_mat.Height);
+
+                SensorsUpdate(G.Width, G.Height);
 
                 //dessine les cercles sur la frame
                 for (int i = 0; i < circleSegments.Length; i++)
-                    Cv2.Circle(R, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), 1);
+                    Cv2.Circle(ROI_mat, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), 1);
 
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     try
                     {
-                        _image = Convert(R.ToBitmap());
+                        _image = Convert(ROI_mat.ToBitmap());
                     }
                     catch (Exception ex)
                     {
@@ -509,7 +566,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        void CapteursAdd(CircleSegment[] newCircleSegments, int width, int height)
+        void SensorsAdd(CircleSegment[] newCircleSegments, int width, int height)
         {
             if (cercles_mat.Empty())
                 cercles_mat = new Mat(height, width, MatType.CV_8UC3);
@@ -536,7 +593,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         }
                     }
                     Cercle? c;
-                    if (found)
+                    if (found) // oui
                     {
                         c = cercles[j];
 
@@ -546,12 +603,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         c.circleSegment.Center = new Point2f(X_moy, Y_moy);
                         c.nbr_fois_centre_repere++;
                     }
-                    else
+                    else // non
                     {
                         //new circle
                         c = new Cercle(newCircleSegments[i], cercles.Count);
                         cercles.Add(c);
                     }
+                    c.actif = true;
                 }
                 catch (Exception ex)
                 {
@@ -560,124 +618,80 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        //void IsDejaPresent(Point2f center)
-        //{
-        //    int x = (int)center.X;
-        //    int y = (int)center.Y;
-        //    //read pixel
-        //    //Vec3b pixelValue = Cercles.At<Vec3b>(y, x);
-
-        //    ////différent de couleur par défaut du fond
-        //    //bool isDejaPresent = !(pixelValue.Item0 == CirclesReset_color.Val0 &&
-        //    //             pixelValue.Item1 == CirclesReset_color.Val1 &&
-        //    //             pixelValue.Item2 == CirclesReset_color.Val2);
-
-        //    //if (isDejaPresent)
-        //    //{
-        //    //quel point de mesure ?
-        //    int i = 0;
-        //    bool found = false;
-        //    for (i = 0; i < cercles.Count; i++)
-        //    {
-        //        if (Point2f.Distance(center, cercles[i].circleSegment.Center) < _rayon)
-        //        {
-        //            found = true;
-        //            break;
-        //        }
-        //    }
-        //    if (!found)
-        //    {
-
-        //    }
-
-        //    Cercle c = cercles[i];
-
-        //    //moyenne position centre
-        //    float X_moy = (center.X + c.nbr_fois_centre_repere * c.circleSegment.Center.X) / (c.nbr_fois_centre_repere + 1);
-        //    float Y_moy = (center.Y + c.nbr_fois_centre_repere * c.circleSegment.Center.Y) / (c.nbr_fois_centre_repere + 1);
-        //    c.circleSegment.Center = new Point2f(X_moy, Y_moy);
-        //    c.nbr_fois_centre_repere++;
-        //    //}
-        //    //return isDejaPresent;
-        //}
-
-        void CapteursUpdate(int w, int h)
+        void SensorsUpdate(int w, int h)
         {
             cercles_mat = new Mat(new OpenCvSharp.Size(w, h), MatType.CV_8UC3, CirclesReset_color);
 
+            double size = (h + w) / 2;
+            _rayon = (int)(size * 80 / 2000);
+            double zoom = ((double)_rayon) / 22;// 0.5;//0.5 quand r=15 ; 3 quand r=50
+
+            //2000
+            int offsetY = (int)(36 * size / 2000); //5 pour 415 ; 30 pour 2000
+            int offsetX = (int)(35 * size / 2000); //5 pour 415 ; 28 pour 2000
+            int thickness = (int)(6 * size / 2000);//1 pour 415 ;  6 pour 2000
+            if (thickness < 1) thickness = 1;
+
+           // return;
+
             //Dessine tous les cercles
-            foreach (Cercle c in cercles)
+            for (int i = 0; i < cercles.Count; i++)
             {
+                Cercle c = cercles[i];
+
+                if (c.actif)
+                    Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.circleSegment.Center, _rayon + 2, Scalar.White, -1);
                 //dessin du disque
-                Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.circleSegment.Center, _rayon, Cercle.couleur, -1);
+                Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.circleSegment.Center, _rayon, c.couleur, -1);
 
                 //écrit le numéro
                 OpenCvSharp.Point xy = new OpenCvSharp.Point(c.circleSegment.Center.X, c.circleSegment.Center.Y);
-                xy.Y += 5;
+
+                //positionne le numéro par rapport au centre du cercle détecté
                 string text = c.numero.ToString();
-                if (text.Length == 1)
-                    xy.X += -5;
-                else if (text.Length == 2)
-                    xy.X += -10;
-                else
-                    xy.X += -15;
-                double zoom = 0.5;//0.5 quand r=15 ; 3 quand r=50
+                xy.Y += offsetY;
+                xy.X += -offsetX * text.Length;
                 Cv2.PutText(cercles_mat, text, xy,
                     HersheyFonts.HersheySimplex,
-                    zoom, Cercle.couleurTexte, thickness: 1);
+                    zoom, Cercle.couleurTexte, thickness: thickness);
+
+                if (i >= _sensors.Count)
+                {
+                    Sensor s = new Sensor(c);
+                    _sensors.Add(s);
+                    Application.Current.Dispatcher.BeginInvoke(() =>
+                    {
+                        Sensor_UC suc = new Sensor_UC();
+                        suc._Link(s);
+                        lv_sensors.Items.Add(suc);
+                    });
+                }
+
+                //mesure
+                //v0 = juste centre
+                Vec3b pixelValue = ROI_mat.At<Vec3b>(c.x, c.y);
+                c.sensor.SetColor(pixelValue);
+                c.actif = false; //reset actif pour la prochaine frame
             }
+            OnPropertyChanged("_sensors");
 
             Dispatcher.BeginInvoke(new Action(() =>
-            {
-                try
-                {
-                    _image1 = Convert(cercles_mat.ToBitmap());
-                }
-                catch (Exception ex)
-                {
+                    {
+                        try
+                        {
+                            _image1 = Convert(cercles_mat.ToBitmap());
+                        }
+                        catch (Exception ex)
+                        {
 
-                }
-            }));
+                        }
+                    }));
         }
 
-        BitmapImage Convert(Bitmap src)
+        #region IHM Click
+        void OpenVideoFile_Click(object sender, MouseButtonEventArgs e)
         {
-            MemoryStream ms = new MemoryStream();
-            src.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
-            BitmapImage image = new BitmapImage();
-            image.BeginInit();
-            ms.Seek(0, SeekOrigin.Begin);
-            image.StreamSource = ms;
-            image.EndInit();
-            return image;
-        }
-
-        void DisplayCrop(bool status)
-        {
-            if (status)
-            {
-                grid_column_crop.Width = new GridLength(1, GridUnitType.Auto);
-                grid_row_crop.Height = new GridLength(1, GridUnitType.Auto);
-            }
-            else
-            {
-                grid_column_crop.Width = new GridLength(0);
-                grid_row_crop.Height = new GridLength(0);
-            }
-        }
-
-        void DisplayHoughCircle(bool status)
-        {
-            if (status)
-                grid_row_houghcircle.Height = new GridLength(1, GridUnitType.Auto);
-            else
-                grid_row_houghcircle.Height = new GridLength(0);
-        }
-
-        #region Click (IHM)
-        void Folder_Click(object sender, MouseButtonEventArgs e)
-        {
-            var dialog = new Microsoft.Win32.OpenFileDialog();
+            OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
             dialog.FileName = "Video";
             dialog.DefaultExt = ".mp4";
             dialog.Filter = "Videos (.mp4)|*.mp4";
@@ -744,6 +758,55 @@ namespace MesureAmpouleADecanter_ScannerFibre
         void PlayPauseButtonUpdate()
         {
             btn_pause.Visibility = (_play) ? Visibility.Hidden : Visibility.Visible;
+        }
+
+        void SensorMap_Load_Click(object sender, MouseButtonEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.FileName = "SensorMap";
+            dialog.DefaultExt = ".sm";
+            dialog.Filter = "SensorMap (.sm)|*.sm";
+            if (File.Exists(_file))
+                dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
+
+            if (dialog.ShowDialog() == true)
+            {
+                string jsonString = File.ReadAllText(dialog.FileName);
+                SensorMap sm = SensorMap.FromJSON(jsonString);
+
+                //set ROI
+                roi_left = sm.roi_left_up_right_bottom.left;
+                roi_top = sm.roi_left_up_right_bottom.top;
+                roi_right = sm.roi_left_up_right_bottom.right;
+                roi_bottom = sm.roi_left_up_right_bottom.bottom;
+
+                //load SensorMap
+                sensorMap = sm;
+            }
+        }
+
+        void SensorMap_Save_Click(object sender, MouseButtonEventArgs e)
+        {
+            SensorMap sm = new SensorMap();
+            sm.DefineROI((int)roi_left, (int)roi_top, (int)roi_right, (int)roi_bottom);
+            foreach (Cercle c in cercles)
+            {
+                //Sensor s = new Sensor(c);
+                sm.AddSensor(c.sensor);
+            }
+            string jsonString = sm.ToJSON();
+
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.FileName = "SensorMap";
+            dialog.DefaultExt = ".sm";
+            dialog.Filter = "SensorMap (.sm)|*.sm";
+
+            //au même endroit que la vidéo
+            if (File.Exists(_file))
+                dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
+
+            if (dialog.ShowDialog() == true)
+                File.WriteAllText(dialog.FileName, jsonString);
         }
         #endregion
     }

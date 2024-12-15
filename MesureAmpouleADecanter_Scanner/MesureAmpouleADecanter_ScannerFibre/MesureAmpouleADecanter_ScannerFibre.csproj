@@ -14,8 +14,11 @@
     <None Remove="Images\crop.png" />
     <None Remove="Images\folder.png" />
     <None Remove="Images\Lecture.png" />
+    <None Remove="Images\load.png" />
+    <None Remove="Images\matrice.png" />
     <None Remove="Images\new.png" />
     <None Remove="Images\Pause.png" />
+    <None Remove="Images\save.png" />
     <None Remove="Images\Stop.png" />
   </ItemGroup>
 
@@ -42,10 +45,19 @@
     <Resource Include="Images\Lecture.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\load.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\matrice.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\new.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Pause.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\save.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Stop.png">
