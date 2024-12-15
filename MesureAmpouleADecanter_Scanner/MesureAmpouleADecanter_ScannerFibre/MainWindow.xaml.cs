@@ -19,9 +19,6 @@ using OpenCvSharp.Extensions;
 
 namespace MesureAmpouleADecanter_ScannerFibre
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         void OnPropertyChanged([CallerMemberName] string propertyName = "")
@@ -52,11 +49,71 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ImageSource image1;
 
-
-        Mat Cercles = new Mat();
+        Mat frame;
+        Mat cercles_mat = new Mat();
         List<Cercle> cercles;
+        bool circle_Recompute;
+
+        public string _file
+        {
+            get => file;
+            set
+            {
+                file = value;
+                OnPropertyChanged();
+                Settings.Default.file = file;
+                Settings.Default.Save();
+                if (MessageBox.Show("Réinitialiser les réglages de crop/roi ?", "Reset Crop ?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                    ResetROI();
+                ProcessFile(_file);
+            }
+        }
+        string file = Settings.Default.file;
+
+        VideoCapture capVideo;
+        int sleepTime;
+        Thread videoThread;
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+        public bool _play
+        {
+            get => play;
+            set
+            {
+                play = value;
+                OnPropertyChanged();
+            }
+        }
+        bool play = false;
+
+        public int _videoTotalFrames
+        {
+            get
+            {
+                if (capVideo != null)
+                    return capVideo.FrameCount;
+                return 1;
+            }
+        }
+
+        public int _videoPositionFrame
+        {
+            get
+            {
+                if (capVideo != null)
+                    return capVideo.PosFrames;
+                return 1;
+            }
+            set
+            {
+                if (capVideo != null)
+                    newWantedPosFrames = value;
+            }
+        }
+        int? newWantedPosFrames;
 
         #region ROI Parameters
+        bool roi_change;
         public double _roi_left
         {
             get => roi_left;
@@ -66,6 +123,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
                 Settings.Default.roi_left = roi_left;
                 Settings.Default.Save();
+                roi_change = true;
             }
         }
         double roi_left = Settings.Default.roi_left;
@@ -79,6 +137,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
                 Settings.Default.roi_right = roi_right;
                 Settings.Default.Save();
+                roi_change = true;
             }
         }
         double roi_right = Settings.Default.roi_right;
@@ -90,6 +149,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 roi_width_maximum = value;
                 OnPropertyChanged();
+                roi_change = true;
             }
         }
         double roi_width_maximum;
@@ -104,6 +164,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
                 Settings.Default.roi_top = roi_top;
                 Settings.Default.Save();
+                roi_change = true;
             }
         }
         double roi_top = Settings.Default.roi_top;
@@ -117,6 +178,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
                 Settings.Default.roi_bottom = roi_bottom;
                 Settings.Default.Save();
+                roi_change = true;
             }
         }
         double roi_bottom = Settings.Default.roi_bottom;
@@ -128,12 +190,14 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 roi_height_maximum = value;
                 OnPropertyChanged();
+                roi_change = true;
             }
         }
         double roi_height_maximum;
         #endregion
 
         #region HoughCircle Parameters
+        bool houghCircle_change;
         public double _houghcircle_dp
         {
             get => houghcircle_dp;
@@ -143,6 +207,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
                 Settings.Default.houghcircle_dp = houghcircle_dp;
                 Settings.Default.Save();
+                houghCircle_change = true;
             }
         }
         double houghcircle_dp = Settings.Default.houghcircle_dp;
@@ -156,6 +221,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 Settings.Default.houghcircle_param1 = houghcircle_param1;
                 Settings.Default.Save();
                 OnPropertyChanged();
+                houghCircle_change = true;
             }
         }
         double houghcircle_param1 = Settings.Default.houghcircle_param1;
@@ -169,31 +235,53 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 Settings.Default.houghcircle_param2 = houghcircle_param2;
                 Settings.Default.Save();
                 OnPropertyChanged();
+                houghCircle_change = true;
             }
         }
         double houghcircle_param2 = Settings.Default.houghcircle_param2;
-        #endregion
 
-        //string file = @"D:\DATA\decantation\videos\20241212_224353.mp4";
 
-        public string _file
+        public int _houghcircle_radius_min
         {
-            get => file;
+            get => houghcircle_radius_min;
             set
             {
-                file = value;
-                OnPropertyChanged();
-                Settings.Default.file = file;
+                houghcircle_radius_min = value;
+                Settings.Default.houghcircle_radius_min = houghcircle_radius_min;
                 Settings.Default.Save();
+                OnPropertyChanged();
+                houghCircle_change = true;
             }
         }
-        string file = Settings.Default.file;
+        int houghcircle_radius_min = Settings.Default.houghcircle_radius_min;
 
+        public int _houghcircle_radius_max
+        {
+            get => houghcircle_radius_max;
+            set
+            {
+                houghcircle_radius_max = value;
+                Settings.Default.houghcircle_radius_max = houghcircle_radius_max;
+                Settings.Default.Save();
+                OnPropertyChanged();
+                houghCircle_change = true;
+            }
+        }
+        int houghcircle_radius_max = Settings.Default.houghcircle_radius_max;
+        #endregion
 
-        VideoCapture capVideo;
-        int sleepTime;
-        Thread videoThread;
-        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        public int _rayon
+        {
+            get => rayon;
+            set
+            {
+                rayon = value;
+                Settings.Default.rayon = rayon;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+        int rayon = Settings.Default.rayon;
 
         public MainWindow()
         {
@@ -203,6 +291,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            DisplayCrop(false);
+            DisplayHoughCircle(false);
             ProcessFile(file);
         }
 
@@ -216,6 +306,14 @@ namespace MesureAmpouleADecanter_ScannerFibre
             cancellationTokenSource.Cancel();
         }
 
+        void ResetROI()
+        {
+            _roi_left = 0;
+            _roi_top = 0;
+            _roi_right = 0;
+            _roi_bottom = 0;
+        }
+
         void ProcessFile(string filePath)
         {
             if (!System.IO.File.Exists(filePath))
@@ -225,6 +323,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             capVideo = new VideoCapture(filePath);
             sleepTime = (int)Math.Round(1000 / capVideo.Fps);
+            OnPropertyChanged("_videoTotalFrames");
 
             CancellationToken token = cancellationTokenSource.Token;
             Task.Factory.StartNew(() => PlayVideo(token), token);
@@ -277,7 +376,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return res;
         }
 
-
         void PlayVideo(object? obj)
         {
             CancellationToken token = (CancellationToken)obj;
@@ -287,103 +385,253 @@ namespace MesureAmpouleADecanter_ScannerFibre
             _roi_width_maximum = capVideo.FrameWidth;
             _roi_height_maximum = capVideo.FrameHeight;
 
-            _roi_right = _roi_width_maximum;
-            _roi_top = _roi_height_maximum;
+            if (_roi_right == 0)
+                _roi_right = _roi_width_maximum;
+            if (_roi_top == 0)
+                _roi_top = _roi_height_maximum;
 
             bool loop = true;
             while (loop)
             {
                 //init
                 capVideo.PosFrames = 0;
-                Cercles = new Mat();
-                cercles = new List<Cercle>();
+                CirclesReset();
 
-                while (!capVideo.IsDisposed && !token.IsCancellationRequested)
+                while (!capVideo.IsDisposed &&
+                    !token.IsCancellationRequested)
                 {
-                    Mat frame = new Mat();
+                    frame = new Mat();
+
+                    //si goto frame number
+                    if (newWantedPosFrames != null)
+                    {
+                        capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
+                        newWantedPosFrames = null;
+                    }
+
+                    //read next frame
                     capVideo.Read(frame);
+                    OnPropertyChanged("_videoPositionFrame");
+
+                    //si arrivé à la fin
                     if (frame.Empty())
                         break;
-                    //Thread.Sleep(sleepTime);
-                    Thread.Sleep(1);
-                    try
+
+                    Thread.Sleep(sleepTime);
+
+                    if (roi_change || houghCircle_change)
+                        CirclesReset();
+
+                    ProcessFrame(frame);
+
+                    //si pause
+                    while (!_play)
                     {
-                        Mat R = ROI(frame);
-                        Mat G = ToGray(R);
+                        Thread.Sleep(10);
 
-                        CircleSegment[] circleSegments = Cv2.HoughCircles(G,
-                            method: HoughModes.Gradient,
-                            dp: _houghcircle_dp, //1.9 4k vertical
-                            minDist: 1,    //1
-                            param1: _houghcircle_param1,   //100
-                            param2: _houghcircle_param2,   //37
-                            minRadius: 0,  //0
-                            maxRadius: 20); //20 
-
-                        CirclesAdd(circleSegments, R.Width, R.Height);
-
-                        for (int i = 0; i < circleSegments.Length; i++)
-                            Cv2.Circle(R, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), 1);
-
-                        Dispatcher.BeginInvoke(new Action(() =>
+                        if (newWantedPosFrames != null)
                         {
-                            try
-                            {
-                                _image = Convert(R.ToBitmap());
-                            }
-                            catch (Exception ex)
-                            {
+                            capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
+                            newWantedPosFrames = null;
+                            capVideo.Read(frame);
+                            ProcessFrame(frame);
+                        }
 
-                            }
-                        }));
-                    }
-                    catch (Exception ex)
-                    {
-
+                        if (roi_change || houghCircle_change || circle_Recompute)
+                        {
+                            circle_Recompute = false;
+                            CirclesReset();
+                            ProcessFrame(frame);
+                        }
                     }
                 }
             }
         }
 
-        void CirclesAdd(CircleSegment[] circleSegments, int width, int height)
+        Scalar CirclesReset_color = Scalar.Black;
+
+        void CirclesReset()
         {
-            if (Cercles.Empty())
-                Cercles = new Mat(height, width, MatType.CV_8UC3);
+            int left = (int)_roi_left;// 20;
+            int right = (int)(_roi_width_maximum - _roi_right);//150;
+            int top = (int)(_roi_height_maximum - _roi_top);//1720;
+            int bottom = (int)(_roi_bottom);//100;
 
-            for (int i = 0; i < circleSegments.Length; i++)
+            int w = capVideo.FrameWidth - left - right;
+            int h = capVideo.FrameHeight - top - bottom;
+
+            //Cercles = new Mat(new OpenCvSharp.Size(w, h), MatType.CV_8UC3, CirclesReset_color);
+            cercles = new List<Cercle>();
+        }
+
+        void ProcessFrame(Mat frame)
+        {
+            Mat frame_copy = frame.Clone();
+            roi_change = false;
+            houghCircle_change = false;
+            try
             {
-                bool dejapresent = Cercle.IsDejaPresent(circleSegments[i].Center, ref Cercles);
+                Mat R = ROI(frame_copy);
+                Mat G = ToGray(R);
 
-                if (!dejapresent)
+                CircleSegment[] circleSegments = Cv2.HoughCircles(G,
+                    method: HoughModes.Gradient,
+                    dp: _houghcircle_dp, //1.9 4k vertical
+                    minDist: 1,    //1
+                    param1: _houghcircle_param1,   //100
+                    param2: _houghcircle_param2,   //37
+                    minRadius: _houghcircle_radius_min,  //0
+                    maxRadius: _houghcircle_radius_max); //20 
+
+                CapteursAdd(circleSegments, R.Width, R.Height);
+
+                CapteursUpdate(G.Width, G.Height);
+
+                //dessine les cercles sur la frame
+                for (int i = 0; i < circleSegments.Length; i++)
+                    Cv2.Circle(R, (OpenCvSharp.Point)circleSegments[i].Center, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), 1);
+
+                Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    //new circle
-                    Cercle? c = new Cercle(circleSegments[i], cercles.Count);
-                    cercles.Add(c);
+                    try
+                    {
+                        _image = Convert(R.ToBitmap());
+                    }
+                    catch (Exception ex)
+                    {
 
-                    //dessin du cercle
-                    int rayon = 15; // (int)circleSegments[i].Radius;
-                    Cv2.Circle(Cercles, (OpenCvSharp.Point)circleSegments[i].Center, rayon, Cercle.couleur, -1);
+                    }
+                }));
+            }
+            catch (Exception ex)
+            {
 
-                    OpenCvSharp.Point xy = new OpenCvSharp.Point(c.circleSegment.Center.X, c.circleSegment.Center.Y);
-                    xy.Y += 5;
-                    string text = c.numero.ToString();
-                    if (text.Length == 1)
-                        xy.X += -5;
-                    else if (text.Length == 2)
-                        xy.X += -10;
+            }
+        }
+
+        void CapteursAdd(CircleSegment[] newCircleSegments, int width, int height)
+        {
+            if (cercles_mat.Empty())
+                cercles_mat = new Mat(height, width, MatType.CV_8UC3);
+
+            //pour chaque nouveau cercle
+            for (int i = 0; i < newCircleSegments.Length; i++)
+            {
+                try
+                {
+                    Point2f center = newCircleSegments[i].Center;
+                    int x = (int)center.X;
+                    int y = (int)center.Y;
+
+                    //est-ce que le point de mesure existe déjà ?
+                    int j = 0;
+                    bool found = false;
+                    for (j = 0; j < cercles.Count; j++)
+                    {
+                        double d = Point2f.Distance(center, cercles[j].circleSegment.Center);
+                        if (d < _rayon)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    Cercle? c;
+                    if (found)
+                    {
+                        c = cercles[j];
+
+                        //moyenne position centre
+                        float X_moy = (center.X + c.nbr_fois_centre_repere * c.circleSegment.Center.X) / (c.nbr_fois_centre_repere + 1);
+                        float Y_moy = (center.Y + c.nbr_fois_centre_repere * c.circleSegment.Center.Y) / (c.nbr_fois_centre_repere + 1);
+                        c.circleSegment.Center = new Point2f(X_moy, Y_moy);
+                        c.nbr_fois_centre_repere++;
+                    }
                     else
-                        xy.X += -15;
-
-                    Cv2.PutText(Cercles, text, xy, HersheyFonts.HersheySimplex,
-                        0.5, Cercle.couleurTexte, thickness: 1);
+                    {
+                        //new circle
+                        c = new Cercle(newCircleSegments[i], cercles.Count);
+                        cercles.Add(c);
+                    }
                 }
+                catch (Exception ex)
+                {
+
+                }
+            }
+        }
+
+        //void IsDejaPresent(Point2f center)
+        //{
+        //    int x = (int)center.X;
+        //    int y = (int)center.Y;
+        //    //read pixel
+        //    //Vec3b pixelValue = Cercles.At<Vec3b>(y, x);
+
+        //    ////différent de couleur par défaut du fond
+        //    //bool isDejaPresent = !(pixelValue.Item0 == CirclesReset_color.Val0 &&
+        //    //             pixelValue.Item1 == CirclesReset_color.Val1 &&
+        //    //             pixelValue.Item2 == CirclesReset_color.Val2);
+
+        //    //if (isDejaPresent)
+        //    //{
+        //    //quel point de mesure ?
+        //    int i = 0;
+        //    bool found = false;
+        //    for (i = 0; i < cercles.Count; i++)
+        //    {
+        //        if (Point2f.Distance(center, cercles[i].circleSegment.Center) < _rayon)
+        //        {
+        //            found = true;
+        //            break;
+        //        }
+        //    }
+        //    if (!found)
+        //    {
+
+        //    }
+
+        //    Cercle c = cercles[i];
+
+        //    //moyenne position centre
+        //    float X_moy = (center.X + c.nbr_fois_centre_repere * c.circleSegment.Center.X) / (c.nbr_fois_centre_repere + 1);
+        //    float Y_moy = (center.Y + c.nbr_fois_centre_repere * c.circleSegment.Center.Y) / (c.nbr_fois_centre_repere + 1);
+        //    c.circleSegment.Center = new Point2f(X_moy, Y_moy);
+        //    c.nbr_fois_centre_repere++;
+        //    //}
+        //    //return isDejaPresent;
+        //}
+
+        void CapteursUpdate(int w, int h)
+        {
+            cercles_mat = new Mat(new OpenCvSharp.Size(w, h), MatType.CV_8UC3, CirclesReset_color);
+
+            //Dessine tous les cercles
+            foreach (Cercle c in cercles)
+            {
+                //dessin du disque
+                Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.circleSegment.Center, _rayon, Cercle.couleur, -1);
+
+                //écrit le numéro
+                OpenCvSharp.Point xy = new OpenCvSharp.Point(c.circleSegment.Center.X, c.circleSegment.Center.Y);
+                xy.Y += 5;
+                string text = c.numero.ToString();
+                if (text.Length == 1)
+                    xy.X += -5;
+                else if (text.Length == 2)
+                    xy.X += -10;
+                else
+                    xy.X += -15;
+                double zoom = 0.5;//0.5 quand r=15 ; 3 quand r=50
+                Cv2.PutText(cercles_mat, text, xy,
+                    HersheyFonts.HersheySimplex,
+                    zoom, Cercle.couleurTexte, thickness: 1);
             }
 
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 try
                 {
-                    _image1 = Convert(Cercles.ToBitmap());
+                    _image1 = Convert(cercles_mat.ToBitmap());
                 }
                 catch (Exception ex)
                 {
@@ -392,7 +640,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }));
         }
 
-        public BitmapImage Convert(Bitmap src)
+        BitmapImage Convert(Bitmap src)
         {
             MemoryStream ms = new MemoryStream();
             src.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
@@ -404,23 +652,99 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return image;
         }
 
+        void DisplayCrop(bool status)
+        {
+            if (status)
+            {
+                grid_column_crop.Width = new GridLength(1, GridUnitType.Auto);
+                grid_row_crop.Height = new GridLength(1, GridUnitType.Auto);
+            }
+            else
+            {
+                grid_column_crop.Width = new GridLength(0);
+                grid_row_crop.Height = new GridLength(0);
+            }
+        }
+
+        void DisplayHoughCircle(bool status)
+        {
+            if (status)
+                grid_row_houghcircle.Height = new GridLength(1, GridUnitType.Auto);
+            else
+                grid_row_houghcircle.Height = new GridLength(0);
+        }
+
+        #region Click (IHM)
         void Folder_Click(object sender, MouseButtonEventArgs e)
         {
             var dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.FileName = "Video"; // Default file name
-            dialog.DefaultExt = ".mp4"; // Default file extension
-            dialog.Filter = "Videos (.mp4)|*.mp4"; // Filter files by extension
+            dialog.FileName = "Video";
+            dialog.DefaultExt = ".mp4";
+            dialog.Filter = "Videos (.mp4)|*.mp4";
+            if (File.Exists(_file))
+                dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
 
-            // Show open file dialog box
-            bool? result = dialog.ShowDialog();
+            if (dialog.ShowDialog() == true)
+                _file = dialog.FileName;
+        }
 
-            // Process open file dialog box results
-            if (result == true)
+        void btn_pause_Click(object sender, MouseButtonEventArgs e)
+        {
+            _play = true;
+            PlayPauseButtonUpdate();
+        }
+
+        void btn_play_Click(object sender, MouseButtonEventArgs e)
+        {
+            _play = false;
+            PlayPauseButtonUpdate();
+        }
+
+        void Crop_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (grid_column_crop.Width == new GridLength(1, GridUnitType.Auto))
+                DisplayCrop(false);
+            else
+                DisplayCrop(true);
+        }
+
+        void HoughCircle_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (grid_row_houghcircle.Height == new GridLength(1, GridUnitType.Auto))
+                DisplayHoughCircle(false);
+            else
+                DisplayHoughCircle(true);
+        }
+
+        void CirclesReset_Click(object sender, MouseButtonEventArgs e)
+        {
+            circle_Recompute = true;
+            if (_play)
+                CirclesReset();
+        }
+
+        void Image_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
             {
-                // Open document
-                file = dialog.FileName;
-                ProcessFile(file);
+                _play = !_play;
+                PlayPauseButtonUpdate();
+            }
+            else if (e.ChangedButton == MouseButton.Right)
+            {
+                CirclesReset();
+                ProcessFrame(frame);
+            }
+            else if (e.ChangedButton == MouseButton.Middle)
+            {
+
             }
         }
+
+        void PlayPauseButtonUpdate()
+        {
+            btn_pause.Visibility = (_play) ? Visibility.Hidden : Visibility.Visible;
+        }
+        #endregion
     }
 }

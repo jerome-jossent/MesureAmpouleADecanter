@@ -8,10 +8,11 @@
         mc:Ignorable="d"
         Loaded="Window_Loaded" Closing="Window_Closing"
         Title="MainWindow" Height="900" Width="1800">
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto" x:Name="grid_row_houghcircle"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -21,45 +22,106 @@
 
         <!--MENU-->
         <Grid Grid.Row="0">
-            <StackPanel HorizontalAlignment="Left">
-                <Image Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                <Image Margin="5" Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                       MouseDown="Folder_Click" />
+
+                <Grid Margin="5">
+                    <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                           x:Name="btn_play" MouseDown="btn_play_Click"/>
+                    <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                           x:Name="btn_pause" MouseDown="btn_pause_Click"/>
+                </Grid>
+
+                <Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Crop_Click" />
+                
+                <Image Margin="5" Source="/Images/contour.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="HoughCircle_Click" />  
+                
+                <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="CirclesReset_Click" />
+
+                <Slider Minimum="1" Maximum="100" Value="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}" 
+                        Width="150" VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
-        
+
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
             </Grid.RowDefinitions>
-            <Slider Grid.Row="0" Minimum="0" Maximum="10" Value="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}"/>
-            <Slider Grid.Row="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}"/>
-            <Slider Grid.Row="2" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
-        </Grid>
-        
-        <Grid Grid.Column="0" Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Row="0" Grid.Column="0" Content="dp" />
+            <Label Grid.Row="1" Grid.Column="0" Content="param1" />
+            <Label Grid.Row="2" Grid.Column="0" Content="param2" />
+            <Label Grid.Row="3" Grid.Column="0" Content="Rayon min/max" />
+
+
+            <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="10" Value="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}"/>
+            <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}"/>
+            <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
+            <wpftk:RangeSlider Grid.Row="3" Grid.Column="1" Step="1"
+                               LowerValue="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}"
+                               HigherValue="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" 
+                               Minimum="0" Maximum="200"                               
+                               />
+
+            <Label Grid.Row="0" Grid.Column="2" Content="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}" />
+            <Label Grid.Row="1" Grid.Column="2" Content="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}" />
+            <Label Grid.Row="2" Grid.Column="2" Content="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}" />
+            <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal">
+                <Label  Content="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}" />
+                <Label  Content=" / " />
+                <Label  Content="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Column="0" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" x:Name="grid_column_crop"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto" x:Name="grid_row_crop"/>
             </Grid.RowDefinitions>
 
             <Image Grid.Column="1"
-            Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
+                Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
                Stretch="Uniform"
                RenderOptions.BitmapScalingMode="Fant"
+                   MouseDown="Image_Click"
                />
+            <Slider Grid.Column="1" VerticalAlignment="Bottom"
+                    IsMoveToPointEnabled="True"
+                    Minimum="0"
+                    Maximum="{Binding _videoTotalFrames, UpdateSourceTrigger=PropertyChanged}"
+                    Value="{Binding _videoPositionFrame, UpdateSourceTrigger=PropertyChanged}"
+                    >
+                <Slider.Resources>
+                    <ResourceDictionary>
+                        <SolidColorBrush x:Key="SliderThumbBackground" Color="Red"/>
+                        <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="Red"/>
+                        <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="Red"/>
+                    </ResourceDictionary>
+                </Slider.Resources>
+            </Slider>
 
             <wpftk:RangeSlider Grid.Column="0" Orientation="Vertical" Step="1"
                                LowerValue="{Binding _roi_bottom, UpdateSourceTrigger=PropertyChanged}" 
                                HigherValue="{Binding _roi_top, UpdateSourceTrigger=PropertyChanged}"
                                Minimum="0" Maximum="{Binding _roi_height_maximum, UpdateSourceTrigger=PropertyChanged}"  
                                />
-            
+
             <wpftk:RangeSlider Grid.Column="1" Grid.Row="1" Step="1"
                                LowerValue="{Binding _roi_left, UpdateSourceTrigger=PropertyChanged}"
                                HigherValue="{Binding _roi_right, UpdateSourceTrigger=PropertyChanged}" 

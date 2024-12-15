@@ -12,6 +12,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public int numero;
         public int x;
         public int y;
+        public int nbr;
+        public int nbr_fois_centre_repere = 1;
 
         internal static Scalar couleur = new Scalar(0, 0, 255);
         public CircleSegment circleSegment;
@@ -23,19 +25,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             numero = index;
         }
 
-        internal static bool IsDejaPresent(Point2f center, ref Mat mat)
-        {
-            int x = (int)center.X;
-            int y = (int)center.Y;
-            //read pixel
-            Vec3b pixelValue = mat.At<Vec3b>(y, x);
 
-            bool test = pixelValue.Item0 == Cercle.couleur.Val0 &&
-                   pixelValue.Item1 == Cercle.couleur.Val1 &&
-                   pixelValue.Item2 == Cercle.couleur.Val2;
-
-            return test;
-        }
     }
 
 }

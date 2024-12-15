@@ -118,5 +118,41 @@ namespace MesureAmpouleADecanter_ScannerFibre.Properties {
                 this["file"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int houghcircle_radius_min {
+            get {
+                return ((int)(this["houghcircle_radius_min"]));
+            }
+            set {
+                this["houghcircle_radius_min"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        public int houghcircle_radius_max {
+            get {
+                return ((int)(this["houghcircle_radius_max"]));
+            }
+            set {
+                this["houghcircle_radius_max"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("15")]
+        public int rayon {
+            get {
+                return ((int)(this["rayon"]));
+            }
+            set {
+                this["rayon"] = value;
+            }
+        }
     }
 }
