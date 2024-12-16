@@ -19,6 +19,7 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!--MENU-->
@@ -149,6 +150,7 @@
                RenderOptions.BitmapScalingMode="Fant"
                />
 
+        <!--Sensor's values-->
         <ListView Grid.Column="2" Grid.Row="0" Grid.RowSpan="5" x:Name="lv_sensors"  >
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -156,6 +158,13 @@
                 </ItemsPanelTemplate>
             </ListView.ItemsPanel>
         </ListView>
+
+        <!--Reconstruction Scan-->
+        <Image Grid.Column="3" Grid.Row="2"
+    Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}"
+       Stretch="Uniform"
+       RenderOptions.BitmapScalingMode="Fant"
+       />
 
 
     </Grid>

@@ -21,6 +21,7 @@ using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MesureAmpouleADecanter_ScannerFibre
 {
@@ -54,6 +55,17 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
         ImageSource image1;
+
+        public ImageSource _image3
+        {
+            get => image3;
+            set
+            {
+                image3 = value;
+                OnPropertyChanged();
+            }
+        }
+        ImageSource image3;
 
 
         public string _file
@@ -288,6 +300,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
         Mat frame;
         Mat ROI_mat;
         Mat cercles_mat = new Mat();
+        Mat scan_mat = new Mat(100, 100, MatType.CV_8UC3);
+        int scan_mat_column = 0;
+
         List<Cercle> cercles;
         bool circle_Recompute;
         VideoCapture capVideo;
@@ -445,6 +460,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             cercles = new List<Cercle>();
             _sensors = new ObservableCollection<Sensor>();
+
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+            {
+                lv_sensors.Items.Clear();
+            });
         }
 
         void PlayVideo(CancellationToken cancellationToken)
@@ -493,6 +513,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         CirclesReset();
 
                     ProcessFrame(frame);
+
+                    ScanConstructFromSensors();
 
                     //si pause & pas fermeture de la fenêtre
                     while (!_play &&
@@ -554,10 +576,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     {
                         _image = Convert(ROI_mat.ToBitmap());
                     }
-                    catch (Exception ex)
-                    {
-
-                    }
+                    catch (Exception ex) { }
                 }));
             }
             catch (Exception ex)
@@ -632,7 +651,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             int thickness = (int)(6 * size / 2000);//1 pour 415 ;  6 pour 2000
             if (thickness < 1) thickness = 1;
 
-           // return;
+            // return;
 
             //Dessine tous les cercles
             for (int i = 0; i < cercles.Count; i++)
@@ -659,7 +678,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 {
                     Sensor s = new Sensor(c);
                     _sensors.Add(s);
-                    Application.Current.Dispatcher.BeginInvoke(() =>
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
                     {
                         Sensor_UC suc = new Sensor_UC();
                         suc._Link(s);
@@ -669,23 +688,50 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                 //mesure
                 //v0 = juste centre
-                Vec3b pixelValue = ROI_mat.At<Vec3b>(c.x, c.y);
+                Vec3b pixelValue = ROI_mat.At<Vec3b>(c.y, c.x);
                 c.sensor.SetColor(pixelValue);
-                c.actif = false; //reset actif pour la prochaine frame
+
+                //reset actif pour la prochaine frame
+                c.actif = false;
             }
             OnPropertyChanged("_sensors");
 
             Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        try
-                        {
-                            _image1 = Convert(cercles_mat.ToBitmap());
-                        }
-                        catch (Exception ex)
-                        {
+            {
+                try
+                {
+                    _image1 = Convert(cercles_mat.ToBitmap());
+                }
+                catch (Exception ex) { }
+            }));
+        }
 
-                        }
-                    }));
+        void ScanConstructFromSensors()
+        {
+            //reset colonne
+            Cv2.Line(scan_mat, new OpenCvSharp.Point(scan_mat_column, 0), new OpenCvSharp.Point(scan_mat_column, scan_mat.Height - 1), Scalar.Black, 1);
+            //ligne de scan
+            if (scan_mat_column < scan_mat.Width - 2)
+                Cv2.Line(scan_mat, new OpenCvSharp.Point(scan_mat_column + 1, 0), new OpenCvSharp.Point(scan_mat_column + 1, scan_mat.Height - 1), Scalar.GreenYellow, 1);
+
+            foreach (Sensor s in _sensors)
+            {
+                Scalar pixel = scan_mat.At<Scalar>();
+                scan_mat.At<Vec3b>(s.numero, scan_mat_column) = new Vec3b(s.pixelValue.Item0, s.pixelValue.Item1, s.pixelValue.Item2);
+            }
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    _image3 = Convert(scan_mat.ToBitmap());
+                }
+                catch (Exception ex) { }
+            }));
+
+            scan_mat_column++;
+            if (scan_mat_column > scan_mat.Width - 1)
+                scan_mat_column = 0;
         }
 
         #region IHM Click

@@ -19,9 +19,6 @@ using System.Windows.Threading;
 
 namespace MesureAmpouleADecanter_ScannerFibre
 {
-    /// <summary>
-    /// Logique d'interaction pour Sensor_UC.xaml
-    /// </summary>
     public partial class Sensor_UC : UserControl, INotifyPropertyChanged
     {
         void OnPropertyChanged([CallerMemberName] string propertyName = "")

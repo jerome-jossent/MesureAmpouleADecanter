@@ -26,6 +26,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public float intensity { get; set; }
 
         public Scalar color_scalar { get; set; }
+        public Vec3b pixelValue { get; set; }
 
         public Cercle cercle;
         internal Sensor_UC uc;
@@ -39,10 +40,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public void SetColor(Vec3b pixelValue)
         {
+            this.pixelValue = pixelValue;
             color_scalar = new Scalar(pixelValue.Item0, pixelValue.Item1, pixelValue.Item2);
             intensity = (float)(((float)pixelValue.Item0 + pixelValue.Item1 + pixelValue.Item2) / (255 * 3));
             uc?._Update(pixelValue, intensity);
         }
-
     }
 }
