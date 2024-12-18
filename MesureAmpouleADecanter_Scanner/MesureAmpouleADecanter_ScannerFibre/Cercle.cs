@@ -26,6 +26,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public Cercle(CircleSegment circleSegment, int index)
         {
             this.circleSegment = circleSegment;
+            SetNumero(index);
+        }
+
+        public void SetNumero(int index)
+        {
             numero = index;
             couleur = ColorFromHSV(250 - 2.5 * numero, 1, 1);
         }

@@ -300,7 +300,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         Mat frame;
         Mat ROI_mat;
         Mat cercles_mat = new Mat();
-        Mat scan_mat = new Mat(100, 100, MatType.CV_8UC3);
+        Mat scan_mat = new Mat(100, 200, MatType.CV_8UC3, Scalar.Magenta);
         int scan_mat_column = 0;
 
         List<Cercle> cercles;
@@ -373,11 +373,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
             int top = (int)(_roi_height_maximum - _roi_top);//1720;
             int bottom = (int)(_roi_bottom);//100;
 
-            Dispatcher.BeginInvoke(() =>
-            {
-                //Title = left + " ↔ " + right + "\t" + top + " ↨ " + bottom;
-                Title = _houghcircle_dp.ToString("0.00") + "\t" + _houghcircle_param1.ToString("0.00") + "\t" + _houghcircle_param2.ToString("0.00");
-            });
+            //Dispatcher.BeginInvoke(() =>
+            //{
+            //    //Title = left + " ↔ " + right + "\t" + top + " ↨ " + bottom;
+            //    //Title = _houghcircle_dp.ToString("0.00") + "\t" + _houghcircle_param1.ToString("0.00") + "\t" + _houghcircle_param2.ToString("0.00");
+            //});
 
             return ROI(src, left, top, right, bottom);
         }
@@ -481,7 +481,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 _roi_top = _roi_height_maximum;
 
             bool loop = true;
-            while (loop)
+            while (!capVideo.IsDisposed && loop)
             {
                 //init
                 capVideo.PosFrames = 0;
@@ -559,8 +559,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     param2: _houghcircle_param2,   //37
                     minRadius: _houghcircle_radius_min,  //0
                     maxRadius: _houghcircle_radius_max); //20 
-
-
 
                 SensorsAdd(circleSegments, ROI_mat.Width, ROI_mat.Height);
 
@@ -667,7 +665,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OpenCvSharp.Point xy = new OpenCvSharp.Point(c.circleSegment.Center.X, c.circleSegment.Center.Y);
 
                 //positionne le numéro par rapport au centre du cercle détecté
-                string text = c.numero.ToString();
+                string text;
+                if (c.sensor != null && c.sensor.numero != null)
+                    text = ((int)c.sensor.numero).ToString();
+                else
+                    text = c.numero.ToString();
+
                 xy.Y += offsetY;
                 xy.X += -offsetX * text.Length;
                 Cv2.PutText(cercles_mat, text, xy,
@@ -689,6 +692,47 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 //mesure
                 //v0 = juste centre
                 Vec3b pixelValue = ROI_mat.At<Vec3b>(c.y, c.x);
+
+                //                //v1 = carré
+                //                int range = 9;
+                //                int nbr_val = 0;
+                //                float[] mesure = new float[3];
+                //                for (int x = -range; x < range + 1; x++)
+                //                    for (int y = -range; y < range + 1; y++)
+                //                    {
+                //                        Vec3b pixelValueRange = ROI_mat.At<Vec3b>(c.y + y, c.x + x);
+                //                        mesure[0] += pixelValueRange.Item0;
+                //                        mesure[1] += pixelValueRange.Item1;
+                //                        mesure[2] += pixelValueRange.Item2;
+                //                        nbr_val++;
+                //                    }
+
+                ////                Cv2.his
+
+
+
+                //                range++;
+                //                //cadre jaune de la zone de mesure
+                //                OpenCvSharp.Point A = new OpenCvSharp.Point(c.x-range, c.y-range);
+                //                OpenCvSharp.Point B = new OpenCvSharp.Point(c.x+range, c.y-range);
+                //                OpenCvSharp.Point C = new OpenCvSharp.Point(c.x+range, c.y+range);
+                //                OpenCvSharp.Point D = new OpenCvSharp.Point(c.x-range, c.y+range);
+
+                //                Cv2.Line(ROI_mat, A, B, Scalar.Black);
+                //                Cv2.Line(ROI_mat, B, C, Scalar.Black);
+                //                Cv2.Line(ROI_mat, C, D, Scalar.Black);
+                //                Cv2.Line(ROI_mat, D, A, Scalar.Black);
+
+
+                //                pixelValue.Item0 = (byte)(mesure[0] / nbr_val);
+                //                pixelValue.Item1 = (byte)(mesure[1] / nbr_val);
+                //                pixelValue.Item2 = (byte)(mesure[2] / nbr_val);
+
+                //=> pas non plus très représentatif...
+
+
+
+
                 c.sensor.SetColor(pixelValue);
 
                 //reset actif pour la prochaine frame
@@ -717,7 +761,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
             foreach (Sensor s in _sensors)
             {
                 Scalar pixel = scan_mat.At<Scalar>();
-                scan_mat.At<Vec3b>(s.numero, scan_mat_column) = new Vec3b(s.pixelValue.Item0, s.pixelValue.Item1, s.pixelValue.Item2);
+                if (s.numero != null)
+                    scan_mat.At<Vec3b>((int)s.numero, scan_mat_column) = new Vec3b(s.pixelValue.Item0, s.pixelValue.Item1, s.pixelValue.Item2);
             }
 
             Dispatcher.BeginInvoke(new Action(() =>
@@ -734,8 +779,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 scan_mat_column = 0;
         }
 
-        #region IHM Click
-        void OpenVideoFile_Click(object sender, MouseButtonEventArgs e)
+        void SelectVideoFile()
         {
             OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
             dialog.FileName = "Video";
@@ -746,6 +790,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             if (dialog.ShowDialog() == true)
                 _file = dialog.FileName;
+        }
+
+        #region IHM Click
+        void OpenVideoFile_Click(object sender, MouseButtonEventArgs e)
+        {
+            SelectVideoFile();
         }
 
         void btn_pause_Click(object sender, MouseButtonEventArgs e)
@@ -855,5 +905,47 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 File.WriteAllText(dialog.FileName, jsonString);
         }
         #endregion
+
+        private void VideoFileSelect_Click(object sender, RoutedEventArgs e)
+        {
+            SelectVideoFile();
+        }
+
+        private void CameraListRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("TODO");
+        }
+
+        private void SortSensors_Up2Down_Click(object sender, RoutedEventArgs e)
+        {
+            SortSensors_Up2Down();
+        }
+
+        private void SortSensors_Up2Down_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                _play = !_play;
+                PlayPauseButtonUpdate();
+            }
+            else if (e.ChangedButton == MouseButton.Right)
+            {
+                SortSensors_Up2Down();
+            }
+            else if (e.ChangedButton == MouseButton.Middle)
+            {
+
+            }
+        }
+
+        void SortSensors_Up2Down()
+        {
+            foreach (Sensor s in _sensors)
+            {
+                s.uc.index = (-s.numero).ToString();
+                s.numero = null;
+            }
+            Sensor.ResetSensorsOrder();
+        }
     }
 }

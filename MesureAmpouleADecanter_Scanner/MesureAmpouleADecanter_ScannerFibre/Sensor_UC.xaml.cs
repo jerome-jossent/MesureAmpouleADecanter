@@ -63,6 +63,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
         float _intensity;
 
 
+        public float intensity_min { get => s.intensity_min; }
+        public float intensity_max { get => s.intensity_max; }
+        public bool ON { get => s.ON; }
+
         public Sensor s;
 
         public Sensor_UC()
@@ -75,10 +79,15 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             this.s = s;
             s.uc = this;
-            _index = s.numero + " : ";
+            _SetIndexName((int)s.numero);
         }
 
-        internal void _Update(Vec3b pixelValue, float intensity)
+        internal void _SetIndexName(int numero)
+        {
+            _index = numero.ToString("00") + " : ";
+        }
+
+        internal void _Update(Vec3b pixelValue)
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -86,8 +95,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     pixelValue.Item2,
                     pixelValue.Item1,
                     pixelValue.Item0));
-                this.intensity = intensity;
-                _tbk_val.Text = (intensity * 100).ToString("00");
+
+                OnPropertyChanged("intensity_min");
+                OnPropertyChanged("intensity_max");
+                intensity = s.intensity;
+                OnPropertyChanged("ON");
+
+                _tbk_val.Text = (s.intensity * 100).ToString("00");
             }));
         }
     }
