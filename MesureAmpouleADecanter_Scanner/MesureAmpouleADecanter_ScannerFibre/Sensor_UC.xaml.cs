@@ -69,6 +69,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public Sensor s;
 
+        public bool Selected;
+
         public Sensor_UC()
         {
             InitializeComponent();
@@ -103,6 +105,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                 _tbk_val.Text = (s.intensity * 100).ToString("00");
             }));
+        }
+
+        internal void _Selected(bool v)
+        {
+            Selected = v;
+            this.Background = new SolidColorBrush(v ? Colors.DarkGray : Colors.Transparent);
         }
     }
 }

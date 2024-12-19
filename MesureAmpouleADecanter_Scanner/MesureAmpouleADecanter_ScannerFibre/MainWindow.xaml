@@ -224,7 +224,9 @@
 
                 <!--SensorMap Mat-->
                 <Image Grid.Column="1" Grid.Row="2" Source="{Binding _image1, UpdateSourceTrigger=PropertyChanged}"
-                   Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" />
+                   Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="SensorMap_Click"
+                       />
 
                 <!--Sensor's values-->
                 <ListView Grid.ColumnSpan="3" Grid.Row="3" x:Name="lv_sensors"  >

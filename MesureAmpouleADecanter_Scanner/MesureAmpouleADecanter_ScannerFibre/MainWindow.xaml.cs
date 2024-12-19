@@ -643,13 +643,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
             _rayon = (int)(size * 80 / 2000);
             double zoom = ((double)_rayon) / 22;// 0.5;//0.5 quand r=15 ; 3 quand r=50
 
-            //2000
             int offsetY = (int)(36 * size / 2000); //5 pour 415 ; 30 pour 2000
             int offsetX = (int)(35 * size / 2000); //5 pour 415 ; 28 pour 2000
             int thickness = (int)(6 * size / 2000);//1 pour 415 ;  6 pour 2000
             if (thickness < 1) thickness = 1;
-
-            // return;
 
             //Dessine tous les cercles
             for (int i = 0; i < cercles.Count; i++)
@@ -946,6 +943,34 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 s.numero = null;
             }
             Sensor.ResetSensorsOrder();
+        }
+
+        private void SensorMap_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Right)
+            {
+                var image = sender as System.Windows.Controls.Image;
+                System.Windows.Point p = e.GetPosition(image);
+
+                float x = (float)(p.X / image.ActualWidth * cercles_mat.Width);
+                float y = (float)(p.Y / image.ActualHeight * cercles_mat.Height);
+                Point2f pointClick = new Point2f(x, y);
+
+                Cercle cercleSelectionné = null;
+                //quel cercle est concerné ?
+                foreach (Cercle cercle in cercles)
+                {
+                    if (Point2f.Distance(pointClick, cercle.circleSegment.Center) < rayon)
+                    {
+                        //trouvé !
+                        cercleSelectionné = cercle;
+                        break;
+                    }
+                }
+                if (cercleSelectionné == null) return;
+
+                cercleSelectionné.sensor.uc._Selected(true);
+            }
         }
     }
 }
