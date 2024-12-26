@@ -33,12 +33,13 @@
                            MinWidth="60"
                            HorizontalAlignment="Right" VerticalAlignment="Center"/>
         
-        <CheckBox Grid.Column="3" x:Name="_ckb_auto" Margin="5,0" Content="auto" VerticalAlignment="Center"
+        <Image  Grid.Column="3" Height="28" RenderOptions.BitmapScalingMode="Fant" Margin="5,0"
+                    MouseDown="_SetDefaultValue_Click" ToolTip="{Binding _default}"
+                    Source="/WebCamParameters_UC;component/Resources/Reboot.png" />
+
+        <CheckBox Grid.Column="4" x:Name="_ckb_auto" Margin="5,0" Content="auto" VerticalAlignment="Center"
                   Checked="_SetAutoManu_CheckUncheck" Unchecked="_SetAutoManu_CheckUncheck"
                   />
 
-        <Image  Grid.Column="4" Height="28" RenderOptions.BitmapScalingMode="Fant" Margin="5,0"
-                    MouseDown="_SetDefaultValue_Click" ToolTip="{Binding _default}"
-                    Source="/WebCamParameters_UC;component/Resources/Reboot.png" />
     </Grid>
 </UserControl>

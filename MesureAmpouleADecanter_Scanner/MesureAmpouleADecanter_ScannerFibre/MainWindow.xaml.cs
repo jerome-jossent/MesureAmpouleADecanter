@@ -297,6 +297,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         int rayon = Settings.Default.rayon;
         #endregion
 
+        //WebCamParameters_UC.WebCamConfig res = WebCamParameters_UC._Formulaire._ShowDialog();
+
         public ObservableCollection<Sensor> _sensors { get; set; } = new ObservableCollection<Sensor>();
 
         #region Parameters local
@@ -322,100 +324,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             InitializeComponent();
             DataContext = this;
-
-            WebCamParameters_UC.WebCamConfig res = WebCamParameters_UC._Formulaire._ShowDialog();
         }
 
         void Window_Loaded(object sender, RoutedEventArgs e)
         {
-
-
-
-
-            //WebCam_Setting();
-
-
-            //return;
-
-
             DisplayCrop(false);
             DisplayHoughCircle(false);
             ProcessFile(file);
-        }
-
-
-
-       
-
-        Dictionary<VideoProcAmpProperty, WebCamParameters_VideoProcAmp> videoProcAmpParameters = new Dictionary<VideoProcAmpProperty, WebCamParameters_VideoProcAmp>();
-        Dictionary<CameraControlProperty, WebCamParameters_CameraControl> cameraControlParameters = new Dictionary<CameraControlProperty, WebCamParameters_CameraControl>();
-
-        void WebCam_Setting()
-        {
-            DsDevice[] devices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
-            if (devices.Length == 0) return;
-
-            // Sélectionner le premier périphérique
-            var device = devices[0]; //device.Name
-
-            // Initialisation du filtre de capture
-            IBaseFilter captureFilter = null;
-            IFilterGraph2? graphBuilder = new FilterGraph() as IFilterGraph2;
-            graphBuilder.AddSourceFilterForMoniker(device.Mon, null, device.Name, out captureFilter);
-
-            // Accès à l'interface IAMVideoProcAmp
-            var videoProcAmp = captureFilter as IAMVideoProcAmp;
-            if (videoProcAmp != null)
-            {
-                foreach (VideoProcAmpProperty vpa in (VideoProcAmpProperty[])Enum.GetValues(typeof(VideoProcAmpProperty)))
-                {
-                    int currentValue, minValue, maxValue, stepSize, defaultValue;
-                    VideoProcAmpFlags flags;
-                    videoProcAmp.Get(vpa, out currentValue, out flags);
-                    videoProcAmp.GetRange(vpa, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
-                    //Console.WriteLine($"Luminosité actuelle : {currentValue}, Min : {minValue}, Max : {maxValue}");
-                    //videoProcAmp.Set(VideoProcAmpProperty.Brightness, defaultValue, VideoProcAmpFlags.Manual);
-                    WebCamParameters_VideoProcAmp vpa_val = new WebCamParameters_VideoProcAmp(vpa.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, flags);
-                    videoProcAmpParameters.Add(vpa, vpa_val);
-                }
-            }
-
-            // Accéder à l'interface IAMCameraControl
-            var cameraControl = captureFilter as IAMCameraControl;
-            if (cameraControl != null)
-            {
-                foreach (CameraControlProperty cc in (CameraControlProperty[])Enum.GetValues(typeof(CameraControlProperty)))
-                {
-                    int currentValue, minValue, maxValue, stepSize, defaultValue;
-                    CameraControlFlags flags;
-                    cameraControl.Get(cc, out currentValue, out flags);
-                    cameraControl.GetRange(cc, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
-                    //Console.WriteLine($"Focus actuel : {currentFocus} Min = {minValue}, Max = {maxValue}, Par défaut = {defaultValue}, Pas = {stepSize}");
-                    //cameraControl.Set(CameraControlProperty.Focus, 1, CameraControlFlags.Manual);
-                    WebCamParameters_CameraControl cc_val = new WebCamParameters_CameraControl(cc.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, flags);
-                    cameraControlParameters.Add(cc, cc_val);
-                }
-            }
-
-            string ligne = "";
-            string webcam_parameters = "Video Proc Amp :\n";
-            foreach (var vpa in videoProcAmpParameters)
-            {
-                ligne = vpa.Value.ToString();
-                webcam_parameters += ligne + "\n";
-            }
-
-            webcam_parameters += "\nCamera Control :\n";
-            foreach (var cc in cameraControlParameters)
-            {
-                ligne = cc.Value.ToString();
-                webcam_parameters += ligne + "\n";
-            }
-
-
-            // Nettoyage
-            Marshal.ReleaseComObject(graphBuilder);
-            Marshal.ReleaseComObject(captureFilter);
         }
 
         void Window_Closing(object sender, CancelEventArgs e)
@@ -448,7 +363,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
         #endregion
 
         #region Image & Mat Operations
-
         Mat ToGray(Mat src)
         {
             Mat gray = new Mat();

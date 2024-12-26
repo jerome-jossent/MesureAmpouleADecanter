@@ -1,26 +1,11 @@
 ﻿using DirectShowLib;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace WebCamParameters_UC
 {
@@ -88,28 +73,10 @@ namespace WebCamParameters_UC
             int index = (sender as ComboBox).SelectedIndex;
             device_current = dsDevices[index];
 
-            //codec & résolution & framerate 
+            //codec & résolution & framerate : TODO ?
 
             WebCamParameters_Full wcs = _GetWebCamSettings(device_current);
-
             Fill(wcs);
-
-            //string ligne = "";
-            //string webcam_parameters = "Video Proc Amp :\n";
-            //foreach (var vpa in wcs.webCamParameters_VideoProcAmp)
-            //{
-            //    ligne = vpa.Value.ToString();
-            //    webcam_parameters += ligne + "\n";
-            //}
-
-            //webcam_parameters += "\nCamera Control :\n";
-            //foreach (var cc in wcs.webCamParameters_CameraControl)
-            //{
-            //    ligne = cc.Value.ToString();
-            //    webcam_parameters += ligne + "\n";
-            //}
-
-            //_tbk.Text = webcam_parameters;
         }
 
         Dictionary<string, _Parameter> ucs = new Dictionary<string, _Parameter>();
@@ -215,11 +182,11 @@ namespace WebCamParameters_UC
             _Formulaire f = new _Formulaire();
 
             Window w = new Window();
+            w.Title = "Camera settings";
             w.Content = f;
             w.SizeToContent = SizeToContent.WidthAndHeight;
             w.ShowDialog();
 
-            //f._GetWebCamSettings();
             return f._webCamConfig;
         }
 
@@ -266,26 +233,22 @@ namespace WebCamParameters_UC
                 return;
             }
 
-            //set values
-            //& update IHM
+            //set values & update IHM
             foreach (KeyValuePair<string, WebCamParameter> item in wcc.cameraControlProperties)
             {
                 CameraControlProperty name = WebCamParameter._GetCameraControlProperty(item.Key);
                 CameraControl_SetValue(name, item.Value.value, item.Value.auto ? CameraControlFlags.Auto : CameraControlFlags.Manual);
-                ucs[item.Value.name]._value = item.Value.value;
-                ucs[item.Value.name]._ckb_auto.IsChecked = item.Value.auto;
+                ucs[item.Key]._value = item.Value.value;
+                ucs[item.Key]._ckb_auto.IsChecked = item.Value.auto;
             }
 
             foreach (KeyValuePair<string, WebCamParameter> item in wcc.videoProcAmpProperties)
             {
                 VideoProcAmpProperty name = WebCamParameter._GetVideoProcAmpProperty(item.Key);
                 VideoProcAmp_SetValue(name, item.Value.value, item.Value.auto ? VideoProcAmpFlags.Auto : VideoProcAmpFlags.Manual);
-                ucs[item.Value.name]._value = item.Value.value;
-                ucs[item.Value.name]._ckb_auto.IsChecked = item.Value.auto;
+                ucs[item.Key]._value = item.Value.value;
+                ucs[item.Key]._ckb_auto.IsChecked = item.Value.auto;
             }
-
-
-
         }
     }
 }

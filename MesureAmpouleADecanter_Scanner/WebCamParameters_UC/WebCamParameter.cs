@@ -20,7 +20,7 @@ namespace WebCamParameters_UC
 
         //public enum WebCamParameterType { CameraControlProperty, VideoProcAmpProperty }
         //public WebCamParameterType type { get; set; }
-        public string name { get; set; }
+        //public string name { get; set; }
         public int value { get; set; }
         public bool auto { get; set; }
 
@@ -28,7 +28,7 @@ namespace WebCamParameters_UC
 
         public WebCamParameter(WebCamParameter_CameraControl item)
         {
-            name = item.name;
+            //name = item.name;
             //type = WebCamParameterType.CameraControlProperty;
             value = item.currentValue;
             auto = item.auto;
@@ -36,7 +36,7 @@ namespace WebCamParameters_UC
 
         public WebCamParameter(WebCamParameter_VideoProcAmp item)
         {
-            name = item.name;
+            //name = item.name;
             //type = WebCamParameterType.VideoProcAmpProperty;
             value = item.currentValue;
             auto = item.auto;
