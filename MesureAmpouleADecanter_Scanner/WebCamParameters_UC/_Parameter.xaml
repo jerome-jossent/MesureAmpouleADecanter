@@ -4,27 +4,41 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WebCamParameters_UC"
+             xmlns:tki="http://schemas.xceed.com/wpf/xaml/toolkit"
              mc:Ignorable="d" 
-             d:DesignHeight="40" d:DesignWidth="800">
+             d:DesignHeight="20" d:DesignWidth="800">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150"/>
             <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="30"/>
-            <ColumnDefinition Width="60"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Column="0" Text="{Binding _name}" ToolTip="{Binding _name}"/>
+        <TextBlock Grid.Column="0" Text="{Binding _name}" ToolTip="{Binding _name}" VerticalAlignment="Center"/>
 
-        <Slider Grid.Column="1" 
+        <Slider Grid.Column="1" VerticalAlignment="Center" 
                 Minimum="{Binding _minimum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 Maximum="{Binding _maximum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 TickFrequency="{Binding _step, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  
                 Value="{Binding _value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 MinWidth="100" />
         
-        <TextBlock Grid.Column="2" Text="{Binding _value}" HorizontalAlignment="Right"/>
+        <!--<TextBlock Grid.Column="2" Text="{Binding _value}" HorizontalAlignment="Right" VerticalAlignment="Center"/>-->
+        <tki:IntegerUpDown Grid.Column="2" 
+                           Value="{Binding _value}"
+                Minimum="{Binding _minimum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                Maximum="{Binding _maximum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                           MinWidth="60"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
         
-        <CheckBox Grid.Column="3" x:Name="_ckb_auto" Margin="5,0" Content="auto"/>
+        <CheckBox Grid.Column="3" x:Name="_ckb_auto" Margin="5,0" Content="auto" VerticalAlignment="Center"
+                  Checked="_SetAutoManu_CheckUncheck" Unchecked="_SetAutoManu_CheckUncheck"
+                  />
+
+        <Image  Grid.Column="4" Height="28" RenderOptions.BitmapScalingMode="Fant" Margin="5,0"
+                    MouseDown="_SetDefaultValue_Click" ToolTip="{Binding _default}"
+                    Source="/WebCamParameters_UC;component/Resources/Reboot.png" />
     </Grid>
 </UserControl>

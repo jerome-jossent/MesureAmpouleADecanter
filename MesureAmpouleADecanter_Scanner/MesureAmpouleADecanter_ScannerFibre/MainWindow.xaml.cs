@@ -323,8 +323,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             InitializeComponent();
             DataContext = this;
 
-            WebCamParameters_UC._Formulaire._ShowDialog();
-
+            WebCamParameters_UC.WebCamConfig res = WebCamParameters_UC._Formulaire._ShowDialog();
         }
 
         void Window_Loaded(object sender, RoutedEventArgs e)

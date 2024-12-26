@@ -10,17 +10,45 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-        
-        <ComboBox Grid.Row="0" 
-                x:Name="_cbx_devices"  SelectionChanged="_cbx_devices_SelectionChanged"                 
-                Height="28" VerticalContentAlignment="Center" Width="199"   Margin="10" 
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+
+            <ComboBox                 x:Name="_cbx_devices"  SelectionChanged="_cbx_devices_SelectionChanged"                 
+                Height="28" VerticalContentAlignment="Center" Width="250"   Margin="10" 
                 VerticalAlignment="Top" HorizontalAlignment="Left"/>
 
-        <StackPanel Grid.Row="1" Orientation="Vertical" x:Name="_sp" Margin="10" />
+            <Image  Height="28" RenderOptions.BitmapScalingMode="Fant" Margin="5,0"
+                    MouseDown="_DevicesListRefresh_Click" ToolTip="Refresh"
+                    Source="/WebCamParameters_UC;component/Resources/refresh.png" />
 
-        <TextBlock Grid.Row="2" x:Name="_tbk" Margin="0,14,10,10" HorizontalAlignment="Right" Width="390"/>
-        
+            <Image  Height="28" RenderOptions.BitmapScalingMode="Fant" Margin="5,0"
+                    MouseDown="_DeviceParametersSave_Click" ToolTip="Save"
+                    Source="/WebCamParameters_UC;component/Resources/save2.png" />
+
+            <Image  Height="28" RenderOptions.BitmapScalingMode="Fant" Margin="5,0"
+                    MouseDown="_DeviceParametersLoad_Click" ToolTip="Load"
+                    Source="/WebCamParameters_UC;component/Resources/load2.png" />
+
+        </StackPanel>
+
+        <GroupBox Grid.Row="1">
+            <GroupBox.Header>
+                <TextBlock Text="Camera Control" FontWeight="Bold" Foreground="CornflowerBlue"/>
+            </GroupBox.Header>
+            <StackPanel  Orientation="Vertical" x:Name="_spcc" Margin="10" />
+        </GroupBox>
+
+        <GroupBox Grid.Row="2">
+            <GroupBox.Header>
+                <TextBlock Text="Amp proc video" FontWeight="Bold" Foreground="CornflowerBlue"/>
+            </GroupBox.Header>
+            <StackPanel  Orientation="Vertical" x:Name="_spapv" Margin="10" />
+        </GroupBox>
+
+        <!--<TextBlock Grid.Row="2" x:Name="_tbk" Margin="0,14,10,10" HorizontalAlignment="Right" Width="390"/>-->
+
     </Grid>
 </UserControl>
