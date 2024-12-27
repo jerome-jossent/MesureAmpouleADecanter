@@ -62,10 +62,23 @@ namespace WebCamParameters_UC
             }
         }
 
-        public List<DsDevice> _GetWebcams()
+        public static List<DsDevice> _GetWebcams()
         {
             List<DsDevice> devices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice).ToList();
             return devices;
+        }
+
+        internal DsDevice _GetWebcam(WebCamConfig wcc)
+        {
+            return _GetWebcam(wcc.device_name);
+        }
+
+        internal DsDevice _GetWebcam(string device_name)
+        {
+            foreach (var device in _GetWebcams())
+                if (device.Name == device_name)
+                    return device;
+            return null;
         }
 
         void _cbx_devices_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -103,20 +116,26 @@ namespace WebCamParameters_UC
             }
         }
 
-        public void VideoProcAmp_SetValue(VideoProcAmpProperty vpa, int value, VideoProcAmpFlags flag)
+        public void VideoProcAmp_SetValue(VideoProcAmpProperty vpa, int value, VideoProcAmpFlags flag, bool updateUC = false)
         {
             var videoProcAmp = captureFilter as IAMVideoProcAmp;
             videoProcAmp.Set(vpa, value, flag);
-            _webCamConfig.videoProcAmpProperties[vpa.ToString()].value = value;
-            _webCamConfig.videoProcAmpProperties[vpa.ToString()].auto = flag == VideoProcAmpFlags.Auto;
+            if (updateUC)
+            {
+                _webCamConfig.videoProcAmpProperties[vpa.ToString()].value = value;
+                _webCamConfig.videoProcAmpProperties[vpa.ToString()].auto = flag == VideoProcAmpFlags.Auto;
+            }
         }
 
-        public void CameraControl_SetValue(CameraControlProperty cc, int value, CameraControlFlags flag)
+        public void CameraControl_SetValue(CameraControlProperty cc, int value, CameraControlFlags flag, bool updateUC = false)
         {
             var cameraControl = captureFilter as IAMCameraControl;
             cameraControl.Set(cc, value, flag);
-            _webCamConfig.cameraControlProperties[cc.ToString()].value = value;
-            _webCamConfig.cameraControlProperties[cc.ToString()].auto = flag == CameraControlFlags.Auto;
+            if (updateUC)
+            {
+                _webCamConfig.cameraControlProperties[cc.ToString()].value = value;
+                _webCamConfig.cameraControlProperties[cc.ToString()].auto = flag == CameraControlFlags.Auto;
+            }
         }
 
         public WebCamParameters_Full _GetWebCamSettings()
@@ -177,19 +196,6 @@ namespace WebCamParameters_UC
             };
         }
 
-        public static WebCamConfig _ShowDialog()
-        {
-            _Formulaire f = new _Formulaire();
-
-            Window w = new Window();
-            w.Title = "Camera settings";
-            w.Content = f;
-            w.SizeToContent = SizeToContent.WidthAndHeight;
-            w.ShowDialog();
-
-            return f._webCamConfig;
-        }
-
         void _DevicesListRefresh_Click(object sender, MouseButtonEventArgs e)
         {
             WebcamsToCombobox(_cbx_devices);
@@ -213,6 +219,38 @@ namespace WebCamParameters_UC
             System.IO.File.WriteAllText(dlg.FileName, jsonString);
         }
 
+        public void _Load(WebCamConfig webCamConfig, bool updateIHM)
+        {
+            if (graphBuilder == null)
+                graphBuilder = new FilterGraph() as IFilterGraph2;
+            // Initialisation du filtre de capture
+            if (captureFilter == null)
+                graphBuilder.AddSourceFilterForMoniker(_GetWebcam(webCamConfig).Mon, null, webCamConfig.device_name, out captureFilter);
+
+            //set values & update IHM
+            foreach (KeyValuePair<string, WebCamParameter> item in webCamConfig.cameraControlProperties)
+            {
+                CameraControlProperty name = WebCamParameter._GetCameraControlProperty(item.Key);
+                CameraControl_SetValue(name, item.Value.value, item.Value.auto ? CameraControlFlags.Auto : CameraControlFlags.Manual);
+                if (updateIHM)
+                {
+                    ucs[item.Key]._value = item.Value.value;
+                    ucs[item.Key]._ckb_auto.IsChecked = item.Value.auto;
+                }
+            }
+
+            foreach (KeyValuePair<string, WebCamParameter> item in webCamConfig.videoProcAmpProperties)
+            {
+                VideoProcAmpProperty name = WebCamParameter._GetVideoProcAmpProperty(item.Key);
+                VideoProcAmp_SetValue(name, item.Value.value, item.Value.auto ? VideoProcAmpFlags.Auto : VideoProcAmpFlags.Manual);
+                if (updateIHM)
+                {
+                    ucs[item.Key]._value = item.Value.value;
+                    ucs[item.Key]._ckb_auto.IsChecked = item.Value.auto;
+                }
+            }
+        }
+
         void _DeviceParametersLoad_Click(object sender, MouseButtonEventArgs e)
         {
             if (device_current == null) return;
@@ -222,8 +260,7 @@ namespace WebCamParameters_UC
             if (dlg.ShowDialog() != true)
                 return;
 
-            string jsonString = System.IO.File.ReadAllText(dlg.FileName);
-            WebCamConfig? wcc = JsonConvert.DeserializeObject<WebCamConfig>(jsonString);
+            WebCamConfig? wcc = WebCamConfig.FromFile(dlg.FileName);
 
             //même device ?
             if (device_current.Name != wcc.device_name)
@@ -233,22 +270,12 @@ namespace WebCamParameters_UC
                 return;
             }
 
-            //set values & update IHM
-            foreach (KeyValuePair<string, WebCamParameter> item in wcc.cameraControlProperties)
-            {
-                CameraControlProperty name = WebCamParameter._GetCameraControlProperty(item.Key);
-                CameraControl_SetValue(name, item.Value.value, item.Value.auto ? CameraControlFlags.Auto : CameraControlFlags.Manual);
-                ucs[item.Key]._value = item.Value.value;
-                ucs[item.Key]._ckb_auto.IsChecked = item.Value.auto;
-            }
+            _Load(wcc, true);
+        }
 
-            foreach (KeyValuePair<string, WebCamParameter> item in wcc.videoProcAmpProperties)
-            {
-                VideoProcAmpProperty name = WebCamParameter._GetVideoProcAmpProperty(item.Key);
-                VideoProcAmp_SetValue(name, item.Value.value, item.Value.auto ? VideoProcAmpFlags.Auto : VideoProcAmpFlags.Manual);
-                ucs[item.Key]._value = item.Value.value;
-                ucs[item.Key]._ckb_auto.IsChecked = item.Value.auto;
-            }
+        internal WebCamConfig _GetWebCamConfig()
+        {
+            return _webCamConfig;
         }
     }
 }

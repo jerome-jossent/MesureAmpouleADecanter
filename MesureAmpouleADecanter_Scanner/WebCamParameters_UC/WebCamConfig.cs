@@ -1,4 +1,5 @@
 ﻿using DirectShowLib;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -29,5 +30,16 @@ namespace WebCamParameters_UC
                 videoProcAmpProperties.Add(item.Key.ToString(), new WebCamParameter(item.Value));
         }
 
+        internal static WebCamConfig? FromFile(string filePath)
+        {
+            string jsonString = System.IO.File.ReadAllText(filePath);
+            return FromJSON(jsonString);
+        }
+
+        internal static WebCamConfig? FromJSON(string jsonString)
+        {
+            WebCamConfig? wcc = JsonConvert.DeserializeObject<WebCamConfig>(jsonString);
+            return wcc;
+        }
     }
 }

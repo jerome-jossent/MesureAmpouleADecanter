@@ -30,8 +30,8 @@ namespace WebCamParameters_UC
         CameraControlProperty cameraControlProperty;
         bool setbycode;
 
-        Action<CameraControlProperty, int, CameraControlFlags> cameraControl_SetValue;
-        Action<VideoProcAmpProperty, int, VideoProcAmpFlags> videoProcAmp_SetValue;
+        Action<CameraControlProperty, int, CameraControlFlags, bool> cameraControl_SetValue;
+        Action<VideoProcAmpProperty, int, VideoProcAmpFlags, bool> videoProcAmp_SetValue;
 
         public string _name { get; set; }
         public int _value
@@ -41,9 +41,9 @@ namespace WebCamParameters_UC
                 val = value;
                 OnPropertyChanged();
                 if (cameraControl_SetValue != null)
-                    cameraControl_SetValue(cameraControlProperty, val, _ckb_auto.IsChecked == true ? CameraControlFlags.Auto : CameraControlFlags.Manual);
+                    cameraControl_SetValue(cameraControlProperty, val, _ckb_auto.IsChecked == true ? CameraControlFlags.Auto : CameraControlFlags.Manual, true);
                 if (videoProcAmp_SetValue != null)
-                    videoProcAmp_SetValue(videoProcAmpProperty, val, _ckb_auto.IsChecked == true ? VideoProcAmpFlags.Auto : VideoProcAmpFlags.Manual);
+                    videoProcAmp_SetValue(videoProcAmpProperty, val, _ckb_auto.IsChecked == true ? VideoProcAmpFlags.Auto : VideoProcAmpFlags.Manual, true);
             }
         }
         int val;
@@ -67,7 +67,7 @@ namespace WebCamParameters_UC
         }
 
         internal void _Link(KeyValuePair<CameraControlProperty, WebCamParameter_CameraControl> item,
-            Action<CameraControlProperty, int, CameraControlFlags> cameraControl_SetValue)
+            Action<CameraControlProperty, int, CameraControlFlags, bool> cameraControl_SetValue)
         {
             cameraControlProperty = item.Key;
             _name = cameraControlProperty.ToString();
@@ -87,7 +87,7 @@ namespace WebCamParameters_UC
         }
 
         internal void _Link(KeyValuePair<VideoProcAmpProperty, WebCamParameter_VideoProcAmp> item,
-            Action<VideoProcAmpProperty, int, VideoProcAmpFlags> videoProcAmp_SetValue)
+            Action<VideoProcAmpProperty, int, VideoProcAmpFlags, bool> videoProcAmp_SetValue)
         {
             videoProcAmpProperty = item.Key;
             _name = videoProcAmpProperty.ToString();
@@ -116,5 +116,4 @@ namespace WebCamParameters_UC
             if (setbycode) return;
             _value = val;
         }
-    }
-}
+    }}

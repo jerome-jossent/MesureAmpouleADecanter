@@ -324,6 +324,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             InitializeComponent();
             DataContext = this;
+
+            //WebCamParameters_UC._Manager.ShowDialog();
+            //WebCamParameters_UC._Manager.Set_WebCamConfig(@"D:\DATA\decantation\c922 Pro Stream Webcam.wcc");
+            //WebCamParameters_UC._Manager.Set_WebCamConfig(@"D:\DATA\decantation\c922 Pro Stream Webcam_default.wcc");
+            WebCamParameters_UC._Manager.Set_WebCamParameter("c922 Pro Stream Webcam", VideoProcAmpProperty.WhiteBalance, 1, false);
         }
 
         void Window_Loaded(object sender, RoutedEventArgs e)
