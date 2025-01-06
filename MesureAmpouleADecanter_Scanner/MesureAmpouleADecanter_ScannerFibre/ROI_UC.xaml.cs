@@ -30,6 +30,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         public event PropertyChangedEventHandler? PropertyChanged;
 
+        public int _circlesCount { get => circlesCount; set { circlesCount = value; OnPropertyChanged(); } }
+        int circlesCount;
 
         public ImageSource _image
         {

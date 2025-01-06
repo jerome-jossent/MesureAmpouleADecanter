@@ -13,5 +13,6 @@ Stretch="Uniform"
 RenderOptions.BitmapScalingMode="Fant"
     MouseDown="Image_Click"
 />
+        <Label Content="{Binding _circlesCount}" Foreground="Red"/>
     </Grid>
 </UserControl>

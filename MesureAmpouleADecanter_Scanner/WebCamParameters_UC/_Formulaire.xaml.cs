@@ -25,8 +25,8 @@ namespace WebCamParameters_UC
 
         WebCamConfig _webCamConfig;// = new WebCamConfig();
 
-        Dictionary<VideoProcAmpProperty, WebCamParameter_VideoProcAmp> videoProcAmpParameters;
-        Dictionary<CameraControlProperty, WebCamParameter_CameraControl> cameraControlParameters;
+        Dictionary<VideoProcAmpProperty, WebCamParameter_Full_VideoProcAmp> videoProcAmpParameters;
+        Dictionary<CameraControlProperty, WebCamParameter_Full_CameraControl> cameraControlParameters;
 
         public _Formulaire()
         {
@@ -70,12 +70,12 @@ namespace WebCamParameters_UC
             return devices;
         }
 
-        internal DsDevice _GetWebcam(WebCamConfig wcc)
+        internal static DsDevice _GetWebcam(WebCamConfig wcc)
         {
             return _GetWebcam(wcc.device_name);
         }
 
-        internal DsDevice _GetWebcam(string device_name)
+        internal static DsDevice _GetWebcam(string device_name)
         {
             foreach (var device in _GetWebcams())
                 if (device.Name == device_name)
@@ -145,12 +145,16 @@ namespace WebCamParameters_UC
             return _GetWebCamSettings(device_current);
         }
 
-        public WebCamParameters_Full _GetWebCamSettings(DsDevice device)
+        public static WebCamParameters _GetWebCamSettings(string webcam_name)
         {
-            videoProcAmpParameters = new Dictionary<VideoProcAmpProperty, WebCamParameter_VideoProcAmp>();
-            cameraControlParameters = new Dictionary<CameraControlProperty, WebCamParameter_CameraControl>();
+            DsDevice device = _GetWebcam(webcam_name);
 
-            // Initialisation du filtre de capture
+            WebCamParameters wcp = new WebCamParameters();
+            wcp.webCamParameters_VideoProcAmp = new Dictionary<VideoProcAmpProperty, WebCamParameter_VideoProcAmp>();
+            wcp.webCamParameters_CameraControl = new Dictionary<CameraControlProperty, WebCamParameter_CameraControl>();
+
+            IBaseFilter captureFilter = null;
+            IFilterGraph2? graphBuilder = new FilterGraph() as IFilterGraph2;
             graphBuilder.AddSourceFilterForMoniker(device.Mon, null, device.Name, out captureFilter);
 
             #region Accéder à l'interface IAMCameraControl
@@ -165,8 +169,8 @@ namespace WebCamParameters_UC
                     bool auto = flags == CameraControlFlags.Auto;
                     cameraControl.GetRange(cc, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
                     WebCamParameter_CameraControl cc_val =
-                        new WebCamParameter_CameraControl(cc.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, auto, flags);
-                    cameraControlParameters.Add(cc, cc_val);
+                        new WebCamParameter_CameraControl(currentValue, auto);
+                    wcp.webCamParameters_CameraControl.Add(cc, cc_val);
                 }
             }
             #endregion
@@ -183,7 +187,106 @@ namespace WebCamParameters_UC
                     bool auto = flags == VideoProcAmpFlags.Auto;
                     videoProcAmp.GetRange(vpa, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
                     WebCamParameter_VideoProcAmp vpa_val =
-                        new WebCamParameter_VideoProcAmp(vpa.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, auto, flags);
+                        new WebCamParameter_VideoProcAmp(currentValue, auto);
+                    wcp.webCamParameters_VideoProcAmp.Add(vpa, vpa_val);
+                }
+            }
+            #endregion
+
+            return wcp;
+        }
+
+        public static WebCamParameters_Full _GetWebCamSettings_Full(string webcam_name)
+        {
+            DsDevice device = _GetWebcam(webcam_name);
+
+            WebCamParameters_Full wcp = new WebCamParameters_Full();
+            wcp.webCamParameters_VideoProcAmp = new Dictionary<VideoProcAmpProperty, WebCamParameter_Full_VideoProcAmp>();
+            wcp.webCamParameters_CameraControl = new Dictionary<CameraControlProperty, WebCamParameter_Full_CameraControl>();
+
+            IBaseFilter captureFilter = null;
+            IFilterGraph2? graphBuilder = new FilterGraph() as IFilterGraph2;
+            graphBuilder.AddSourceFilterForMoniker(device.Mon, null, device.Name, out captureFilter);
+
+            #region Accéder à l'interface IAMCameraControl
+            var cameraControl = captureFilter as IAMCameraControl;
+            if (cameraControl != null)
+            {
+                foreach (CameraControlProperty cc in (CameraControlProperty[])Enum.GetValues(typeof(CameraControlProperty)))
+                {
+                    int currentValue, minValue, maxValue, stepSize, defaultValue;
+                    CameraControlFlags flags;
+                    cameraControl.Get(cc, out currentValue, out flags);
+                    bool auto = flags == CameraControlFlags.Auto;
+                    cameraControl.GetRange(cc, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
+                    WebCamParameter_Full_CameraControl cc_val =
+                        new WebCamParameter_Full_CameraControl(cc.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, auto, flags);
+                    wcp.webCamParameters_CameraControl.Add(cc, cc_val);
+                }
+            }
+            #endregion
+
+            #region Accès à l'interface IAMVideoProcAmp
+            var videoProcAmp = captureFilter as IAMVideoProcAmp;
+            if (videoProcAmp != null)
+            {
+                foreach (VideoProcAmpProperty vpa in (VideoProcAmpProperty[])Enum.GetValues(typeof(VideoProcAmpProperty)))
+                {
+                    int currentValue, minValue, maxValue, stepSize, defaultValue;
+                    VideoProcAmpFlags flags;
+                    videoProcAmp.Get(vpa, out currentValue, out flags);
+                    bool auto = flags == VideoProcAmpFlags.Auto;
+                    videoProcAmp.GetRange(vpa, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
+                    WebCamParameter_Full_VideoProcAmp vpa_val =
+                        new WebCamParameter_Full_VideoProcAmp(vpa.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, auto, flags);
+                    wcp.webCamParameters_VideoProcAmp.Add(vpa, vpa_val);
+                }
+            }
+            #endregion
+
+            return wcp;
+        }
+
+
+        public WebCamParameters_Full _GetWebCamSettings(DsDevice device)
+        {
+            videoProcAmpParameters = new Dictionary<VideoProcAmpProperty, WebCamParameter_Full_VideoProcAmp>();
+            cameraControlParameters = new Dictionary<CameraControlProperty, WebCamParameter_Full_CameraControl>();
+
+            // Initialisation du filtre de capture
+            graphBuilder.AddSourceFilterForMoniker(device.Mon, null, device.Name, out captureFilter);
+
+            #region Accéder à l'interface IAMCameraControl
+            var cameraControl = captureFilter as IAMCameraControl;
+            if (cameraControl != null)
+            {
+                foreach (CameraControlProperty cc in (CameraControlProperty[])Enum.GetValues(typeof(CameraControlProperty)))
+                {
+                    int currentValue, minValue, maxValue, stepSize, defaultValue;
+                    CameraControlFlags flags;
+                    cameraControl.Get(cc, out currentValue, out flags);
+                    bool auto = flags == CameraControlFlags.Auto;
+                    cameraControl.GetRange(cc, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
+                    WebCamParameter_Full_CameraControl cc_val =
+                        new WebCamParameter_Full_CameraControl(cc.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, auto, flags);
+                    cameraControlParameters.Add(cc, cc_val);
+                }
+            }
+            #endregion
+
+            #region Accès à l'interface IAMVideoProcAmp
+            var videoProcAmp = captureFilter as IAMVideoProcAmp;
+            if (videoProcAmp != null)
+            {
+                foreach (VideoProcAmpProperty vpa in (VideoProcAmpProperty[])Enum.GetValues(typeof(VideoProcAmpProperty)))
+                {
+                    int currentValue, minValue, maxValue, stepSize, defaultValue;
+                    VideoProcAmpFlags flags;
+                    videoProcAmp.Get(vpa, out currentValue, out flags);
+                    bool auto = flags == VideoProcAmpFlags.Auto;
+                    videoProcAmp.GetRange(vpa, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
+                    WebCamParameter_Full_VideoProcAmp vpa_val =
+                        new WebCamParameter_Full_VideoProcAmp(vpa.ToString(), currentValue, minValue, maxValue, stepSize, defaultValue, auto, flags);
                     videoProcAmpParameters.Add(vpa, vpa_val);
                 }
             }

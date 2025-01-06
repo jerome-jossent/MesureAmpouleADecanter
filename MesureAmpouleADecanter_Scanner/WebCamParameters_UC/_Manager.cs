@@ -30,10 +30,21 @@ namespace WebCamParameters_UC
             if (wcc == null) return;
 
             _Formulaire f = new _Formulaire();
-            DirectShowLib.DsDevice device = f._GetWebcam(wcc);
+            DirectShowLib.DsDevice device = _Formulaire._GetWebcam(wcc);
             if (device == null) return;
 
             f._Load(wcc, false);
+        }
+
+        public static void Set_WebCamConfig(string webcam_name, WebCamParameters webcam_parameters)
+        {
+            DsDevice dsDevice = _Formulaire._GetWebcam(webcam_name);
+
+            foreach (KeyValuePair<CameraControlProperty, WebCamParameter_CameraControl> item in webcam_parameters.webCamParameters_CameraControl)
+                Set_WebCamParameter(dsDevice, item.Key, item.Value.currentValue, item.Value.auto);
+
+            foreach (KeyValuePair<VideoProcAmpProperty, WebCamParameter_VideoProcAmp> item in webcam_parameters.webCamParameters_VideoProcAmp)
+                Set_WebCamParameter(dsDevice, item.Key, item.Value.currentValue, item.Value.auto);            
         }
 
         public static List<DsDevice> Get_WebCams()
@@ -41,22 +52,99 @@ namespace WebCamParameters_UC
             return _Formulaire._GetWebcams();
         }
 
-        public static void Set_WebCamParameter(int deviceIndex, VideoProcAmpProperty vpap, float _0to1, bool setAuto)
+        //public static void Set_WebCamParameter(int deviceIndex, VideoProcAmpProperty vpap, float _0to1, bool setAuto)
+        //{
+        //    Set_WebCamParameter(Get_WebCams()[deviceIndex], vpap, _0to1, setAuto);
+        //}
+
+        //public static void Set_WebCamParameter(string deviceName, VideoProcAmpProperty vpap, float _0to1, bool setAuto)
+        //{
+        //    foreach (DsDevice device in Get_WebCams())
+        //        if (device.Name == deviceName)
+        //        {
+        //            Set_WebCamParameter(device, vpap, _0to1, setAuto);
+        //            break;
+        //        }
+        //}
+
+        //public static void Set_WebCamParameter(DsDevice device, VideoProcAmpProperty vpap, float _0to1, bool setAuto)
+        //{
+        //    // Initialisation du filtre de capture
+        //    IFilterGraph2? graphBuilder = new FilterGraph() as IFilterGraph2;
+        //    IBaseFilter captureFilter = null;
+
+        //    graphBuilder.AddSourceFilterForMoniker(device.Mon, null, device.Name, out captureFilter);
+
+        //    var videoProcAmp = captureFilter as IAMVideoProcAmp;
+
+        //    int currentValue, minValue, maxValue, stepSize, defaultValue;
+        //    VideoProcAmpFlags flags;
+
+        //    videoProcAmp.Get(vpap, out currentValue, out flags);
+        //    bool auto = flags == VideoProcAmpFlags.Auto;
+        //    videoProcAmp.GetRange(vpap, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
+
+        //    int value = (int)(_0to1 * (maxValue - minValue));
+        //    VideoProcAmpFlags flag = setAuto ? VideoProcAmpFlags.Auto : VideoProcAmpFlags.Manual;
+
+        //    videoProcAmp.Set(vpap, value, flag);
+        //}
+
+
+
+        //public static void Set_WebCamParameter(int deviceIndex, CameraControlProperty ccp, float _0to1, bool setAuto)
+        //{
+        //    Set_WebCamParameter(Get_WebCams()[deviceIndex], ccp, _0to1, setAuto);
+        //}
+
+        //public static void Set_WebCamParameter(string deviceName, CameraControlProperty ccp, float _0to1, bool setAuto)
+        //{
+        //    foreach (DsDevice device in Get_WebCams())
+        //        if (device.Name == deviceName)
+        //        {
+        //            Set_WebCamParameter(device, ccp, _0to1, setAuto);
+        //            break;
+        //        }
+        //}
+
+        //public static void Set_WebCamParameter(DsDevice device, CameraControlProperty ccp, float _0to1, bool setAuto)
+        //{
+        //    // Initialisation du filtre de capture
+        //    IFilterGraph2? graphBuilder = new FilterGraph() as IFilterGraph2;
+        //    IBaseFilter captureFilter = null;
+
+        //    graphBuilder.AddSourceFilterForMoniker(device.Mon, null, device.Name, out captureFilter);
+
+        //    var cameraControl = captureFilter as IAMCameraControl;
+
+        //    int currentValue, minValue, maxValue, stepSize, defaultValue;
+        //    CameraControlFlags flags;
+
+        //    cameraControl.Get(ccp, out currentValue, out flags);
+        //    bool auto = flags == CameraControlFlags.Auto;
+        //    cameraControl.GetRange(ccp, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
+
+        //    int value = (int)(_0to1 * (maxValue - minValue));
+        //    CameraControlFlags flag = setAuto ? CameraControlFlags.Auto : CameraControlFlags.Manual;
+
+        //    cameraControl.Set(ccp, value, flag);
+        //}
+        public static void Set_WebCamParameter(int deviceIndex, VideoProcAmpProperty vpap, int value, bool setAuto)
         {
-            Set_WebCamParameter(Get_WebCams()[deviceIndex], vpap, _0to1, setAuto);
+            Set_WebCamParameter(Get_WebCams()[deviceIndex], vpap, value, setAuto);
         }
 
-        public static void Set_WebCamParameter(string deviceName, VideoProcAmpProperty vpap, float _0to1, bool setAuto)
+        public static void Set_WebCamParameter(string deviceName, VideoProcAmpProperty vpap, int value, bool setAuto)
         {
             foreach (DsDevice device in Get_WebCams())
                 if (device.Name == deviceName)
                 {
-                    Set_WebCamParameter(device, vpap, _0to1, setAuto);
+                    Set_WebCamParameter(device, vpap, value, setAuto);
                     break;
                 }
         }
 
-        public static void Set_WebCamParameter(DsDevice device, VideoProcAmpProperty vpap, float _0to1, bool setAuto)
+        public static void Set_WebCamParameter(DsDevice device, VideoProcAmpProperty vpap, int value, bool setAuto)
         {
             // Initialisation du filtre de capture
             IFilterGraph2? graphBuilder = new FilterGraph() as IFilterGraph2;
@@ -73,7 +161,6 @@ namespace WebCamParameters_UC
             bool auto = flags == VideoProcAmpFlags.Auto;
             videoProcAmp.GetRange(vpap, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
 
-            int value = (int)(_0to1 * (maxValue - minValue));
             VideoProcAmpFlags flag = setAuto ? VideoProcAmpFlags.Auto : VideoProcAmpFlags.Manual;
 
             videoProcAmp.Set(vpap, value, flag);
@@ -81,22 +168,22 @@ namespace WebCamParameters_UC
 
 
 
-        public static void Set_WebCamParameter(int deviceIndex, CameraControlProperty ccp, float _0to1, bool setAuto)
+        public static void Set_WebCamParameter(int deviceIndex, CameraControlProperty ccp, int value, bool setAuto)
         {
-            Set_WebCamParameter(Get_WebCams()[deviceIndex], ccp, _0to1, setAuto);
+            Set_WebCamParameter(Get_WebCams()[deviceIndex], ccp, value, setAuto);
         }
 
-        public static void Set_WebCamParameter(string deviceName, CameraControlProperty ccp, float _0to1, bool setAuto)
+        public static void Set_WebCamParameter(string deviceName, CameraControlProperty ccp, int value, bool setAuto)
         {
             foreach (DsDevice device in Get_WebCams())
                 if (device.Name == deviceName)
                 {
-                    Set_WebCamParameter(device, ccp, _0to1, setAuto);
+                    Set_WebCamParameter(device, ccp, value, setAuto);
                     break;
                 }
         }
 
-        public static void Set_WebCamParameter(DsDevice device, CameraControlProperty ccp, float _0to1, bool setAuto)
+        public static void Set_WebCamParameter(DsDevice device, CameraControlProperty ccp, int value, bool setAuto)
         {
             // Initialisation du filtre de capture
             IFilterGraph2? graphBuilder = new FilterGraph() as IFilterGraph2;
@@ -113,12 +200,10 @@ namespace WebCamParameters_UC
             bool auto = flags == CameraControlFlags.Auto;
             cameraControl.GetRange(ccp, out minValue, out maxValue, out stepSize, out defaultValue, out flags);
 
-            int value = (int)(_0to1 * (maxValue - minValue));
             CameraControlFlags flag = setAuto ? CameraControlFlags.Auto : CameraControlFlags.Manual;
 
             cameraControl.Set(ccp, value, flag);
         }
-
 
 
         public static void Set_WebCamDefaultValues(int deviceIndex)

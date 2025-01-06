@@ -1,0 +1,37 @@
+﻿using Newtonsoft.Json;
+using OpenCvSharp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using static WebCamParameters_UC.WebCamFormat;
+
+namespace MesureAmpouleADecanter_ScannerFibre
+{
+    public class Config
+    {
+        public string webcam_name { get; set; }
+        public Format webcam_format { get; set; }
+        public WebCamParameters_UC.WebCamParameters webcam_parameters { get; set; }
+        public List<Rect> rois { get; set; } = new List<Rect>();
+        public List<Sensor> sensors { get; set; } = new List<Sensor>();
+
+
+        public Config() { }
+
+        public static Config FromJSON(string jsonString)
+        {
+            //Config config = System.Text.Json.JsonSerializer.Deserialize<Config>(jsonString);
+            Config config = JsonConvert.DeserializeObject<Config>(jsonString);
+            return config;
+        }
+
+        public string ToJSON()
+        {
+            //string jsonString = System.Text.Json.JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true});
+            string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(this, Formatting.Indented);
+            return jsonString;
+        }
+    }
+}

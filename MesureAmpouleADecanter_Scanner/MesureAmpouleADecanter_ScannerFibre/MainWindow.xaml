@@ -8,13 +8,14 @@
         xmlns:opencv="clr-namespace:OpenCvSharp;assembly=OpenCvSharp"
         mc:Ignorable="d"
         Loaded="Window_Loaded" Closing="Window_Closing"
-        Title="MainWindow" Height="900" Width="1200">
+        Title="{Binding _title}" Height="900" Width="1200">
+
     <Window.Resources>
         <local:InvertableBooleanToVisibilityConverter x:Key="_Converter"/>
     </Window.Resources>
 
-    <TabControl x:Name="_tbc">
-        <TabItem Header="Source" IsEnabled="False">
+    <TabControl SelectedIndex="{Binding _tabindex}">
+        <TabItem Header="Source"  Visibility="Collapsed">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -122,7 +123,7 @@
             </Grid>
         </TabItem>
 
-        <TabItem Header="Get Sensors" IsEnabled="False">
+        <TabItem Header="Get Sensors"  Visibility="Collapsed">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -260,7 +261,7 @@
             </Grid>
         </TabItem>
 
-        <TabItem Header="Set Camera and ROIs" IsSelected="True">
+        <TabItem Header="Set Camera and ROIs">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -271,9 +272,21 @@
 
                     <ComboBox x:Name ="_cbx_webcam" MinWidth="150" Margin="5" SelectionChanged="_cbx_webcam_SelectionChanged"
                               VerticalContentAlignment="Center"/>
-                    <ComboBox x:Name="_cbx_webcam_format" MinWidth="150" Margin="5" SelectionChanged="_cbx_webcam_format_SelectionChanged"
+
+                    <ComboBox  MinWidth="150" Margin="5" 
+                               x:Name="_cbx_webcam_format"          
                               ItemsSource="{Binding _webcam_formats}"
-                              VerticalContentAlignment="Center"/>
+                              VerticalContentAlignment="Center"
+                    SelectionChanged="_cbx_webcam_format_SelectionChanged"
+                              SelectedValue="{Binding _webcam_format, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              DisplayMemberPath="Name"
+                               >
+                        <!--<ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>-->
+                    </ComboBox>
 
                     <!--<Image Margin="5" Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
   MouseDown="OpenVideoFile_Click" />-->
@@ -293,20 +306,8 @@
                     <Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
    MouseDown="DefineROI_Click" ToolTip="Menu : define region of interest" />
 
-                    <!--<Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="Crop_Click" ToolTip="Menu : define region of interest" />
-
-                    <Image Margin="5" Source="/Images/contour.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="HoughCircle_Click" ToolTip="Menu : define Hough Circle algorithm parameters"/>
-
-                    <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="CirclesReset_Click" ToolTip="Reset sensor detection"/>
-
-                    <Image Margin="5" Source="/Images/save.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="SensorMap_Save_Click" ToolTip="Save sensor detection map"/>
-
-                    <Image Margin="5" Source="/Images/load.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="SensorMap_Load_Click" ToolTip="Load sensor detection map"/>-->
+                    <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
 
                 </StackPanel>
 
@@ -333,6 +334,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
+                <!--MENU-->
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
 
                     <Grid Margin="5">
@@ -357,14 +359,8 @@
           MouseDown="HoughCircle_Switch_Click"/>
                     </Grid>
 
-
                     <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="CirclesReset_Click" ToolTip="Reset sensor detection"/>
-
-
-                    <Image Margin="5" Source="/Images/arrow_right.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                       MouseDown="AdjustSensors_Click" ToolTip="Adjust Sensors positions"/>
-
+                           MouseDown="CirclesReset_Click" ToolTip="Reset sensor detection"/>
                 </StackPanel>
 
                 <!--Hough circles parameters-->
@@ -411,6 +407,7 @@
                     <Label Grid.Row="4" Grid.Column="2" Content="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
 
+                <!---->
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions >
                         <ColumnDefinition Width="auto"/>
@@ -418,7 +415,7 @@
                     </Grid.ColumnDefinitions>
 
                     <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding _rois}" />
+                        <ItemsControl ItemsSource="{Binding _rois, UpdateSourceTrigger=PropertyChanged}" />
                     </ScrollViewer>
 
                 </Grid>
@@ -427,8 +424,7 @@
 
         </TabItem>
 
-
-        <TabItem Header="Adjust sensor's positions" x:Name="_tbi_sensors_adjust" >
+        <TabItem Header="Adjust sensor's positions" TabIndex="4">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -457,7 +453,7 @@
 
                 </StackPanel>
 
-                
+
 
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions >

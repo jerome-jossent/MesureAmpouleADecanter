@@ -26,7 +26,7 @@ namespace WebCamParameters_UC
 
         public WebCamParameter() { }//pour JSON
 
-        public WebCamParameter(WebCamParameter_CameraControl item)
+        public WebCamParameter(WebCamParameter_Full_CameraControl item)
         {
             //name = item.name;
             //type = WebCamParameterType.CameraControlProperty;
@@ -34,7 +34,7 @@ namespace WebCamParameters_UC
             auto = item.auto;
         }
 
-        public WebCamParameter(WebCamParameter_VideoProcAmp item)
+        public WebCamParameter(WebCamParameter_Full_VideoProcAmp item)
         {
             //name = item.name;
             //type = WebCamParameterType.VideoProcAmpProperty;

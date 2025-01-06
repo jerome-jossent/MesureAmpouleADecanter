@@ -66,7 +66,7 @@ namespace WebCamParameters_UC
             DataContext = this;
         }
 
-        internal void _Link(KeyValuePair<CameraControlProperty, WebCamParameter_CameraControl> item,
+        internal void _Link(KeyValuePair<CameraControlProperty, WebCamParameter_Full_CameraControl> item,
             Action<CameraControlProperty, int, CameraControlFlags, bool> cameraControl_SetValue)
         {
             cameraControlProperty = item.Key;
@@ -86,7 +86,7 @@ namespace WebCamParameters_UC
             this.cameraControl_SetValue = cameraControl_SetValue;
         }
 
-        internal void _Link(KeyValuePair<VideoProcAmpProperty, WebCamParameter_VideoProcAmp> item,
+        internal void _Link(KeyValuePair<VideoProcAmpProperty, WebCamParameter_Full_VideoProcAmp> item,
             Action<VideoProcAmpProperty, int, VideoProcAmpFlags, bool> videoProcAmp_SetValue)
         {
             videoProcAmpProperty = item.Key;

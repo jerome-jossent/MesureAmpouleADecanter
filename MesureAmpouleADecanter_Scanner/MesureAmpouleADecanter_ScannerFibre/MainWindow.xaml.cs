@@ -25,7 +25,6 @@ using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using OpenCvSharp.WpfExtensions;
-
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using static System.Net.Mime.MediaTypeNames;
 using static WebCamParameters_UC.WebCamFormat;
@@ -92,6 +91,28 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         string file = Settings.Default.file;
 
+        public string _title
+        {
+            get => title;
+            set
+            {
+                title = value;
+                OnPropertyChanged();
+            }
+        }
+        string title = "";
+
+        public int _tabindex
+        {
+            get => tabindex;
+            set
+            {
+                tabindex = value;
+                OnPropertyChanged();
+                _title = tabindex.ToString();
+            }
+        }
+        int tabindex = 2;
 
         public bool _play
         {
@@ -313,11 +334,58 @@ namespace MesureAmpouleADecanter_ScannerFibre
         int rayon = Settings.Default.rayon;
         #endregion
 
-        public ObservableCollection<Sensor> _sensors { get; set; } = new ObservableCollection<Sensor>();
-        public ObservableCollection<ROI_UC> _rois { get; set; } = new ObservableCollection<ROI_UC>();
+        public Config config = new Config();
 
-        public ObservableCollection<WebCamParameters_UC.WebCamFormat.Format> _webcam_formats { get; set; }
-        //List<ROI_UC> rois = new List<ROI_UC>();
+        public Format _webcam_format
+        {
+            get => config.webcam_format; set
+            {
+                if (value == null)
+                {
+                    value = config.webcam_format;
+                    //if (config.webcam_format != null)
+                    //{
+                    //    OnPropertyChanged();
+                    //    CameraFormatSelected();
+                    //}
+                }
+                else
+                    config.webcam_format = value;
+
+                //CameraFormatSelected();
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<Format> _webcam_formats
+        {
+            get => webcam_formats; set
+            {
+                webcam_formats = value;
+                OnPropertyChanged();
+            }
+        }
+        ObservableCollection<Format> webcam_formats;
+
+        public ObservableCollection<ROI_UC> _rois
+        {
+            get => rois; set
+            {
+                rois = value;
+                OnPropertyChanged();
+            }
+        }
+        ObservableCollection<ROI_UC> rois = new ObservableCollection<ROI_UC>();
+
+        public ObservableCollection<Sensor> _sensors
+        {
+            get => sensors; set
+            {
+                sensors = value;
+                OnPropertyChanged();
+            }
+        }
+        ObservableCollection<Sensor> sensors = new ObservableCollection<Sensor>();
 
 
         #region Parameters local
@@ -325,7 +393,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         List<DsDevice> webcams;
         int webcam_index;
         DsDevice webcam;
-        WebCamParameters_UC.WebCamFormat.Format webcam_format;
+        //WebCamParameters_UC.WebCamFormat.Format webcam_format;
         WebCamParameters_UC.WebCamConfig webCam_Config;
 
         Mat frame;
@@ -516,14 +584,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void Camera(int webcam_index)
         {
+            config.webcam_name = webcam.Name;
+            //config.webcam_format = _webcam_format;
+
             VideoStop();
             capVideo = new OpenCvSharp.VideoCapture();
             capVideo.Open(webcam_index, VideoCaptureAPIs.DSHOW);
-            //capVideo.Set(VideoCaptureProperties.FourCC, FourCC.FromString(webcam_format.format));
-            //capVideo.Set(VideoCaptureProperties.FrameWidth, webcam_format.w);
-            //capVideo.Set(VideoCaptureProperties.FrameHeight, webcam_format.h);
-            //capVideo.Set(VideoCaptureProperties.Fps, webcam_format.fr);
-            //capVideo.Set(VideoCaptureProperties.FourCC, FourCC.FromString(webcam_format.format));
 
             CancellationToken token_cameralive = cancellationTokenSource.Token;
             Task.Factory.StartNew(() => ThreadVideoLive(token_cameralive), token_cameralive);
@@ -1156,41 +1222,54 @@ namespace MesureAmpouleADecanter_ScannerFibre
             webcam_index = (int)(e.AddedItems[0] as TextBlock).Tag;
             webcam = webcams[webcam_index];
 
-            //_cbx_webcam_format.Items.Clear();
-            //List<WebCamParameters_UC.WebCamFormat.Format> formats = WebCamParameters_UC._Manager.Get_WebCam_Formats(webcam);
+            config.webcam_name = webcam.Name;
+            CameraSelected();
+        }
+
+        void CameraSelected()
+        {
             _webcam_formats = new ObservableCollection<Format>(WebCamParameters_UC._Manager.Get_WebCam_Formats(webcam));
-
-            Format maxf = WebCamParameters_UC.WebCamFormat.GetFormat_MaxPerf(webcam);
-            object max = null;
-            foreach (WebCamParameters_UC.WebCamFormat.Format f in _webcam_formats)
-            {
-                TextBlock tb = new TextBlock();
-                tb.Text = f.Name;
-                tb.Tag = f;
-                _cbx_webcam_format.Items.Add(tb);
-                if (maxf.Name == f.Name)
-                    max = tb;
-            }
-
-            //select best score
-            _cbx_webcam_format.SelectedItem = max;
         }
 
         void _cbx_webcam_format_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            webcam_format = (e.AddedItems[0] as TextBlock).Tag as WebCamParameters_UC.WebCamFormat.Format;
+            _webcam_format = e.AddedItems[0] as Format;
+            CameraFormatSelected();
+        }
+
+        private void CameraFormatSelected()
+        {
             Camera(webcam_index);
             Set_Format();
             _play = true;
         }
 
+        void FormatForce()
+        {
+            if (capVideo == null)
+                Camera(webcam_index);
+            int tentative = 0;
+            Mat im = new Mat();
+            do
+            {
+                Set_Format();
+
+                while (im.Empty())
+                    capVideo.Read(im);
+                tentative++;
+            } while (im.Width != _webcam_format.w && tentative < 100);
+            if (tentative >= 100)
+            {
+                MessageBox.Show("FormatForce Echec");
+            }
+        }
+
         void Set_Format()
         {
-            capVideo.Set(VideoCaptureProperties.FourCC, FourCC.FromString(webcam_format.format));
-            capVideo.Set(VideoCaptureProperties.FrameWidth, webcam_format.w);
-            capVideo.Set(VideoCaptureProperties.FrameHeight, webcam_format.h);
-            capVideo.Set(VideoCaptureProperties.Fps, webcam_format.fr);
-            capVideo.Set(VideoCaptureProperties.FourCC, FourCC.FromString(webcam_format.format));
+            capVideo.Set(VideoCaptureProperties.FourCC, FourCC.FromString(_webcam_format.format));
+            capVideo.Set(VideoCaptureProperties.FrameWidth, _webcam_format.w);
+            capVideo.Set(VideoCaptureProperties.FrameHeight, _webcam_format.h);
+            capVideo.Set(VideoCaptureProperties.Fps, _webcam_format.fr);
         }
 
         void WebCamSettings_Show_Click(object sender, MouseButtonEventArgs e)
@@ -1202,12 +1281,35 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        private void DefineROI_Click(object sender, MouseButtonEventArgs e)
+        void DefineROI_Click(object sender, MouseButtonEventArgs e)
         {
-            var roi = SelectROI();
+            Rect? roi;
+            try
+            {
+                roi = SelectROI();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
             if (roi == null) return;
 
-            ROI_UC roi_uc = new ROI_UC((Rect)roi);
+            try
+            {
+                ROI_New((Rect)roi);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        void ROI_New(Rect roi)
+        {
+            ROI_UC roi_uc = new ROI_UC(roi);
+            if (!config.rois.Contains(roi))
+                config.rois.Add(roi);
 
             _rois.Add(roi_uc);
             TextBlock tb = new TextBlock();
@@ -1223,6 +1325,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 var tb = sender as TextBlock;
                 ROI_UC roi_uc = tb.Tag as ROI_UC;
+                config.rois.Remove(roi_uc._roi);
                 _rois.Remove(roi_uc);
                 _lbx_rois.Items.Remove(sender);
             }
@@ -1253,39 +1356,101 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     //dessine les cercles sur la frame
                     for (int i = 0; i < circleSegments.Length; i++)
                         Cv2.Circle(roi_frame, (OpenCvSharp.Point)circleSegments[i].Center - roi._roi.TopLeft, (int)circleSegments[i].Radius, new Scalar(0, 0, 255), 1);
+
+                    roi._circlesCount = circleSegments.Length;
                 }
 
                 //SensorsUpdate(G.Width, G.Height);
 
                 roi.Show(roi_frame);
             }
-            Dispatcher.BeginInvoke(() =>
-            {
-                Title = cercles.Count.ToString();
-            });
-        }
 
+            _title = cercles.Count.ToString();
+        }
 
         void HoughCircle_Switch_Click(object sender, MouseButtonEventArgs e)
         {
             _HoughCircle_Detection = !_HoughCircle_Detection;
+            OnPropertyChanged(nameof(_rois));
         }
 
-        void AdjustSensors_Click(object sender, MouseButtonEventArgs e)
+        void Sensors_Load_Click(object sender, MouseButtonEventArgs e)
         {
-            _HoughCircle_Detection = false;
-            _tbc.SelectedItem = _tbi_sensors_adjust;//.IsSelected = true;
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.FileName = "Config";
+            dialog.DefaultExt = ".cfg";
+            dialog.Filter = "Config (.cfg)|*.cfg";
+            if (File.Exists(_file))
+                dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
+
+            if (dialog.ShowDialog() == true)
+            {
+                string jsonString = File.ReadAllText(dialog.FileName);
+                config = Config.FromJSON(jsonString);
+                //caméra présente ?
+                bool camerapresente = false;
+                for (int i = 0; i < _cbx_webcam.Items.Count; i++)
+                {
+                    TextBlock tb = _cbx_webcam.Items[i] as TextBlock;
+                    if (tb.Text == webcam.Name)
+                    {
+                        camerapresente = true;
+                        this.webcam = webcam;
+                        webcam_index = (int)tb.Tag;
+                    }
+                }
+
+                if (!camerapresente)
+                {
+                    MessageBox.Show("Caméra demandée non présente :\n" + config.webcam_name);
+                    return;
+                }
+
+                CameraSelected();
+
+                FormatForce();
+
+                //appliqués les réglages caméra
+                WebCamParameters_UC._Manager.Set_WebCamConfig(config.webcam_name, config.webcam_parameters);
+
+                //ROIs
+                foreach (Rect roi in config.rois)
+                    ROI_New(roi);
+
+                //quelles sont les coordonnées et taille des sensors ?
+
+
+                //Camera(webcam_index);
+                _play = true;
+            }
         }
 
-        private void Sensors_Load_Click(object sender, MouseButtonEventArgs e)
+        void Sensors_Save_Click(object sender, MouseButtonEventArgs e)
         {
+            //quelle caméra ?
 
-        }
+            //quel format ?
 
+            //quels réglages de caméra ?
+            config.webcam_parameters = WebCamParameters_UC._Formulaire._GetWebCamSettings(config.webcam_name);
+            //quelles ROI ?
 
-        private void Sensors_Save_Click(object sender, MouseButtonEventArgs e)
-        {
+            //quelles sont les coordonnées et taille des sensors ?
 
+            //save all
+            string jsonString = config.ToJSON();
+
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.FileName = "Config";
+            dialog.DefaultExt = ".cfg";
+            dialog.Filter = "Config (.cfg)|*.cfg";
+
+            //au même endroit que la vidéo
+            if (File.Exists(_file))
+                dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
+
+            if (dialog.ShowDialog() == true)
+                File.WriteAllText(dialog.FileName, jsonString);
         }
     }
 }

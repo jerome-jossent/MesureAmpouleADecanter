@@ -19,8 +19,8 @@ namespace WebCamParameters_UC
         public WebCamConfig() { }//JSON
 
         public WebCamConfig(string name,
-            Dictionary<CameraControlProperty, WebCamParameter_CameraControl> cameraControlParameters,
-            Dictionary<VideoProcAmpProperty, WebCamParameter_VideoProcAmp> videoProcAmpParameters)
+            Dictionary<CameraControlProperty, WebCamParameter_Full_CameraControl> cameraControlParameters,
+            Dictionary<VideoProcAmpProperty, WebCamParameter_Full_VideoProcAmp> videoProcAmpParameters)
         {
             this.device_name = name;
             foreach (var item in cameraControlParameters)

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace WebCamParameters_UC
@@ -12,33 +13,40 @@ namespace WebCamParameters_UC
     {
         public class Format
         {
-            public int w, h;
-            public int fr;
-            public string format;
-            public int index; //utile ?
+            public int w { get; set; }
+            public int h { get; set; }
+            public int fr { get; set; }
+            public string format { get; set; }
 
+            [Newtonsoft.Json.JsonIgnore]
+            [JsonIgnore]
             public string Name { get => "(" + format + ") " + w + "*" + h + " [" + fr + "fps]"; }
 
+            [Newtonsoft.Json.JsonIgnore]
+            [JsonIgnore]
             public int _pixels_par_sec { get => w * h * fr; }
 
             public Format() { }
 
-            public Format(VideoInfoHeader? videoInfo, int index)
+            public Format(VideoInfoHeader? videoInfo)
             {
                 w = videoInfo.BmiHeader.Width;
                 h = videoInfo.BmiHeader.Height;
                 fr = (int)(10000000 / videoInfo.AvgTimePerFrame);
                 format = GetVideoFormat(videoInfo.BmiHeader.Compression);
-                this.index = index;
             }
 
-            public Format(int width, int height, int frameRate, string format, int index)
+            public Format(int width, int height, int frameRate, string format)
             {
                 w = width;
                 h = height;
                 fr = frameRate;
                 this.format = format;
-                this.index = index;
+            }
+
+            public override string ToString()
+            {
+                return Name;
             }
         }
 
@@ -91,7 +99,7 @@ namespace WebCamParameters_UC
                             if (mediaType.formatType == FormatType.VideoInfo)
                             {
                                 VideoInfoHeader? videoInfo = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
-                                Format f = new Format(videoInfo, i);
+                                Format f = new Format(videoInfo);
                                 formats.Add(f);
                             }
                             Marshal.FreeCoTaskMem(ptr);
