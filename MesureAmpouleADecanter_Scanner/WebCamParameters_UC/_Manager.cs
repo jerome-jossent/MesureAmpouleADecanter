@@ -160,5 +160,10 @@ namespace WebCamParameters_UC
                 videoProcAmp.Set(vpa, defaultValue, VideoProcAmpFlags.Auto);
             }
         }
+
+        public static List<WebCamFormat.Format> Get_WebCam_Formats(DsDevice webcam)
+        {
+            return WebCamFormat.Get_Formats(webcam);
+        }
     }
 }

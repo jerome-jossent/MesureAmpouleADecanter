@@ -4,27 +4,32 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"        
-        xmlns:wpftk="http://schemas.xceed.com/wpf/xaml/toolkit"        
+        xmlns:wpftk="http://schemas.xceed.com/wpf/xaml/toolkit"    
+        xmlns:opencv="clr-namespace:OpenCvSharp;assembly=OpenCvSharp"
         mc:Ignorable="d"
         Loaded="Window_Loaded" Closing="Window_Closing"
         Title="MainWindow" Height="900" Width="1200">
+    <Window.Resources>
+        <local:InvertableBooleanToVisibilityConverter x:Key="_Converter"/>
+    </Window.Resources>
 
-    <TabControl>
-        <TabItem Header="Source">
+    <TabControl x:Name="_tbc">
+        <TabItem Header="Source" IsEnabled="False">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="37*"/>
+                    <ColumnDefinition Width="261*"/>
+                    <ColumnDefinition Width="299*"/>
+                    <ColumnDefinition Width="299*"/>
+                    <ColumnDefinition Width="299*"/>
                 </Grid.ColumnDefinitions>
 
                 <!--MENU-->
-                <Grid Grid.Row="0" Grid.ColumnSpan="50">
+                <Grid Grid.Row="0" Grid.ColumnSpan="5">
                     <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                         <Menu Height="40" VerticalAlignment="Center" VerticalContentAlignment="Center" >
                             <MenuItem Header="Select Source" VerticalAlignment="Center"  VerticalContentAlignment="Center">
@@ -34,6 +39,9 @@
                                     <MenuItem Header="Recent" Name="_mi_vidfile_recent"/>
                                 </MenuItem>
                                 <MenuItem Header ="Camera" x:Name="_mi_camera" >
+                                    <StackPanel x:Name="_sp_webcam_list">
+
+                                    </StackPanel>
                                     <MenuItem Header="Refresh" Click="CameraListRefresh_Click"/>
                                 </MenuItem>
                             </MenuItem>
@@ -45,10 +53,12 @@
                       MouseDown="OpenVideoFile_Click" />
 
                         <Grid Margin="5">
-                            <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                            MouseDown="btn_play_Click"/>
                             <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                           MouseDown="btn_pause_Click"/>
+                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                               MouseDown="btn_play_Click"/>
+                            <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                               MouseDown="btn_pause_Click"/>
                         </Grid>
 
                         <Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
@@ -70,7 +80,7 @@
                 </Grid>
 
                 <!--Viewer & ROI-->
-                <Grid Grid.Column="0" Grid.Row="1">
+                <Grid Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto" x:Name="grid_column_crop"/>
                         <ColumnDefinition Width="*"/>
@@ -86,6 +96,8 @@
                RenderOptions.BitmapScalingMode="Fant"
                    MouseDown="Image_Click"
                />
+
+
                     <Slider Grid.Column="1" VerticalAlignment="Bottom"                            
                     IsMoveToPointEnabled="True"
                     Minimum="0"
@@ -110,7 +122,7 @@
             </Grid>
         </TabItem>
 
-        <TabItem Header="Get Sensors">
+        <TabItem Header="Get Sensors" IsEnabled="False">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -131,10 +143,12 @@
                       MouseDown="OpenVideoFile_Click" />
 
                         <Grid Margin="5">
-                            <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                           x:Name="btn_play" MouseDown="btn_play_Click"/>
                             <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                           x:Name="btn_pause" MouseDown="btn_pause_Click"/>
+                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                               MouseDown="btn_play_Click"/>
+                            <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                               MouseDown="btn_pause_Click"/>
                         </Grid>
 
                         <Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
@@ -214,7 +228,7 @@
                    MouseDown="SortSensors_Up2Down_Click"
                />
 
-                <Slider VerticalAlignment="Bottom"                            
+                    <Slider VerticalAlignment="Bottom"                            
                     IsMoveToPointEnabled="True"
                     Minimum="0"
                     Maximum="{Binding _videoTotalFrames, UpdateSourceTrigger=PropertyChanged}"
@@ -243,15 +257,222 @@
        Stretch="Uniform"
        RenderOptions.BitmapScalingMode="Fant"
        />
+            </Grid>
+        </TabItem>
 
+        <TabItem Header="Set Camera and ROIs" IsSelected="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                    <ComboBox x:Name ="_cbx_webcam" MinWidth="150" Margin="5" SelectionChanged="_cbx_webcam_SelectionChanged"
+                              VerticalContentAlignment="Center"/>
+                    <ComboBox x:Name="_cbx_webcam_format" MinWidth="150" Margin="5" SelectionChanged="_cbx_webcam_format_SelectionChanged"
+                              ItemsSource="{Binding _webcam_formats}"
+                              VerticalContentAlignment="Center"/>
+
+                    <!--<Image Margin="5" Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+  MouseDown="OpenVideoFile_Click" />-->
+
+                    <Grid Margin="5">
+                        <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                               MouseDown="btn_play_Click"/>
+                        <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                               MouseDown="btn_pause_Click"/>
+                    </Grid>
+
+                    <Image Margin="5" Source="/Images/Settings.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="WebCamSettings_Show_Click" ToolTip="Menu : define region of interest" />
+
+                    <Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="DefineROI_Click" ToolTip="Menu : define region of interest" />
+
+                    <!--<Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="Crop_Click" ToolTip="Menu : define region of interest" />
+
+                    <Image Margin="5" Source="/Images/contour.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="HoughCircle_Click" ToolTip="Menu : define Hough Circle algorithm parameters"/>
+
+                    <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="CirclesReset_Click" ToolTip="Reset sensor detection"/>
+
+                    <Image Margin="5" Source="/Images/save.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="SensorMap_Save_Click" ToolTip="Save sensor detection map"/>
+
+                    <Image Margin="5" Source="/Images/load.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="SensorMap_Load_Click" ToolTip="Load sensor detection map"/>-->
+
+                </StackPanel>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Image Grid.Column="0" Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
+                     Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" MouseDown="Image_Click" />
+
+                    <ListBox Grid.Column="1" x:Name="_lbx_rois"/>
+                </Grid>
 
             </Grid>
         </TabItem>
 
-        <TabItem Header="Set Sensors" >
+        <TabItem Header="Sensors detection's" >
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                    <Grid Margin="5">
+                        <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                             MouseDown="btn_play_Click"/>
+                        <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                             MouseDown="btn_pause_Click"/>
+                    </Grid>
+
+                    <Image Margin="5" Source="/Images/Settings.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="WebCamSettings_Show_Click" ToolTip="Menu : define region of interest" />
+
+                    <TextBlock Text="Hough Circles :" VerticalAlignment="Center"/>
+                    <Grid Margin="5">
+                        <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _HoughCircle_Detection, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+          MouseDown="HoughCircle_Switch_Click"/>
+                        <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _HoughCircle_Detection, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+          MouseDown="HoughCircle_Switch_Click"/>
+                    </Grid>
+
+
+                    <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="CirclesReset_Click" ToolTip="Reset sensor detection"/>
+
+
+                    <Image Margin="5" Source="/Images/arrow_right.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="AdjustSensors_Click" ToolTip="Adjust Sensors positions"/>
+
+                </StackPanel>
+
+                <!--Hough circles parameters-->
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="dp" />
+                    <Label Grid.Row="1" Grid.Column="0" Content="param1" />
+                    <Label Grid.Row="2" Grid.Column="0" Content="param2" />
+                    <Label Grid.Row="3" Grid.Column="0" Content="Rayon min/max" />
+                    <Label Grid.Row="4" Grid.Column="0" Content="Rayon des disques créés" />
+
+
+                    <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="10" Value="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
+                    <wpftk:RangeSlider Grid.Row="3" Grid.Column="1" Step="1"
+                               LowerValue="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}"
+                               HigherValue="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" 
+                               Minimum="0" Maximum="200"                               
+                               />
+                    <Slider Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <Label Grid.Row="0" Grid.Column="2" Content="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}" />
+                    <Label Grid.Row="1" Grid.Column="2" Content="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}" />
+                    <Label Grid.Row="2" Grid.Column="2" Content="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}" />
+                    <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal">
+                        <Label  Content="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}" />
+                        <Label  Content=" / " />
+                        <Label  Content="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <Label Grid.Row="4" Grid.Column="2" Content="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions >
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding _rois}" />
+                    </ScrollViewer>
+
+                </Grid>
+
+            </Grid>
 
         </TabItem>
 
+
+        <TabItem Header="Adjust sensor's positions" x:Name="_tbi_sensors_adjust" >
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                    <Grid Margin="5">
+                        <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                             MouseDown="btn_play_Click"/>
+                        <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                             MouseDown="btn_pause_Click"/>
+                    </Grid>
+
+
+
+                    <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
+
+                    <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
+
+                </StackPanel>
+
+                
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions >
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding _rois}" />
+                    </ScrollViewer>
+
+                </Grid>
+
+            </Grid>
+
+        </TabItem>
     </TabControl>
 </Window>

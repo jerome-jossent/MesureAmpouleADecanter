@@ -9,17 +9,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\arrow_right.png" />
     <None Remove="Images\camera.png" />
     <None Remove="Images\contour.png" />
     <None Remove="Images\crop.png" />
     <None Remove="Images\folder.png" />
     <None Remove="Images\Lecture.png" />
     <None Remove="Images\load.png" />
+    <None Remove="Images\load2.png" />
     <None Remove="Images\matrice.png" />
     <None Remove="Images\new.png" />
     <None Remove="Images\Pause.png" />
     <None Remove="Images\save.png" />
+    <None Remove="Images\save2.png" />
+    <None Remove="Images\Settings.png" />
     <None Remove="Images\Stop.png" />
+    <None Remove="Images\toggle_off2.png" />
+    <None Remove="Images\toggle_on2.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +41,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\arrow_right.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\camera.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
@@ -53,6 +62,9 @@
     <Resource Include="Images\load.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\load2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\matrice.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
@@ -65,7 +77,19 @@
     <Resource Include="Images\save.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\save2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Settings.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\Stop.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\toggle_off2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\toggle_on2.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

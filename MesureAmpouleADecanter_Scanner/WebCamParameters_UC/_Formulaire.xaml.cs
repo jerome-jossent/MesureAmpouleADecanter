@@ -39,8 +39,10 @@ namespace WebCamParameters_UC
         void _Formulaire_Unloaded(object sender, RoutedEventArgs e)
         {
             // Nettoyage
-            Marshal.ReleaseComObject(graphBuilder);
-            Marshal.ReleaseComObject(captureFilter);
+            if (graphBuilder != null)
+                Marshal.ReleaseComObject(graphBuilder);
+            if (captureFilter != null)
+                Marshal.ReleaseComObject(captureFilter);
         }
 
         void _Formulaire_Loaded(object sender, RoutedEventArgs e)
