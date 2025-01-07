@@ -5,14 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"
              mc:Ignorable="d" 
-             d:DesignHeight="30" d:DesignWidth="200">
-    <StackPanel Orientation ="Horizontal">
-        <TextBlock x:Name="_tbk_index" Text="{Binding index}" VerticalAlignment="Center" />
-        <TextBlock x:Name="_tbk" Text="  " Background="{Binding color}"/>
-        <Grid Width="40">
-            <ProgressBar MinHeight="0" Height="20" Minimum="{Binding intensity_min}" Maximum="{Binding intensity_max}" Value="{Binding intensity}"/>
-            <TextBlock x:Name="_tbk_val" VerticalAlignment="Center"  HorizontalAlignment="Center"/>
-        </Grid>
-        <Label Content="{Binding ON}"/>
+             d:DesignHeight="20" d:DesignWidth="200"
+             Height="25">
+    <StackPanel Orientation ="Horizontal" Height="20" >
+        <TextBlock x:Name="_tbk_index" Text="{Binding _index}" Width="25" TextAlignment="Right" VerticalAlignment="Center" />
+        <TextBlock x:Name="_tbk" Text="  " Background="{Binding _color}"/>
+        <ProgressBar Width="40" Height="10" Minimum="{Binding _intensity_min}" Maximum="{Binding _intensity_max}" Value="{Binding _intensity}"/>
+        <TextBlock x:Name="_tbk_val" Margin="3,0" VerticalAlignment="Center"  HorizontalAlignment="Center"/>
+        <TextBlock Text="{Binding _ON}" Width="36" VerticalAlignment="Center"/>
     </StackPanel>
 </UserControl>

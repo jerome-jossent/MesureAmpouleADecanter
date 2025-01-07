@@ -43,6 +43,17 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
         ImageSource image;
+        
+        public ImageSource _sensormap
+        {
+            get => sensormap;
+            set
+            {
+                sensormap = value;
+                OnPropertyChanged();
+            }
+        }
+        ImageSource sensormap;
 
 
         public OpenCvSharp.Rect _roi;
@@ -73,10 +84,22 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 catch (Exception ex) { }
             }));
         }
+        internal void Show_sensormap(Mat frame)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    _sensormap = frame.ToWriteableBitmap();
+                }
+                catch (Exception ex) { }
+            }));
+        }
 
         private void Image_Click(object sender, MouseButtonEventArgs e)
         {
 
         }
+
     }
 }

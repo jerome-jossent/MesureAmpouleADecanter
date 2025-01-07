@@ -1,4 +1,5 @@
-﻿using OpenCvSharp;
+﻿using Newtonsoft.Json;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -20,29 +21,44 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public int? numero { get; set; }
-        public int x { get => (int)cercle.x; }
-        public int y { get => (int)cercle.y; }
 
+        public int x { get; set; }
+        public int y { get; set; }
+
+        public float hauteur_mm { get; set; }
+
+        [JsonIgnore]
         public float intensity { get; set; }
         public float intensity_min { get; set; } = -1;
         public float intensity_max { get; set; } = -1;
+        [JsonIgnore]
         public float intensity_threshold { get; set; }
 
+        [JsonIgnore]
         public bool ON { get => intensity > intensity_threshold; }
+        [JsonIgnore]
         public bool ON_previous;
 
+        [JsonIgnore]
         public Scalar color_scalar { get; set; }
+        [JsonIgnore]
         public Vec3b pixelValue { get; set; }
         public static int SensorsNextIndex { get; private set; }
 
+        [JsonIgnore]
         public Cercle cercle;
+
+        [JsonIgnore]
         internal Sensor_UC uc;
+
+        public Sensor() { }
 
         public Sensor(Cercle c)
         {
             cercle = c;
             c.sensor = this;
             numero = c.numero;
+            Save();
         }
 
         public void SetColor(Vec3b pixelValue)
@@ -66,7 +82,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     numero = Sensor.SensorsNextIndex;
                     SensorsNextIndex++;
                     uc._SetIndexName((int)numero);
-                    cercle.SetNumero((int)numero);
+                    cercle?.SetNumero((int)numero);
                 }
             }
 
@@ -78,6 +94,26 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public static void ResetSensorsOrder()
         {
             SensorsNextIndex = 0;
+        }
+
+        internal void Save()
+        {
+            if (cercle != null)
+            {
+                x = cercle.x;
+                y = cercle.y;
+            }
+        }
+
+        internal void Load()
+        {
+
+        }
+
+        internal void Reset()
+        {
+            uc._index = "?";
+            numero = null;
         }
     }
 }

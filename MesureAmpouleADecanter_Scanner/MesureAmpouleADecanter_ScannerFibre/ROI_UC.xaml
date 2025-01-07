@@ -7,12 +7,17 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Image 
- Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
-Stretch="Uniform"
-RenderOptions.BitmapScalingMode="Fant"
-    MouseDown="Image_Click"
-/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Image Grid.Column="0" Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
+            Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" MouseDown="Image_Click"/>
+        <Image Grid.Column="1" x:Name="_img_sensormap" Source="{Binding _sensormap, UpdateSourceTrigger=PropertyChanged}"
+            Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>
+
+
         <Label Content="{Binding _circlesCount}" Foreground="Red"/>
     </Grid>
 </UserControl>

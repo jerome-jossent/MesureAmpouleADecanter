@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\arrow_down.png" />
     <None Remove="Images\arrow_right.png" />
+    <None Remove="Images\arrow_up.png" />
     <None Remove="Images\camera.png" />
     <None Remove="Images\contour.png" />
     <None Remove="Images\crop.png" />
@@ -41,7 +43,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\arrow_down.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\arrow_right.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\arrow_up.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\camera.png">

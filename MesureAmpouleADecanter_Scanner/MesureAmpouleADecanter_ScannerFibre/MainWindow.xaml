@@ -167,11 +167,7 @@
                         <Image Margin="5" Source="/Images/load.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="SensorMap_Load_Click" ToolTip="Load sensor detection map"/>
 
-                        <Menu Height="40" VerticalAlignment="Center" VerticalContentAlignment="Center" >
-                            <MenuItem Header="Sort Sensors : from up to down" Click="SortSensors_Up2Down_Click" />
-                        </Menu>
-
-
+        
                     </StackPanel>
                 </Grid>
 
@@ -243,21 +239,21 @@
                        MouseDown="SensorMap_Click"
                        />
 
-                <!--Sensor's values-->
+                <!--Sensor's values--><!--
                 <ListView Grid.ColumnSpan="3" Grid.Row="3" x:Name="lv_sensors"  >
                     <ListView.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="10"/>
                         </ItemsPanelTemplate>
                     </ListView.ItemsPanel>
-                </ListView>
+                </ListView>-->
 
-                <!--Reconstruction Scan-->
+                <!--Reconstruction Scan--><!--
                 <Image Grid.Column="2" Grid.Row="2"
     Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}"
        Stretch="Uniform"
        RenderOptions.BitmapScalingMode="Fant"
-       />
+       />-->
             </Grid>
         </TabItem>
 
@@ -287,6 +283,8 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>-->
                     </ComboBox>
+
+                    <TextBlock Text="{Binding ElementName=_webcam_format, Path=Name, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!--<Image Margin="5" Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
   MouseDown="OpenVideoFile_Click" />-->
@@ -349,7 +347,7 @@
                     <Image Margin="5" Source="/Images/Settings.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
    MouseDown="WebCamSettings_Show_Click" ToolTip="Menu : define region of interest" />
 
-                    <TextBlock Text="Hough Circles :" VerticalAlignment="Center"/>
+                    <TextBlock Text="Detection (Hough Circles) :" VerticalAlignment="Center"/>
                     <Grid Margin="5">
                         <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
               Visibility="{Binding _HoughCircle_Detection, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
@@ -361,6 +359,15 @@
 
                     <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                            MouseDown="CirclesReset_Click" ToolTip="Reset sensor detection"/>
+
+                    <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
+
+                    <TextBlock Text="Sort Sensors :&#x0a;from up to down" VerticalAlignment="Center"/>
+                    
+                    <Image Margin="5" Source="/Images/arrow_down.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="SortSensors_Up2Down_Click" ToolTip="Save"/>
+                                     
                 </StackPanel>
 
                 <!--Hough circles parameters-->
@@ -380,51 +387,57 @@
                     </Grid.ColumnDefinitions>
 
                     <Label Grid.Row="0" Grid.Column="0" Content="dp" />
-                    <Label Grid.Row="1" Grid.Column="0" Content="param1" />
-                    <Label Grid.Row="2" Grid.Column="0" Content="param2" />
-                    <Label Grid.Row="3" Grid.Column="0" Content="Rayon min/max" />
-                    <Label Grid.Row="4" Grid.Column="0" Content="Rayon des disques créés" />
-
-
                     <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="10" Value="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding _houghcircle_dp, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="param1" />
                     <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding _houghcircle_param1, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Label Grid.Row="2" Grid.Column="0" Content="param2" />
                     <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding _houghcircle_param2, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Label Grid.Row="3" Grid.Column="0" Content="Rayon min/max" />
                     <wpftk:RangeSlider Grid.Row="3" Grid.Column="1" Step="1"
                                LowerValue="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}"
                                HigherValue="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" 
                                Minimum="0" Maximum="200"                               
                                />
-                    <Slider Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}"/>
-
-                    <Label Grid.Row="0" Grid.Column="2" Content="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}" />
-                    <Label Grid.Row="1" Grid.Column="2" Content="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}" />
-                    <Label Grid.Row="2" Grid.Column="2" Content="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}" />
                     <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal">
                         <Label  Content="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}" />
                         <Label  Content=" / " />
                         <Label  Content="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" />
                     </StackPanel>
-                    <Label Grid.Row="4" Grid.Column="2" Content="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <!--<Label Grid.Row="4" Grid.Column="0" Content="Rayon des disques créés" />
+                    <Slider Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Grid.Row="4" Grid.Column="2" Content="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}" />-->
                 </Grid>
 
-                <!---->
-                <Grid Grid.Row="2">
-                    <Grid.ColumnDefinitions >
-                        <ColumnDefinition Width="auto"/>
+                <Grid Grid.Row="2" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
                     <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding _rois, UpdateSourceTrigger=PropertyChanged}" />
                     </ScrollViewer>
-
+                    
+                    <!--Sensor's values-->
+                    <ListView Grid.Column="1" ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors"  >
+                        <!--<ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="10"/>
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>-->
+                    </ListView>
                 </Grid>
-
             </Grid>
 
         </TabItem>
 
-        <TabItem Header="Adjust sensor's positions" TabIndex="4">
+        <TabItem Header="Adjust sensor's positions" IsEnabled="False">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -433,7 +446,6 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-
                     <Grid Margin="5">
                         <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                                  Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
@@ -443,7 +455,47 @@
                              MouseDown="btn_pause_Click"/>
                     </Grid>
 
+                    <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
 
+                    <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
+                </StackPanel>
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions >
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!--<ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding _rois}" />
+                    </ScrollViewer>-->
+
+                </Grid>
+
+            </Grid>
+
+        </TabItem>
+
+
+        <TabItem Header="Adjust sensor's order">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <Grid Margin="5">
+                        <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                             MouseDown="btn_play_Click"/>
+                        <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                             MouseDown="btn_pause_Click"/>
+                    </Grid>
 
                     <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="Sensors_Save_Click" ToolTip="Save"/>
@@ -453,18 +505,18 @@
 
                 </StackPanel>
 
-
-
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions >
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                    <!--<ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding _rois}" />
-                    </ScrollViewer>
+                    </ScrollViewer>-->
 
+                    <!--Reconstruction Scan-->
+                    <Image Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>
                 </Grid>
 
             </Grid>

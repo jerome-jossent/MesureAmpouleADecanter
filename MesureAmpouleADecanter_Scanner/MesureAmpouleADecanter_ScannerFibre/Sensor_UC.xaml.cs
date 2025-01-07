@@ -27,45 +27,45 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public SolidColorBrush color
+        public SolidColorBrush _color
         {
-            get => _color;
+            get => color;
             set
             {
-                if (_color == value) return;
-                _color = value;
+                if (color == value) return;
+                color = value;
                 OnPropertyChanged();
             }
         }
-        SolidColorBrush _color = new SolidColorBrush(Colors.Magenta);
+        SolidColorBrush color = new SolidColorBrush(Colors.Magenta);
 
-        public string index
+        public string _index
         {
-            get => _index;
+            get => index;
             set
             {
-                _index = value;
+                index = value;
                 OnPropertyChanged();
             }
         }
-        string _index;
+        string index;
 
-        public float intensity
+        public float _intensity
         {
-            get => _intensity;
+            get => intensity;
             set
             {
-                if (_intensity == value) return;
-                _intensity = value;
+                if (intensity == value) return;
+                intensity = value;
                 OnPropertyChanged();
             }
         }
-        float _intensity;
+        float intensity;
 
 
-        public float intensity_min { get => s.intensity_min; }
-        public float intensity_max { get => s.intensity_max; }
-        public bool ON { get => s.ON; }
+        public float _intensity_min { get => s.intensity_min; }
+        public float _intensity_max { get => s.intensity_max; }
+        public bool _ON { get => s.ON; }
 
         public Sensor s;
 
@@ -93,24 +93,24 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                color = new SolidColorBrush(Color.FromRgb(
+                _color = new SolidColorBrush(Color.FromRgb(
                     pixelValue.Item2,
                     pixelValue.Item1,
                     pixelValue.Item0));
 
-                OnPropertyChanged("intensity_min");
-                OnPropertyChanged("intensity_max");
-                intensity = s.intensity;
-                OnPropertyChanged("ON");
+                OnPropertyChanged(nameof(_intensity_min));
+                OnPropertyChanged(nameof(_intensity_max));
+                _intensity = s.intensity;
+                OnPropertyChanged(nameof(_ON));
 
                 _tbk_val.Text = (s.intensity * 100).ToString("00");
             }));
         }
 
-        internal void _Selected(bool v)
+        internal void _Selected()
         {
-            Selected = v;
-            this.Background = new SolidColorBrush(v ? Colors.DarkGray : Colors.Transparent);
+            Selected = !Selected;
+            Background = new SolidColorBrush(Selected ? Colors.DarkGray : Colors.Transparent);
         }
     }
 }

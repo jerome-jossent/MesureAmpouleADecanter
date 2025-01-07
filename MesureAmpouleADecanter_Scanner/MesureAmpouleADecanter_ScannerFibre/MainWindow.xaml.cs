@@ -27,6 +27,7 @@ using OpenCvSharp.Extensions;
 using OpenCvSharp.WpfExtensions;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using static System.Net.Mime.MediaTypeNames;
+using static MesureAmpouleADecanter_ScannerFibre.SensorMap;
 using static WebCamParameters_UC.WebCamFormat;
 using Rect = OpenCvSharp.Rect;
 
@@ -377,6 +378,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ObservableCollection<ROI_UC> rois = new ObservableCollection<ROI_UC>();
 
+
+
         public ObservableCollection<Sensor> _sensors
         {
             get => sensors; set
@@ -387,6 +390,15 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ObservableCollection<Sensor> sensors = new ObservableCollection<Sensor>();
 
+        public ObservableCollection<Sensor_UC> _sensors_uc
+        {
+            get => sensors_uc; set
+            {
+                sensors_uc = value;
+                OnPropertyChanged();
+            }
+        }
+        ObservableCollection<Sensor_UC> sensors_uc = new ObservableCollection<Sensor_UC>();
 
         #region Parameters local
 
@@ -574,11 +586,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             cercles = new List<Cercle>();
             _sensors = new ObservableCollection<Sensor>();
-
-            Dispatcher.BeginInvoke(() =>
-            {
-                lv_sensors.Items.Clear();
-            });
+            _sensors_uc = new ObservableCollection<Sensor_UC>();
         }
 
 
@@ -765,7 +773,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                 //SensorsAdd(circleSegments, ROI_mat.Width, ROI_mat.Height);
 
-                SensorsUpdate(G.Width, G.Height);
+                //SensorsUpdate(G.Width, G.Height);
 
                 //dessine les cercles sur la frame
                 for (int i = 0; i < circleSegments.Length; i++)
@@ -819,15 +827,16 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         c = cercles[j];
 
                         //moyenne position centre
-                        float X_moy = (center.X + c.nbr_fois_centre_repere * c.circleSegment.Center.X) / (c.nbr_fois_centre_repere + 1);
-                        float Y_moy = (center.Y + c.nbr_fois_centre_repere * c.circleSegment.Center.Y) / (c.nbr_fois_centre_repere + 1);
-                        c.circleSegment.Center = new Point2f(X_moy, Y_moy);
+                        float X_moy = (center.X + c.nbr_fois_centre_repere * c.center_abs.X) / (c.nbr_fois_centre_repere + 1);
+                        float Y_moy = (center.Y + c.nbr_fois_centre_repere * c.center_abs.Y) / (c.nbr_fois_centre_repere + 1);
+                        c.center_abs = new Point2f(X_moy, Y_moy);
+
                         c.nbr_fois_centre_repere++;
                     }
                     else // non
                     {
                         //new circle
-                        c = new Cercle(newCircleSegments[i], cercles.Count);
+                        c = new Cercle(newCircleSegments[i], cercles.Count, roi);
                         cercles.Add(c);
                     }
                     c.actif = true;
@@ -839,17 +848,16 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        void SensorsUpdate(int w, int h)
+        Mat SensorsUpdate(int w, int h, ROI_UC roi)
         {
-
-            cercles_mat = new Mat(new OpenCvSharp.Size(w, h), MatType.CV_8UC3, CirclesReset_color);
+            Mat cercles_mat = new Mat(new OpenCvSharp.Size(w, h), MatType.CV_8UC3, CirclesReset_color);
 
             double size = (h + w) / 2;
             _rayon = (int)(size * 80 / 2000);
-            double zoom = ((double)_rayon) / 22;// 0.5;//0.5 quand r=15 ; 3 quand r=50
+            double zoom = ((double)_rayon) / 30;// 22;// 0.5;//0.5 quand r=15 ; 3 quand r=50
 
-            int offsetY = (int)(36 * size / 2000); //5 pour 415 ; 30 pour 2000
-            int offsetX = (int)(35 * size / 2000); //5 pour 415 ; 28 pour 2000
+            int offsetY = (int)(32 * size / 2000); //5 pour 415 ; 30 pour 2000
+            int offsetX = (int)(32 * size / 2000); //5 pour 415 ; 28 pour 2000
             int thickness = (int)(6 * size / 2000);//1 pour 415 ;  6 pour 2000
             if (thickness < 1) thickness = 1;
 
@@ -857,14 +865,17 @@ namespace MesureAmpouleADecanter_ScannerFibre
             for (int i = 0; i < cercles.Count; i++)
             {
                 Cercle c = cercles[i];
+                //concerne cet ROI ?
+                if (c.roi_Left != roi._roi.Left || c.roi_Top != roi._roi.Top)
+                    continue;
 
                 if (c.actif)
-                    Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.circleSegment.Center, _rayon + 2, Scalar.White, -1);
+                    Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.center, _rayon + 2, Scalar.White, -1);
                 //dessin du disque
-                Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.circleSegment.Center, _rayon, c.couleur, -1);
+                Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.center, _rayon, c.couleur, -1);
 
                 //écrit le numéro
-                OpenCvSharp.Point xy = new OpenCvSharp.Point(c.circleSegment.Center.X, c.circleSegment.Center.Y);
+                OpenCvSharp.Point xy = new OpenCvSharp.Point(c.center.X, c.center.Y);
 
                 //positionne le numéro par rapport au centre du cercle détecté
                 string text;
@@ -883,77 +894,28 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 {
                     Sensor s = new Sensor(c);
                     _sensors.Add(s);
+
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
                     {
                         Sensor_UC suc = new Sensor_UC();
                         suc._Link(s);
-                        lv_sensors.Items.Add(suc);
+                        _sensors_uc.Add(suc);
                     });
                 }
-
-                //mesure
-                //v0 = juste centre
-                Vec3b pixelValue = ROI_mat.At<Vec3b>(c.y, c.x);
-
-                //                //v1 = carré
-                //                int range = 9;
-                //                int nbr_val = 0;
-                //                float[] mesure = new float[3];
-                //                for (int x = -range; x < range + 1; x++)
-                //                    for (int y = -range; y < range + 1; y++)
-                //                    {
-                //                        Vec3b pixelValueRange = ROI_mat.At<Vec3b>(c.y + y, c.x + x);
-                //                        mesure[0] += pixelValueRange.Item0;
-                //                        mesure[1] += pixelValueRange.Item1;
-                //                        mesure[2] += pixelValueRange.Item2;
-                //                        nbr_val++;
-                //                    }
-
-                ////                Cv2.his
-
-
-
-                //                range++;
-                //                //cadre jaune de la zone de mesure
-                //                OpenCvSharp.Point A = new OpenCvSharp.Point(c.x-range, c.y-range);
-                //                OpenCvSharp.Point B = new OpenCvSharp.Point(c.x+range, c.y-range);
-                //                OpenCvSharp.Point C = new OpenCvSharp.Point(c.x+range, c.y+range);
-                //                OpenCvSharp.Point D = new OpenCvSharp.Point(c.x-range, c.y+range);
-
-                //                Cv2.Line(ROI_mat, A, B, Scalar.Black);
-                //                Cv2.Line(ROI_mat, B, C, Scalar.Black);
-                //                Cv2.Line(ROI_mat, C, D, Scalar.Black);
-                //                Cv2.Line(ROI_mat, D, A, Scalar.Black);
-
-
-                //                pixelValue.Item0 = (byte)(mesure[0] / nbr_val);
-                //                pixelValue.Item1 = (byte)(mesure[1] / nbr_val);
-                //                pixelValue.Item2 = (byte)(mesure[2] / nbr_val);
-
-                //=> pas non plus très représentatif...
-
-
-
-
-                c.sensor.SetColor(pixelValue);
 
                 //reset actif pour la prochaine frame
                 c.actif = false;
             }
             OnPropertyChanged("_sensors");
 
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                try
-                {
-                    _image1 = Convert(cercles_mat.ToBitmap());
-                }
-                catch (Exception ex) { }
-            }));
+            return cercles_mat;
         }
 
         void ScanConstructFromSensors()
         {
+            if (scan_mat.Height != _sensors.Count)
+                scan_mat = new Mat(_sensors.Count, 200, MatType.CV_8UC3);
+
             //reset colonne
             Cv2.Line(scan_mat, new OpenCvSharp.Point(scan_mat_column, 0), new OpenCvSharp.Point(scan_mat_column, scan_mat.Height - 1), Scalar.Black, 1);
             //ligne de scan
@@ -1138,35 +1100,22 @@ namespace MesureAmpouleADecanter_ScannerFibre
             Camera(webcam_index);
         }
 
-        private void SortSensors_Up2Down_Click(object sender, RoutedEventArgs e)
-        {
-            SortSensors_Up2Down();
-        }
+        //private void SortSensors_Up2Down_Click(object sender, RoutedEventArgs e)
+        //{
+        //    SortSensors_Up2Down();
+        //}
 
         private void SortSensors_Up2Down_Click(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                _play = !_play;
-            }
-            else if (e.ChangedButton == MouseButton.Right)
-            {
-                SortSensors_Up2Down();
-            }
-            else if (e.ChangedButton == MouseButton.Middle)
-            {
-
-            }
+            SortSensors_Up2Down();
         }
 
         void SortSensors_Up2Down()
         {
             foreach (Sensor s in _sensors)
-            {
-                s.uc.index = (-s.numero).ToString();
-                s.numero = null;
-            }
+                s.Reset();
             Sensor.ResetSensorsOrder();
+            sensors_to_sorted = true;
         }
 
         private void SensorMap_Click(object sender, MouseButtonEventArgs e)
@@ -1193,7 +1142,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 }
                 if (cercleSelectionné == null) return;
 
-                cercleSelectionné.sensor.uc._Selected(true);
+                cercleSelectionné.sensor.uc._Selected();
             }
         }
 
@@ -1253,10 +1202,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
             do
             {
                 Set_Format();
-
                 while (im.Empty())
+                {
                     capVideo.Read(im);
-                tentative++;
+                    tentative++;
+                }
             } while (im.Width != _webcam_format.w && tentative < 100);
             if (tentative >= 100)
             {
@@ -1311,6 +1261,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             if (!config.rois.Contains(roi))
                 config.rois.Add(roi);
 
+            roi_uc._img_sensormap.MouseDown += _sensormap_Click;
             _rois.Add(roi_uc);
             TextBlock tb = new TextBlock();
             tb.Text = roi_uc._name;
@@ -1325,10 +1276,54 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 var tb = sender as TextBlock;
                 ROI_UC roi_uc = tb.Tag as ROI_UC;
+
+                roi_uc._img_sensormap.MouseDown -= _sensormap_Click;
+
                 config.rois.Remove(roi_uc._roi);
                 _rois.Remove(roi_uc);
                 _lbx_rois.Items.Remove(sender);
             }
+        }
+
+        private void _sensormap_Click(object sender, MouseButtonEventArgs e)
+        {
+            var image = sender as System.Windows.Controls.Image;
+            var grid = image.Parent as Grid;
+            var uc = grid.Parent as ROI_UC;
+
+            System.Windows.Point p = e.GetPosition(image);
+
+            float x = (float)(p.X / image.ActualWidth * uc._roi.Width);
+            float y = (float)(p.Y / image.ActualHeight * uc._roi.Height);
+            Point2f pointClick = new Point2f(x, y);
+
+            Cercle cercleSelected = null;
+            //quel cercle est concerné ?
+            foreach (Cercle c in cercles)
+            {
+                //concerne cet ROI ?
+                if (c.roi_Left != uc._roi.Left || c.roi_Top != uc._roi.Top)
+                    continue;
+
+                if (Point2f.Distance(pointClick, c.center) < rayon)
+                {
+                    //trouvé !
+                    cercleSelected = c;
+                    break;
+                }
+            }
+            if (cercleSelected == null) return;
+
+            if (e.ChangedButton == MouseButton.Right)
+            {
+                //supprimer
+                cercles.Remove(cercleSelected);
+                Sensor_UC sensor_uc = cercleSelected.sensor.uc;
+                //lv_sensors.Items.Remove(sensor_uc);
+                _sensors_uc.Remove(sensor_uc);
+            }
+            else
+                cercleSelected.sensor.uc._Selected();
         }
 
         void UpdateROIS(Mat frame)
@@ -1359,13 +1354,78 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     roi._circlesCount = circleSegments.Length;
                 }
-
-                //SensorsUpdate(G.Width, G.Height);
-
                 roi.Show(roi_frame);
+
+                Mat sensormap = SensorsUpdate(G.Width, G.Height, roi);
+
+                SensorsMeasure();
+
+                ScanConstructFromSensors();
+
+                roi.Show_sensormap(sensormap);
             }
 
             _title = cercles.Count.ToString();
+        }
+
+        bool sensors_to_sorted = false;
+
+        void SensorsMeasure()
+        {
+            bool all_sensors_are_initialized = true;
+            foreach (Sensor sensor in _sensors)
+            {
+                //mesure
+                //v0 = juste centre
+                Vec3b pixelValue = frame.At<Vec3b>(sensor.y, sensor.x);
+
+                //v1 = carré
+                //                int range = 9;
+                //                int nbr_val = 0;
+                //                float[] mesure = new float[3];
+                //                for (int x = -range; x < range + 1; x++)
+                //                    for (int y = -range; y < range + 1; y++)
+                //                    {
+                //                        Vec3b pixelValueRange = frame.At<Vec3b>(c.y + y, c.x + x);
+                //                        mesure[0] += pixelValueRange.Item0;
+                //                        mesure[1] += pixelValueRange.Item1;
+                //                        mesure[2] += pixelValueRange.Item2;
+                //                        nbr_val++;
+                //                    }
+
+                ////                Cv2.his
+
+
+
+                //                range++;
+                //                //cadre jaune de la zone de mesure
+                //                OpenCvSharp.Point A = new OpenCvSharp.Point(c.x-range, c.y-range);
+                //                OpenCvSharp.Point B = new OpenCvSharp.Point(c.x+range, c.y-range);
+                //                OpenCvSharp.Point C = new OpenCvSharp.Point(c.x+range, c.y+range);
+                //                OpenCvSharp.Point D = new OpenCvSharp.Point(c.x-range, c.y+range);
+
+                //                Cv2.Line(ROI_mat, A, B, Scalar.Black);
+                //                Cv2.Line(ROI_mat, B, C, Scalar.Black);
+                //                Cv2.Line(ROI_mat, C, D, Scalar.Black);
+                //                Cv2.Line(ROI_mat, D, A, Scalar.Black);
+
+
+                //                pixelValue.Item0 = (byte)(mesure[0] / nbr_val);
+                //                pixelValue.Item1 = (byte)(mesure[1] / nbr_val);
+                //                pixelValue.Item2 = (byte)(mesure[2] / nbr_val);
+
+                //=> pas non plus très représentatif...
+
+                sensor.SetColor(pixelValue);
+
+                if (sensor.numero == null)
+                    all_sensors_are_initialized = false;
+            }
+            if (sensors_to_sorted && all_sensors_are_initialized)
+            {
+                //sort
+                _sensors_uc = new ObservableCollection<Sensor_UC>(_sensors_uc.OrderBy(uc => uc.s.numero));
+            }
         }
 
         void HoughCircle_Switch_Click(object sender, MouseButtonEventArgs e)
@@ -1410,15 +1470,27 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                 FormatForce();
 
+                OnPropertyChanged(nameof(_webcam_format));
+
                 //appliqués les réglages caméra
                 WebCamParameters_UC._Manager.Set_WebCamConfig(config.webcam_name, config.webcam_parameters);
 
                 //ROIs
+                _rois.Clear();
+                _lbx_rois.Items.Clear();
                 foreach (Rect roi in config.rois)
                     ROI_New(roi);
 
-                //quelles sont les coordonnées et taille des sensors ?
-
+                //Sensors
+                _sensors_uc = new ObservableCollection<Sensor_UC>();
+                _sensors = new ObservableCollection<Sensor>(config.sensors);
+                foreach (Sensor sensor in _sensors)
+                {
+                    sensor.Load();
+                    Sensor_UC sensor_uc = new Sensor_UC();
+                    sensor_uc._Link(sensor);
+                    _sensors_uc.Add(sensor_uc);
+                }
 
                 //Camera(webcam_index);
                 _play = true;
@@ -1436,6 +1508,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
             //quelles ROI ?
 
             //quelles sont les coordonnées et taille des sensors ?
+            foreach (Sensor sensor in sensors)
+                sensor.Save();
+
+            config.sensors = sensors.ToList();
 
             //save all
             string jsonString = config.ToJSON();
