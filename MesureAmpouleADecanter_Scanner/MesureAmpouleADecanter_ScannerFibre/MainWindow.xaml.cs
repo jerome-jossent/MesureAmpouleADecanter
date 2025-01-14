@@ -378,8 +378,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ObservableCollection<ROI_UC> rois = new ObservableCollection<ROI_UC>();
 
-
-
         public ObservableCollection<Sensor> _sensors
         {
             get => sensors; set
@@ -400,29 +398,31 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ObservableCollection<Sensor_UC> sensors_uc = new ObservableCollection<Sensor_UC>();
 
+
         #region Parameters local
 
         List<DsDevice> webcams;
         int webcam_index;
         DsDevice webcam;
-        //WebCamParameters_UC.WebCamFormat.Format webcam_format;
         WebCamParameters_UC.WebCamConfig webCam_Config;
 
         Mat frame;
         Mat ROI_mat;
         Mat cercles_mat = new Mat();
-        Mat scan_mat = new Mat(100, 200, MatType.CV_8UC3, Scalar.Magenta);
+        Mat scan_mat;// = new Mat(100, 200, MatType.CV_8UC3, Scalar.Magenta);
         int scan_mat_column = 0;
+        DateTime? scan_mat_T0 = null;
 
         List<Cercle> cercles;
         bool circle_Recompute;
-        OpenCvSharp.VideoCapture capVideo;
+        VideoCapture capVideo;
         int sleepTime;
         Thread videoThread;
         CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         Scalar CirclesReset_color = Scalar.Black;
 
         SensorMap sensorMap;
+        bool sensors_to_sorted = false;
         #endregion
 
         #region Window
@@ -913,8 +913,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void ScanConstructFromSensors()
         {
-            if (scan_mat.Height != _sensors.Count)
+            if (scan_mat == null || scan_mat.Height != _sensors.Count)
                 scan_mat = new Mat(_sensors.Count, 200, MatType.CV_8UC3);
+            if (scan_mat_T0 == null)
+                scan_mat_T0 = DateTime.Now;
 
             //reset colonne
             Cv2.Line(scan_mat, new OpenCvSharp.Point(scan_mat_column, 0), new OpenCvSharp.Point(scan_mat_column, scan_mat.Height - 1), Scalar.Black, 1);
@@ -939,8 +941,22 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }));
 
             scan_mat_column++;
-            if (scan_mat_column > scan_mat.Width - 1)
-                scan_mat_column = 0;
+            if (scan_mat_column > scan_mat.Width - 1)            
+                Scan_Save();            
+        }
+
+        void Scan_Save()
+        {
+            DateTime scan_mat_Tfin = DateTime.Now;
+            TimeSpan duree = scan_mat_Tfin.Subtract((DateTime)scan_mat_T0);
+            string name = ((DateTime)scan_mat_T0).ToString("yyyy-MM-dd hh-mm-ss.fff")
+                + " (" + duree.TotalSeconds.ToString("F2") + ")";
+            //sauvegarde image
+            scan_mat.SaveImage(name + ".jpg");
+
+            //reset
+            scan_mat_T0 = null;
+            scan_mat_column = 0;
         }
 
         void SelectVideoFile()
@@ -1063,13 +1079,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         #endregion
 
-        private void VideoFileSelect_Click(object sender, RoutedEventArgs e)
+        void VideoFileSelect_Click(object sender, RoutedEventArgs e)
         {
             SelectVideoFile();
         }
 
 
-        private void CameraListRefresh_Click(object sender, RoutedEventArgs e)
+        void CameraListRefresh_Click(object sender, RoutedEventArgs e)
         {
             _sp_webcam_list.Children.Clear();
             _cbx_webcam.Items.Clear();
@@ -1093,7 +1109,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        private void WebCam_Selected(object sender, RoutedEventArgs e)
+        void WebCam_Selected(object sender, RoutedEventArgs e)
         {
             int webcam_index = (int)(sender as MenuItem).Tag;
             webcam = webcams[webcam_index];
@@ -1105,7 +1121,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         //    SortSensors_Up2Down();
         //}
 
-        private void SortSensors_Up2Down_Click(object sender, MouseButtonEventArgs e)
+        void SortSensors_Up2Down_Click(object sender, MouseButtonEventArgs e)
         {
             SortSensors_Up2Down();
         }
@@ -1118,7 +1134,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             sensors_to_sorted = true;
         }
 
-        private void SensorMap_Click(object sender, MouseButtonEventArgs e)
+        void SensorMap_Click(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Right)
             {
@@ -1166,7 +1182,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
 
 
-        private void _cbx_webcam_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        void _cbx_webcam_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             webcam_index = (int)(e.AddedItems[0] as TextBlock).Tag;
             webcam = webcams[webcam_index];
@@ -1186,7 +1202,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             CameraFormatSelected();
         }
 
-        private void CameraFormatSelected()
+        void CameraFormatSelected()
         {
             Camera(webcam_index);
             Set_Format();
@@ -1285,7 +1301,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        private void _sensormap_Click(object sender, MouseButtonEventArgs e)
+        void _sensormap_Click(object sender, MouseButtonEventArgs e)
         {
             var image = sender as System.Windows.Controls.Image;
             var grid = image.Parent as Grid;
@@ -1368,7 +1384,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             _title = cercles.Count.ToString();
         }
 
-        bool sensors_to_sorted = false;
 
         void SensorsMeasure()
         {
