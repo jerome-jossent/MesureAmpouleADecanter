@@ -6,8 +6,8 @@
              xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Image Source="{Binding bitmapSource}" x:Name="_img"
-                                              ToolTip="{Binding name}"
+    <Image Source="{Binding _bitmapSource}" x:Name="_img"
+                                              ToolTip="{Binding _name}"
                                               Margin="-4.99"
                                               RenderOptions.BitmapScalingMode="Fant"/>
 </UserControl>

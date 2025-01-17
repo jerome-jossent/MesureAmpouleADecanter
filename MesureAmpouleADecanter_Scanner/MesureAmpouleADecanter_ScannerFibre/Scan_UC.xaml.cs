@@ -18,17 +18,17 @@ namespace MesureAmpouleADecanter_ScannerFibre
 {
     public partial class Scan_UC : UserControl
     {
-        public OpenCvSharp.Mat mat;
-        public BitmapSource bitmapSource { get => mat.ToBitmapSource(); }
-        public string name { get; set; }
+        public OpenCvSharp.Mat _mat;
+        public BitmapSource _bitmapSource { get => _mat.ToBitmapSource(); }
+        public string _name { get; set; }
 
         public Scan_UC(OpenCvSharp.Mat scan_mat, string name)
         {
             InitializeComponent();
             DataContext = this;
-            mat = scan_mat;
+            _mat = scan_mat;
             //bitmapSource.Freeze();
-            this.name = name;
+            this._name = name;
         }
     }
 }

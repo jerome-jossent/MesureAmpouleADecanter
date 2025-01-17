@@ -8,7 +8,10 @@
         xmlns:opencv="clr-namespace:OpenCvSharp;assembly=OpenCvSharp"
         mc:Ignorable="d"
         Loaded="Window_Loaded" Closing="Window_Closing"
-        Title="{Binding _title}" Height="900" Width="1200">
+        Title="{Binding _title}" Height="900" Width="1200"
+        
+        KeyDown="_roi_sensor_KeyPress"
+        >
 
     <Window.Resources>
         <local:InvertableBooleanToVisibilityConverter x:Key="_Converter"/>
@@ -448,7 +451,7 @@
 
         </TabItem>
 
-        <TabItem Header="Adjust sensor's positions" IsEnabled="False">
+        <!--<TabItem Header="Adjust sensor's positions" IsEnabled="False">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -479,15 +482,17 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!--<ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                    -->
+        <!--<ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding _rois}" />
                     </ScrollViewer>-->
+        <!--
 
                 </Grid>
 
             </Grid>
 
-        </TabItem>
+        </TabItem>-->
 
 
         <TabItem Header="Scan = f(t)">
@@ -586,7 +591,12 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                 </StackPanel>
 
                 <Grid Grid.Row="1">
-                    <ScrollViewer HorizontalScrollBarVisibility="Visible">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer HorizontalScrollBarVisibility="Visible" Grid.Column="0">
                         <ListBox ItemsSource="{Binding _scans}" Name="_lbx_scans" SelectedItem="{Binding _scan_last}" >
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
@@ -600,6 +610,9 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                             </ListBox.ItemsPanel>
                         </ListBox>
                     </ScrollViewer>
+
+                    <!--<Image Grid.Column="1" Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>-->
+
                 </Grid>
 
             </Grid>

@@ -452,6 +452,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ObservableCollection<Sensor_UC> sensors_uc = new ObservableCollection<Sensor_UC>();
 
+        Sensor nearestSensor;
+
         #region Parameters local
 
         List<DsDevice> webcams;
@@ -1342,7 +1344,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 config.rois.Add(roi);
 
             roi_uc._img.MouseDown += _roi_sensor_Click;
-            roi_uc._img.KeyDown += _roi_sensor_KeyPress;
+            //roi_uc._img.KeyDown += _roi_sensor_KeyPress;
             roi_uc._img_sensormap.MouseDown += _sensormap_Click;
             _rois.Add(roi_uc);
 
@@ -1352,7 +1354,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             tb.MouseDown += ROI_selected;
             _lbx_rois.Items.Add(tb);
         }
-
 
         void ROI_selected(object sender, MouseButtonEventArgs e)
         {
@@ -1426,7 +1427,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             nearestSensor = null;
             double distance_min = double.MaxValue;
-            //quel cercle est concerné ?
+            //quel sensor est concerné ?
             foreach (Sensor s in sensors)
             {
                 double distance = Point2f.Distance(pointClick, new Point2f(s.x, s.y));
@@ -1444,19 +1445,18 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 lv_sensors.Focus();
             }
         }
-        Sensor nearestSensor;
 
         void _roi_sensor_KeyPress(object sender, KeyEventArgs e)
         {
             if (nearestSensor != null)
             {
-                if (e.Key == Key.NumPad4) 
+                if (e.Key == Key.Q) 
                     nearestSensor.x -= 1;
-                if (e.Key == Key.NumPad6)
+                if (e.Key == Key.D)
                     nearestSensor.x += 1;
-                if (e.Key == Key.NumPad8) 
+                if (e.Key == Key.Z) 
                     nearestSensor.y -= 1;
-                if (e.Key == Key.NumPad2) 
+                if (e.Key == Key.S) 
                     nearestSensor.y += 1;
             }
         }
@@ -1700,7 +1700,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void Save_Scan(string filepath)
         {
-            Mat[] images = _scans.Select(x => x.mat).ToArray();
+            Mat[] images = _scans.Select(x => x._mat).ToArray();
             Mat mat = new Mat();
             Cv2.HConcat(images, mat);
             mat.SaveImage(filepath);
