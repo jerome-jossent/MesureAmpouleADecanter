@@ -8,24 +8,23 @@
              
              xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"
              mc:Ignorable="d" 
-             d:DesignHeight="20" d:DesignWidth="200"
+             d:DesignHeight="20" d:DesignWidth="400"
              Height="25">
     <StackPanel Orientation ="Horizontal" Height="20" >
-        <TextBlock x:Name="_tbk_index" Text="{Binding _index}" Width="25" TextAlignment="Right" VerticalAlignment="Center" />
-
-        <Border BorderThickness="1" BorderBrush="Magenta" Margin="3,0" >
-            <TextBlock x:Name="_tbk" Text="  " Background="{Binding _color}"/>
-        </Border>
+        <TextBlock x:Name="_tbk_index" Text="{Binding _index}" Width="30" TextAlignment="Right" VerticalAlignment="Center" />
 
         <ProgressBar Width="40" Height="10" Minimum="{Binding _intensity_min}" Maximum="{Binding _intensity_max}" Value="{Binding _intensity}"/>
         <TextBlock x:Name="_tbk_val" Margin="3,0" Width="20" VerticalAlignment="Center" TextAlignment="Right" HorizontalAlignment="Center"/>
         <TextBlock Text="{Binding _ON}" Width="36" VerticalAlignment="Center"/>
 
-        <wpftk:IntegerUpDown Value="{Binding _x}" Minimum="0" Width="60"/>
-        <wpftk:IntegerUpDown Value="{Binding _y}" Minimum="0" Width="60"/>
+        <wpftk:IntegerUpDown Value="{Binding _x}" Minimum="0" Width="55" Height="18"/>
+        <TextBlock Text="x" Width="10" TextAlignment="Center" />
+        <wpftk:IntegerUpDown Value="{Binding _y}" Minimum="0" Width="55" Height="18"/>
 
-
-
+        <Border BorderThickness="1" BorderBrush="Magenta" Margin="3,0" Width="100" >
+            <TextBlock x:Name="_tbk" Text="{Binding _color_string}" Background="{Binding _color}"
+                       TextAlignment="Center" />
+        </Border>
 
     </StackPanel>
 </UserControl>

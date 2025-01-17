@@ -9,5 +9,5 @@
     <Image Source="{Binding _bitmapSource}" x:Name="_img"
                                               ToolTip="{Binding _name}"
                                               Margin="-4.99"
-                                              RenderOptions.BitmapScalingMode="Fant"/>
+                                              RenderOptions.BitmapScalingMode="NearestNeighbor"/>
 </UserControl>

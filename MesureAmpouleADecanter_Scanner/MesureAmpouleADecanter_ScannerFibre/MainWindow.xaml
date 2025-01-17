@@ -541,7 +541,7 @@ MouseDown="Scan_save_Switch_Click"/>
                     </ScrollViewer>-->
 
                     <!--Reconstruction Scan-->
-                    <Image Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>
+                    <Image Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                 </Grid>
 
             </Grid>

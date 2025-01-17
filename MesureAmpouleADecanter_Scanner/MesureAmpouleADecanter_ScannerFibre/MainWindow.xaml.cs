@@ -968,10 +968,21 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return cercles_mat;
         }
 
+        Scan_UC scan_mat_uc;
+
         void ScanConstructFromSensors()
         {
             if (scan_mat == null || scan_mat.Height != _sensors.Count)
+            {
                 scan_mat = new Mat(_sensors.Count, scan_mat_width, MatType.CV_8UC3);
+
+                //scan_mat_uc = new(scan_mat, "Live");
+                //scan_mat_uc._img.StretchDirection = StretchDirection.UpOnly;
+                //scan_mat_uc._img.Stretch = Stretch.UniformToFill;
+                //scan_mat_uc.Height = _scans_height;
+                //_scans.Clear();
+                //_scans.Add(scan_mat_uc);
+            }
 
             if (scan_mat_T0 == null)
                 scan_mat_T0 = DateTime.Now;
@@ -993,7 +1004,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 try
                 {
-                    _image3 = Convert(scan_mat.ToBitmap());
+                    _image3 = scan_mat.ToBitmapSource();
+                    //scan_mat_uc._Update(scan_mat);
                 }
                 catch (Exception ex) { }
             }));
@@ -1027,7 +1039,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         s._img.StretchDirection = StretchDirection.UpOnly;
                         s._img.Stretch = Stretch.UniformToFill;
                         s.Height = _scans_height;
+
                         _scans.Add(s);
+                        //_scans.Insert(_scans.Count - 2, s);
 
                         //follow last
                         if (scan_focus_last)
@@ -1344,7 +1358,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 config.rois.Add(roi);
 
             roi_uc._img.MouseDown += _roi_sensor_Click;
-            //roi_uc._img.KeyDown += _roi_sensor_KeyPress;
             roi_uc._img_sensormap.MouseDown += _sensormap_Click;
             _rois.Add(roi_uc);
 
@@ -1450,13 +1463,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             if (nearestSensor != null)
             {
-                if (e.Key == Key.Q) 
+                if (e.Key == Key.Q)
                     nearestSensor.x -= 1;
                 if (e.Key == Key.D)
                     nearestSensor.x += 1;
-                if (e.Key == Key.Z) 
+                if (e.Key == Key.Z)
                     nearestSensor.y -= 1;
-                if (e.Key == Key.S) 
+                if (e.Key == Key.S)
                     nearestSensor.y += 1;
             }
         }
@@ -1706,12 +1719,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
             mat.SaveImage(filepath);
         }
 
-        private void Sensors_dsiplay_Switch_Click(object sender, MouseButtonEventArgs e)
+        void Sensors_dsiplay_Switch_Click(object sender, MouseButtonEventArgs e)
         {
             _sensors_dsiplay = !_sensors_dsiplay;
         }
 
-        private void Store_scans_Switch_Click(object sender, MouseButtonEventArgs e)
+        void Store_scans_Switch_Click(object sender, MouseButtonEventArgs e)
         {
             _store_scans = !_store_scans;
         }

@@ -20,7 +20,5 @@
                Source="{Binding _sensormap, UpdateSourceTrigger=PropertyChanged}"
             Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>
 
-        <!--<Label Content="{Binding _circlesCount}" Foreground="Red"/>-->
-
     </Grid>
 </UserControl>

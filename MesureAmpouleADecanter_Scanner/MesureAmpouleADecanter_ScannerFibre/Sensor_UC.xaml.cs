@@ -35,9 +35,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 if (color == value) return;
                 color = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(_color_string));
             }
         }
         SolidColorBrush color = new SolidColorBrush(Colors.Magenta);
+
+        public string _color_string { get => _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B; }
 
         public string _index
         {
@@ -69,8 +72,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public Sensor s;
 
-        public int _x { get {  return s.x; } set { s.x = value; } }
-        public int _y { get {  return s.y; } set { s.y = value; } }
+        public int _x { get { return s.x; } set { s.x = value; } }
+        public int _y { get { return s.y; } set { s.y = value; } }
 
         public bool Selected;
 
