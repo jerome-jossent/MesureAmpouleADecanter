@@ -137,6 +137,17 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         bool HoughCircle_Detection = false;
 
+        public bool _scan_save
+        {
+            get => scan_save;
+            set
+            {
+                scan_save = value;
+                OnPropertyChanged();
+            }
+        }
+        bool scan_save = false;
+
         public int _videoTotalFrames
         {
             get
@@ -358,6 +369,49 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
+        public ObservableCollection<Scan_UC> _scans
+        {
+            get => scans; set
+            {
+                scans = value;
+                OnPropertyChanged();
+            }
+        }
+        ObservableCollection<Scan_UC> scans = new ObservableCollection<Scan_UC>();
+
+
+        public int _scans_height { get => _sensors.Count * 3; }
+
+        public bool _scan_focus_last
+        {
+            get => scan_focus_last; set
+            {
+                scan_focus_last = value;
+                OnPropertyChanged();
+            }
+        }
+        bool scan_focus_last = true;
+
+        public bool _sensors_dsiplay
+        {
+            get => sensors_display; set
+            {
+                sensors_display = value;
+                OnPropertyChanged();
+            }
+        }
+        bool sensors_display = true;
+
+        public bool _store_scans
+        {
+            get => store_scans; set
+            {
+                store_scans = value;
+                OnPropertyChanged();
+            }
+        }
+        bool store_scans = true;
+
         public ObservableCollection<Format> _webcam_formats
         {
             get => webcam_formats; set
@@ -398,7 +452,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ObservableCollection<Sensor_UC> sensors_uc = new ObservableCollection<Sensor_UC>();
 
-
         #region Parameters local
 
         List<DsDevice> webcams;
@@ -409,9 +462,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
         Mat frame;
         Mat ROI_mat;
         Mat cercles_mat = new Mat();
-        Mat scan_mat;// = new Mat(100, 200, MatType.CV_8UC3, Scalar.Magenta);
+        Mat scan_mat;
+        int scan_mat_width = 20;
         int scan_mat_column = 0;
         DateTime? scan_mat_T0 = null;
+        DateTime? experience_T0 = DateTime.Now;
 
         List<Cercle> cercles;
         bool circle_Recompute;
@@ -914,7 +969,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         void ScanConstructFromSensors()
         {
             if (scan_mat == null || scan_mat.Height != _sensors.Count)
-                scan_mat = new Mat(_sensors.Count, 200, MatType.CV_8UC3);
+                scan_mat = new Mat(_sensors.Count, scan_mat_width, MatType.CV_8UC3);
+
             if (scan_mat_T0 == null)
                 scan_mat_T0 = DateTime.Now;
 
@@ -941,22 +997,46 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }));
 
             scan_mat_column++;
-            if (scan_mat_column > scan_mat.Width - 1)            
-                Scan_Save();            
+            Scan_Save();
         }
 
         void Scan_Save()
         {
-            DateTime scan_mat_Tfin = DateTime.Now;
-            TimeSpan duree = scan_mat_Tfin.Subtract((DateTime)scan_mat_T0);
-            string name = ((DateTime)scan_mat_T0).ToString("yyyy-MM-dd hh-mm-ss.fff")
-                + " (" + duree.TotalSeconds.ToString("F2") + ")";
-            //sauvegarde image
-            scan_mat.SaveImage(name + ".jpg");
+            if (scan_mat_column > scan_mat.Width - 1)
+            {
+                if (_scan_save)
+                {
+                    DateTime scan_mat_Tfin = DateTime.Now;
+                    TimeSpan duree = scan_mat_Tfin.Subtract((DateTime)scan_mat_T0);
+                    string name = ((DateTime)scan_mat_T0).ToString("yyyy-MM-dd hh-mm-ss.fff")
+                        + " (" + duree.TotalSeconds.ToString("F2") + ")";
+                    //sauvegarde image
+                    scan_mat.SaveImage(name + ".jpg");
+                }
+                TimeSpan deltatT = (DateTime)scan_mat_T0 - (DateTime)experience_T0;
+                string nom = deltatT.TotalSeconds.ToString("f1");
+                Mat mat_to_save = scan_mat.Clone();
 
-            //reset
-            scan_mat_T0 = null;
-            scan_mat_column = 0;
+                if (_store_scans)
+                {
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        Scan_UC s = new(mat_to_save, nom);
+                        s._img.StretchDirection = StretchDirection.UpOnly;
+                        s._img.Stretch = Stretch.UniformToFill;
+                        s.Height = _scans_height;
+                        _scans.Add(s);
+
+                        //follow last
+                        if (scan_focus_last)
+                            _lbx_scans.ScrollIntoView(s);
+                    });
+                }
+
+                //reset
+                scan_mat_T0 = null;
+                scan_mat_column = 0;
+            }
         }
 
         void SelectVideoFile()
@@ -1084,7 +1164,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             SelectVideoFile();
         }
 
-
         void CameraListRefresh_Click(object sender, RoutedEventArgs e)
         {
             _sp_webcam_list.Children.Clear();
@@ -1115,11 +1194,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             webcam = webcams[webcam_index];
             Camera(webcam_index);
         }
-
-        //private void SortSensors_Up2Down_Click(object sender, RoutedEventArgs e)
-        //{
-        //    SortSensors_Up2Down();
-        //}
 
         void SortSensors_Up2Down_Click(object sender, MouseButtonEventArgs e)
         {
@@ -1162,15 +1236,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-
-
-
-
-
-
-
-
-
         OpenCvSharp.Rect? SelectROI()
         {
             string window_name = "Valid ROI with 'Enter' or 'Space', Cancel with 'c'";
@@ -1180,7 +1245,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             Cv2.DestroyWindow(window_name);
             return newroi;
         }
-
 
         void _cbx_webcam_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -1277,22 +1341,27 @@ namespace MesureAmpouleADecanter_ScannerFibre
             if (!config.rois.Contains(roi))
                 config.rois.Add(roi);
 
+            roi_uc._img.MouseDown += _roi_sensor_Click;
+            roi_uc._img.KeyDown += _roi_sensor_KeyPress;
             roi_uc._img_sensormap.MouseDown += _sensormap_Click;
             _rois.Add(roi_uc);
+
             TextBlock tb = new TextBlock();
             tb.Text = roi_uc._name;
             tb.Tag = roi_uc;
-            tb.MouseDown += roi_selected;
+            tb.MouseDown += ROI_selected;
             _lbx_rois.Items.Add(tb);
         }
 
-        void roi_selected(object sender, MouseButtonEventArgs e)
+
+        void ROI_selected(object sender, MouseButtonEventArgs e)
         {
             if (e.RightButton == MouseButtonState.Pressed)
             {
                 var tb = sender as TextBlock;
                 ROI_UC roi_uc = tb.Tag as ROI_UC;
 
+                roi_uc._img.MouseDown -= _roi_sensor_Click;
                 roi_uc._img_sensormap.MouseDown -= _sensormap_Click;
 
                 config.rois.Remove(roi_uc._roi);
@@ -1342,6 +1411,56 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 cercleSelected.sensor.uc._Selected();
         }
 
+        void _roi_sensor_Click(object sender, MouseButtonEventArgs e)
+        {
+            //quel sensor est le plus proche ?
+            var image = sender as System.Windows.Controls.Image;
+            var grid = image.Parent as Grid;
+            var uc = grid.Parent as ROI_UC;
+
+            System.Windows.Point p = e.GetPosition(image);
+
+            float x = (float)(p.X / image.ActualWidth * uc._roi.Width) + uc._roi.Left;
+            float y = (float)(p.Y / image.ActualHeight * uc._roi.Height) + uc._roi.Top;
+            Point2f pointClick = new Point2f(x, y);
+
+            nearestSensor = null;
+            double distance_min = double.MaxValue;
+            //quel cercle est concerné ?
+            foreach (Sensor s in sensors)
+            {
+                double distance = Point2f.Distance(pointClick, new Point2f(s.x, s.y));
+                if (distance < distance_min)
+                {
+                    distance_min = distance;
+                    nearestSensor = s;
+                }
+            }
+
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                lv_sensors.ScrollIntoView(nearestSensor.uc);
+                lv_sensors.SelectedItem = nearestSensor.uc;
+                lv_sensors.Focus();
+            }
+        }
+        Sensor nearestSensor;
+
+        void _roi_sensor_KeyPress(object sender, KeyEventArgs e)
+        {
+            if (nearestSensor != null)
+            {
+                if (e.Key == Key.NumPad4) 
+                    nearestSensor.x -= 1;
+                if (e.Key == Key.NumPad6)
+                    nearestSensor.x += 1;
+                if (e.Key == Key.NumPad8) 
+                    nearestSensor.y -= 1;
+                if (e.Key == Key.NumPad2) 
+                    nearestSensor.y += 1;
+            }
+        }
+
         void UpdateROIS(Mat frame)
         {
             foreach (ROI_UC roi in _rois)
@@ -1370,11 +1489,18 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     roi._circlesCount = circleSegments.Length;
                 }
-                roi.Show(roi_frame);
 
                 Mat sensormap = SensorsUpdate(G.Width, G.Height, roi);
 
                 SensorsMeasure();
+
+                foreach (Sensor sensor in _sensors)
+                {
+                    if (sensors_display)
+                        Sensors_display(roi_frame, roi, sensor);
+                }
+
+                roi.Show(roi_frame);
 
                 ScanConstructFromSensors();
 
@@ -1384,6 +1510,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
             _title = cercles.Count.ToString();
         }
 
+        void Sensors_display(Mat frame, ROI_UC roi_uc, Sensor sensor)
+        {
+            Cv2.Circle(frame, sensor.x - roi_uc._roi.Left, sensor.y - roi_uc._roi.Top, 2, new Scalar(255, 0, 255), 1);
+        }
 
         void SensorsMeasure()
         {
@@ -1436,11 +1566,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 if (sensor.numero == null)
                     all_sensors_are_initialized = false;
             }
+
+            //sort ?
             if (sensors_to_sorted && all_sensors_are_initialized)
-            {
-                //sort
                 _sensors_uc = new ObservableCollection<Sensor_UC>(_sensors_uc.OrderBy(uc => uc.s.numero));
-            }
         }
 
         void HoughCircle_Switch_Click(object sender, MouseButtonEventArgs e)
@@ -1542,6 +1671,49 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             if (dialog.ShowDialog() == true)
                 File.WriteAllText(dialog.FileName, jsonString);
+        }
+
+        void Scan_save_Switch_Click(object sender, MouseButtonEventArgs e)
+        {
+            _scan_save = !_scan_save;
+        }
+
+        void ScansReset_Click(object sender, MouseButtonEventArgs e)
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                _scans.Clear();
+            });
+            experience_T0 = DateTime.Now;
+        }
+
+        void Scan_focus_last_Switch_Click(object sender, MouseButtonEventArgs e)
+        {
+            _scan_focus_last = !_scan_focus_last;
+        }
+
+        void Scan_Save_Click(object sender, MouseButtonEventArgs e)
+        {
+            string filename = "D:\\Projets\\MesureAmpouleADecanter\\MesureAmpouleADecanter_Scanner\\MesureAmpouleADecanter_ScannerFibre\\bin\\Debug\\net8.0-windows\\test.jpg";
+            Save_Scan(filename);
+        }
+
+        void Save_Scan(string filepath)
+        {
+            Mat[] images = _scans.Select(x => x.mat).ToArray();
+            Mat mat = new Mat();
+            Cv2.HConcat(images, mat);
+            mat.SaveImage(filepath);
+        }
+
+        private void Sensors_dsiplay_Switch_Click(object sender, MouseButtonEventArgs e)
+        {
+            _sensors_dsiplay = !_sensors_dsiplay;
+        }
+
+        private void Store_scans_Switch_Click(object sender, MouseButtonEventArgs e)
+        {
+            _store_scans = !_store_scans;
         }
     }
 }

@@ -167,7 +167,7 @@
                         <Image Margin="5" Source="/Images/load.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="SensorMap_Load_Click" ToolTip="Load sensor detection map"/>
 
-        
+
                     </StackPanel>
                 </Grid>
 
@@ -239,7 +239,8 @@
                        MouseDown="SensorMap_Click"
                        />
 
-                <!--Sensor's values--><!--
+                <!--Sensor's values-->
+                <!--
                 <ListView Grid.ColumnSpan="3" Grid.Row="3" x:Name="lv_sensors"  >
                     <ListView.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -248,7 +249,8 @@
                     </ListView.ItemsPanel>
                 </ListView>-->
 
-                <!--Reconstruction Scan--><!--
+                <!--Reconstruction Scan-->
+                <!--
                 <Image Grid.Column="2" Grid.Row="2"
     Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}"
        Stretch="Uniform"
@@ -364,10 +366,21 @@
                        MouseDown="Sensors_Save_Click" ToolTip="Save"/>
 
                     <TextBlock Text="Sort Sensors :&#x0a;from up to down" VerticalAlignment="Center"/>
-                    
+
                     <Image Margin="5" Source="/Images/arrow_down.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
    MouseDown="SortSensors_Up2Down_Click" ToolTip="Save"/>
-                                     
+
+
+                    <TextBlock Text="Show sensors" VerticalAlignment="Center"/>
+                    <Grid Margin="5">
+                        <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _sensors_dsiplay, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+          MouseDown="Sensors_dsiplay_Switch_Click"/>
+                        <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _sensors_dsiplay, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+          MouseDown="Sensors_dsiplay_Switch_Click"/>
+                    </Grid>
+
                 </StackPanel>
 
                 <!--Hough circles parameters-->
@@ -415,23 +428,21 @@
                     <Label Grid.Row="4" Grid.Column="2" Content="{Binding _rayon, UpdateSourceTrigger=PropertyChanged}" />-->
                 </Grid>
 
+                <!--ROI & Sensors-->
                 <Grid Grid.Row="2" >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
+
                     <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding _rois, UpdateSourceTrigger=PropertyChanged}" />
                     </ScrollViewer>
-                    
+
                     <!--Sensor's values-->
-                    <ListView Grid.Column="1" ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors"  >
-                        <!--<ListView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="10"/>
-                            </ItemsPanelTemplate>
-                        </ListView.ItemsPanel>-->
-                    </ListView>
+                    <ListView Grid.Column="1" ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors"
+                              KeyDown="_roi_sensor_KeyPress"
+                              />
                 </Grid>
             </Grid>
 
@@ -479,7 +490,7 @@
         </TabItem>
 
 
-        <TabItem Header="Adjust sensor's order">
+        <TabItem Header="Scan = f(t)">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -503,6 +514,15 @@
                     <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="Sensors_Load_Click" ToolTip="Load"/>
 
+                    <TextBlock Text="Sauvegarder les images" VerticalAlignment="Center"/>
+                    <Grid Margin="5">
+                        <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="Scan_save_Switch_Click"/>
+                        <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="Scan_save_Switch_Click"/>
+                    </Grid>
                 </StackPanel>
 
                 <Grid Grid.Row="2">
@@ -517,6 +537,69 @@
 
                     <!--Reconstruction Scan-->
                     <Image Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>
+                </Grid>
+
+            </Grid>
+
+        </TabItem>
+
+        <TabItem Header="Scans">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                    <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                           MouseDown="ScansReset_Click" ToolTip="Reset scans"/>
+
+
+
+                    <TextBlock Text="Store scans :" VerticalAlignment="Center"/>
+                    <Grid Margin="5">
+                        <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _store_scans, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="Store_scans_Switch_Click"/>
+                        <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _store_scans, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="Store_scans_Switch_Click"/>
+                    </Grid>
+
+
+
+                    <TextBlock Text="Focus on last datas :" VerticalAlignment="Center"/>
+                    <Grid Margin="5">
+                        <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_focus_last, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="Scan_focus_last_Switch_Click"/>
+                        <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_focus_last, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="Scan_focus_last_Switch_Click"/>
+                    </Grid>
+
+
+                    <TextBlock Text="Save to one image :" VerticalAlignment="Center"/>
+                    <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Scan_Save_Click" ToolTip="Save"/>
+                </StackPanel>
+
+                <Grid Grid.Row="1">
+                    <ScrollViewer HorizontalScrollBarVisibility="Visible">
+                        <ListBox ItemsSource="{Binding _scans}" Name="_lbx_scans" SelectedItem="{Binding _scan_last}" >
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel IsItemsHost="True" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                    </ScrollViewer>
                 </Grid>
 
             </Grid>

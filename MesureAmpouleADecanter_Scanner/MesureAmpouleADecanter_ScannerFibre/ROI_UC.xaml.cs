@@ -84,6 +84,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 catch (Exception ex) { }
             }));
         }
+
         internal void Show_sensormap(Mat frame)
         {
             Dispatcher.BeginInvoke(new Action(() =>
@@ -94,11 +95,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 }
                 catch (Exception ex) { }
             }));
-        }
-
-        private void Image_Click(object sender, MouseButtonEventArgs e)
-        {
-
         }
 
     }

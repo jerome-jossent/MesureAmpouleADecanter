@@ -3,15 +3,29 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             
+             xmlns:wpftk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             
              xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"
              mc:Ignorable="d" 
              d:DesignHeight="20" d:DesignWidth="200"
              Height="25">
     <StackPanel Orientation ="Horizontal" Height="20" >
         <TextBlock x:Name="_tbk_index" Text="{Binding _index}" Width="25" TextAlignment="Right" VerticalAlignment="Center" />
-        <TextBlock x:Name="_tbk" Text="  " Background="{Binding _color}"/>
+
+        <Border BorderThickness="1" BorderBrush="Magenta" Margin="3,0" >
+            <TextBlock x:Name="_tbk" Text="  " Background="{Binding _color}"/>
+        </Border>
+
         <ProgressBar Width="40" Height="10" Minimum="{Binding _intensity_min}" Maximum="{Binding _intensity_max}" Value="{Binding _intensity}"/>
-        <TextBlock x:Name="_tbk_val" Margin="3,0" VerticalAlignment="Center"  HorizontalAlignment="Center"/>
+        <TextBlock x:Name="_tbk_val" Margin="3,0" Width="20" VerticalAlignment="Center" TextAlignment="Right" HorizontalAlignment="Center"/>
         <TextBlock Text="{Binding _ON}" Width="36" VerticalAlignment="Center"/>
+
+        <wpftk:IntegerUpDown Value="{Binding _x}" Minimum="0" Width="60"/>
+        <wpftk:IntegerUpDown Value="{Binding _y}" Minimum="0" Width="60"/>
+
+
+
+
     </StackPanel>
 </UserControl>

@@ -69,6 +69,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public Sensor s;
 
+        public int _x { get {  return s.x; } set { s.x = value; } }
+        public int _y { get {  return s.y; } set { s.y = value; } }
+
         public bool Selected;
 
         public Sensor_UC()
