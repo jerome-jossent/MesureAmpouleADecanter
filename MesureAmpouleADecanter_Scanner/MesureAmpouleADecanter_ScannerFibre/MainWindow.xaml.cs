@@ -615,7 +615,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             capVideo = new OpenCvSharp.VideoCapture(filePath);
             sleepTime = (int)Math.Round(1000 / capVideo.Fps);
-            OnPropertyChanged("_videoTotalFrames");
+            OnPropertyChanged(nameof(_videoTotalFrames));
 
             CancellationToken token = cancellationTokenSource.Token;
             Task.Factory.StartNew(() => PlayVideo(token), token);
@@ -1255,7 +1255,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         OpenCvSharp.Rect? SelectROI()
         {
             string window_name = "Valid ROI with 'Enter' or 'Space', Cancel with 'c'";
-            OpenCvSharp.Rect? newroi = Cv2.SelectROI(window_name, frame, true);
+            OpenCvSharp.Rect? newroi = Cv2.SelectROI(window_name, frame.Clone(), true);
             if (((OpenCvSharp.Rect)newroi).Width == 0 || ((OpenCvSharp.Rect)newroi).Height == 0)
                 newroi = null;
             Cv2.DestroyWindow(window_name);
@@ -1533,9 +1533,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
             bool all_sensors_are_initialized = true;
             foreach (Sensor sensor in _sensors)
             {
+                Vec3b pixelValue;
+
                 //mesure
                 //v0 = juste centre
-                Vec3b pixelValue = frame.At<Vec3b>(sensor.y, sensor.x);
+                //pixelValue = frame.At<Vec3b>(sensor.y, sensor.x);
 
                 //v1 = carré
                 //                int range = 9;
@@ -1574,7 +1576,31 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                 //=> pas non plus très représentatif...
 
-                sensor.SetColor(pixelValue);
+                //v2 = max carré
+
+                int range = 9;
+                float[] pixel = new float[3];
+                float mesure = 0;
+                float mesure_max = 0;
+                int x_max = sensor.x, y_max = sensor.y;
+
+                for (int x = -range; x < range + 1; x++)
+                    for (int y = -range; y < range + 1; y++)
+                    {
+                        Vec3b pixelValueRange = frame.At<Vec3b>(sensor.y + y, sensor.x + x);
+                        mesure = pixelValueRange.Item0 + pixelValueRange.Item1 + pixelValueRange.Item2;
+                        if (mesure > mesure_max)
+                        {
+                            mesure_max = mesure;
+                            x_max = sensor.x + x;
+                            y_max = sensor.y + y;
+                        }
+                    }
+
+
+                pixelValue = frame.At<Vec3b>(y_max, x_max);
+                
+                sensor.SetMeasure(pixelValue);
 
                 if (sensor.numero == null)
                     all_sensors_are_initialized = false;
@@ -1582,7 +1608,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             //sort ?
             if (sensors_to_sorted && all_sensors_are_initialized)
-                _sensors_uc = new ObservableCollection<Sensor_UC>(_sensors_uc.OrderBy(uc => uc.s.numero));
+            {
+                var sorted = (_sensors_uc.OrderBy(uc => uc.s.numero)).ToList();
+                _sensors_uc = new ObservableCollection<Sensor_UC>(sorted);
+            }
         }
 
         void HoughCircle_Switch_Click(object sender, MouseButtonEventArgs e)
@@ -1609,11 +1638,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 for (int i = 0; i < _cbx_webcam.Items.Count; i++)
                 {
                     TextBlock tb = _cbx_webcam.Items[i] as TextBlock;
-                    if (tb.Text == webcam.Name)
+                    if (tb.Text == config.webcam_name)// webcam.Name)
                     {
                         camerapresente = true;
-                        this.webcam = webcam;
-                        webcam_index = (int)tb.Tag;
+                        //this.webcam = webcam;
+                        webcam_index = i;// (int)tb.Tag;
+                        webcam = webcams[i];
                     }
                 }
 

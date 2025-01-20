@@ -29,7 +29,15 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
 
         public OpenCvSharp.Mat _mat;
-        public BitmapSource _bitmapSource { get => _mat.ToBitmapSource(); }
+        public BitmapSource _bitmapSource
+        {
+            get
+            {
+                if (_mat == null || _mat.Empty() || _mat.Width == 0 || _mat.Height == 0)
+                    return null;
+                return _mat.ToBitmapSource();
+            }
+        }
         public string _name { get; set; }
 
         public Scan_UC(OpenCvSharp.Mat scan_mat, string name)

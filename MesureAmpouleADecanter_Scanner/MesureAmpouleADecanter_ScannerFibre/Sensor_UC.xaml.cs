@@ -40,7 +40,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         SolidColorBrush color = new SolidColorBrush(Colors.Magenta);
 
-        public string _color_string { get => _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B; }
+        public string _color_string { get => _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B +"[" +
+
+
+                s.normalisation_a[0].ToString("0.00") + ";" + s.normalisation_a[1].ToString("0.00") + ";" + s.normalisation_a[2].ToString("0.00") + ";" + "|" + 
+                s.normalisation_b[0].ToString("0.00") + ";" + s.normalisation_b[1].ToString("0.00") + ";" + s.normalisation_b[2].ToString("0.00") + ";"  +                 
+               "]"; }
 
         public string _index
         {
@@ -99,10 +104,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                _color = new SolidColorBrush(Color.FromRgb(
-                    pixelValue.Item2,
-                    pixelValue.Item1,
-                    pixelValue.Item0));
+                //_color = new SolidColorBrush(Color.FromRgb(
+                //    pixelValue.Item2,
+                //    pixelValue.Item1,
+                //    pixelValue.Item0));
 
                 OnPropertyChanged(nameof(_intensity_min));
                 OnPropertyChanged(nameof(_intensity_max));
@@ -113,10 +118,22 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }));
         }
 
+        internal void _UpdateNormalized(Vec3b pixelValueNormalized)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _color = new SolidColorBrush(Color.FromRgb(
+                    pixelValueNormalized.Item2,
+                    pixelValueNormalized.Item1,
+                    pixelValueNormalized.Item0));
+            }));
+        }
+
         internal void _Selected()
         {
             Selected = !Selected;
             Background = new SolidColorBrush(Selected ? Colors.DarkGray : Colors.Transparent);
         }
+
     }
 }
