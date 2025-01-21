@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.DirectoryServices.ActiveDirectory;
 using System.Drawing;
 using System.IO;
@@ -22,13 +23,16 @@ using System.Windows.Threading;
 using DirectShowLib;
 using MesureAmpouleADecanter_ScannerFibre.Properties;
 using Microsoft.Win32;
+using Newtonsoft.Json.Linq;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using OpenCvSharp.WpfExtensions;
+using Xceed.Wpf.Toolkit;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using static System.Net.Mime.MediaTypeNames;
 using static MesureAmpouleADecanter_ScannerFibre.SensorMap;
 using static WebCamParameters_UC.WebCamFormat;
+using MessageBox = System.Windows.MessageBox;
 using Rect = OpenCvSharp.Rect;
 
 namespace MesureAmpouleADecanter_ScannerFibre
@@ -146,7 +150,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
             }
         }
-        bool scan_save = false;
+        bool scan_save = true;
 
         public int _videoTotalFrames
         {
@@ -954,9 +958,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
                     {
-                        Sensor_UC suc = new Sensor_UC();
-                        suc._Link(s);
-                        _sensors_uc.Add(suc);
+                        Sensor_UC sensor_uc = new Sensor_UC();
+                        sensor_uc._Link(s);
+                        sensor_uc._spinner_index.Spin += Sensor_UC_spinner_index_Spin;
+                        _sensors_uc.Add(sensor_uc);
                     });
                 }
 
@@ -966,6 +971,54 @@ namespace MesureAmpouleADecanter_ScannerFibre
             OnPropertyChanged("_sensors");
 
             return cercles_mat;
+        }
+
+        private void Sensor_UC_spinner_index_Spin(object? sender, Xceed.Wpf.Toolkit.SpinEventArgs e)
+        {
+            ButtonSpinner spinner = (ButtonSpinner)sender;
+            StackPanel sp = spinner.Parent as StackPanel;
+            Sensor_UC suc = sp.Parent as Sensor_UC;
+
+            if (suc._s.numero == null)
+            {
+                //TODO
+                //suc._s.numero == senso
+                return;
+            }
+
+            int valeurcherchee;
+            if (e.Direction == SpinDirection.Increase) // monte
+            {
+                //si premier, annuler
+                if (suc._s.numero == 0) return;
+                //celui du dessus je l'augmente
+                valeurcherchee = (int)suc._s.numero + 1;
+                foreach (Sensor_UC suc_other in sensors_uc)
+                {
+                    if (suc_other._s.numero == valeurcherchee)
+                    {
+                        suc_other._s.SetNumero(valeurcherchee + 1);
+                    }
+                }
+                suc._s.SetNumero(valeurcherchee);
+            }
+            else //descend
+
+            {
+                //si dernier, annuler
+                if (suc._s.numero == sensors_uc.Count - 1) return;
+                valeurcherchee = (int)suc._s.numero - 1;
+                foreach (Sensor_UC suc_other in sensors_uc)
+                {
+                    if (suc_other._s.numero == valeurcherchee)
+                    {
+                        suc_other._s.SetNumero(valeurcherchee - 1);
+                    }
+                }
+                suc._s.SetNumero(valeurcherchee);
+            }
+
+            Sensor_Sort();
         }
 
         Scan_UC scan_mat_uc;
@@ -1018,24 +1071,24 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             if (scan_mat_column > scan_mat.Width - 1)
             {
+                DateTime scan_mat_Tfin = DateTime.Now;
+                DateTime t0 = (DateTime)scan_mat_T0;
+                TimeSpan duree = scan_mat_Tfin.Subtract(t0);
                 if (_scan_save)
                 {
-                    DateTime scan_mat_Tfin = DateTime.Now;
-                    TimeSpan duree = scan_mat_Tfin.Subtract((DateTime)scan_mat_T0);
-                    string name = ((DateTime)scan_mat_T0).ToString("yyyy-MM-dd hh-mm-ss.fff")
+                    string name = t0.ToString("yyyy-MM-dd hh-mm-ss.fff")
                         + " (" + duree.TotalSeconds.ToString("F2") + ")";
                     //sauvegarde image
                     scan_mat.SaveImage(name + ".jpg");
                 }
-                TimeSpan deltatT = (DateTime)scan_mat_T0 - (DateTime)experience_T0;
-                string nom = deltatT.TotalSeconds.ToString("f1");
+                TimeSpan deltatT = t0 - (DateTime)experience_T0;
                 Mat mat_to_save = scan_mat.Clone();
 
                 if (_store_scans)
                 {
                     Dispatcher.BeginInvoke(() =>
                     {
-                        Scan_UC s = new(mat_to_save, nom);
+                        Scan_UC s = new(mat_to_save, t0, duree);
                         s._img.StretchDirection = StretchDirection.UpOnly;
                         s._img.Stretch = Stretch.UniformToFill;
                         s.Height = _scans_height;
@@ -1599,7 +1652,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
 
                 pixelValue = frame.At<Vec3b>(y_max, x_max);
-                
+
                 sensor.SetMeasure(pixelValue);
 
                 if (sensor.numero == null)
@@ -1608,10 +1661,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             //sort ?
             if (sensors_to_sorted && all_sensors_are_initialized)
-            {
-                var sorted = (_sensors_uc.OrderBy(uc => uc.s.numero)).ToList();
-                _sensors_uc = new ObservableCollection<Sensor_UC>(sorted);
-            }
+                Sensor_Sort();
+        }
+
+        void Sensor_Sort()
+        {
+            var sorted = (_sensors_uc.OrderBy(uc => uc._s.numero)).ToList();
+            _sensors_uc = new ObservableCollection<Sensor_UC>(sorted);
         }
 
         void HoughCircle_Switch_Click(object sender, MouseButtonEventArgs e)
@@ -1675,9 +1731,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 {
                     sensor.Load();
                     Sensor_UC sensor_uc = new Sensor_UC();
+                    sensor_uc._spinner_index.Spin += Sensor_UC_spinner_index_Spin;
                     sensor_uc._Link(sensor);
                     _sensors_uc.Add(sensor_uc);
                 }
+                Sensor_Sort();
 
                 //Camera(webcam_index);
                 _play = true;
@@ -1737,16 +1795,31 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void Scan_Save_Click(object sender, MouseButtonEventArgs e)
         {
-            string filename = "D:\\Projets\\MesureAmpouleADecanter\\MesureAmpouleADecanter_Scanner\\MesureAmpouleADecanter_ScannerFibre\\bin\\Debug\\net8.0-windows\\test.jpg";
-            Save_Scan(filename);
+            try
+            {
+                string directory = AppDomain.CurrentDomain.BaseDirectory;
+                FileInfo file = Save_Scan(directory);
+                //open file explorer
+                Process.Start("explorer.exe", "/select, \"" + file.FullName + "\"");
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
-        void Save_Scan(string filepath)
+        FileInfo Save_Scan(string directory)
         {
             Mat[] images = _scans.Select(x => x._mat).ToArray();
             Mat mat = new Mat();
             Cv2.HConcat(images, mat);
+
+            TimeSpan duree = _scans.Last()._t - _scans.First()._t;
+            string filepath = directory + _scans.First()._t.ToString("yyyy-MM-dd HH¤mm") + " [" + duree.TotalSeconds.ToString("f1") + "s].jpg";
+            filepath = filepath.Replace('¤', 'h');
             mat.SaveImage(filepath);
+            FileInfo fileInfo = new FileInfo(filepath);
+            return fileInfo;
         }
 
         void Sensors_dsiplay_Switch_Click(object sender, MouseButtonEventArgs e)

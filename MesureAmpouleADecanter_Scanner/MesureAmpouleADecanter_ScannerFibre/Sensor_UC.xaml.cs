@@ -40,12 +40,15 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         SolidColorBrush color = new SolidColorBrush(Colors.Magenta);
 
-        public string _color_string { get => _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B +"[" +
+        public string _color_string
+        {
+            get => _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B + "[" +
 
 
-                s.normalisation_a[0].ToString("0.00") + ";" + s.normalisation_a[1].ToString("0.00") + ";" + s.normalisation_a[2].ToString("0.00") + ";" + "|" + 
-                s.normalisation_b[0].ToString("0.00") + ";" + s.normalisation_b[1].ToString("0.00") + ";" + s.normalisation_b[2].ToString("0.00") + ";"  +                 
-               "]"; }
+                _s.normalisation_a[0].ToString("0.00") + ";" + _s.normalisation_a[1].ToString("0.00") + ";" + _s.normalisation_a[2].ToString("0.00") + ";" + "|" +
+                _s.normalisation_b[0].ToString("0.00") + ";" + _s.normalisation_b[1].ToString("0.00") + ";" + _s.normalisation_b[2].ToString("0.00") + ";" +
+               "]";
+        }
 
         public string _index
         {
@@ -71,14 +74,14 @@ namespace MesureAmpouleADecanter_ScannerFibre
         float intensity;
 
 
-        public float _intensity_min { get => s.intensity_min; }
-        public float _intensity_max { get => s.intensity_max; }
-        public bool _ON { get => s.ON; }
+        public float _intensity_min { get => _s.intensity_min; }
+        public float _intensity_max { get => _s.intensity_max; }
+        public bool _ON { get => _s.ON; }
 
-        public Sensor s;
+        public Sensor _s;
 
-        public int _x { get { return s.x; } set { s.x = value; } }
-        public int _y { get { return s.y; } set { s.y = value; } }
+        public int _x { get { return _s.x; } set { _s.x = value; } }
+        public int _y { get { return _s.y; } set { _s.y = value; } }
 
         public bool Selected;
 
@@ -90,36 +93,38 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         internal void _Link(Sensor s)
         {
-            this.s = s;
+            this._s = s;
             s.uc = this;
-            _SetIndexName((int)s.numero);
+            if (s.numero != null)
+                _SetIndexName();
         }
 
-        internal void _SetIndexName(int numero)
+        internal void _SetIndexName()
         {
-            _index = numero.ToString("00") + " : ";
+            _index = (_s.numero == null) ? "? : " : ((int)_s.numero).ToString("00") + " : ";
         }
 
         internal void _Update(Vec3b pixelValue)
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                //_color = new SolidColorBrush(Color.FromRgb(
-                //    pixelValue.Item2,
-                //    pixelValue.Item1,
-                //    pixelValue.Item0));
+                _color = new SolidColorBrush(Color.FromRgb(
+                    pixelValue.Item2,
+                    pixelValue.Item1,
+                    pixelValue.Item0));
 
                 OnPropertyChanged(nameof(_intensity_min));
                 OnPropertyChanged(nameof(_intensity_max));
-                _intensity = s.intensity;
+                _intensity = _s.intensity;
                 OnPropertyChanged(nameof(_ON));
 
-                _tbk_val.Text = (s.intensity * 100).ToString("00");
+                _tbk_val.Text = (_s.intensity * 100).ToString("00");
             }));
         }
 
         internal void _UpdateNormalized(Vec3b pixelValueNormalized)
         {
+            return;
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 _color = new SolidColorBrush(Color.FromRgb(

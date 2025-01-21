@@ -61,12 +61,15 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             cercle = c;
             c.sensor = this;
-            numero = c.numero;
+            SetNumero(c.numero);
             Save();
         }
 
-
-
+        public void SetNumero(int numero)
+        {
+            this.numero = numero;
+            uc?._SetIndexName();
+        }
 
         public float[] normalisation_a = new float[] { 0, 0, 0 }, normalisation_b = new float[] { 0, 0, 0 };
 
@@ -115,9 +118,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 if (ON_previous != ON)
                 {
-                    numero = Sensor.SensorsNextIndex;
+                    SetNumero(Sensor.SensorsNextIndex);
+                    //numero = Sensor.SensorsNextIndex;
                     SensorsNextIndex++;
-                    uc._SetIndexName((int)numero);
+                    //uc._SetIndexName((int)numero);
                     cercle?.SetNumero((int)numero);
                 }
             }

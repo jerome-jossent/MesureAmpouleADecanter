@@ -13,6 +13,10 @@
     <StackPanel Orientation ="Horizontal" Height="20" >
         <TextBlock x:Name="_tbk_index" Text="{Binding _index}" Width="30" TextAlignment="Right" VerticalAlignment="Center" />
 
+        <wpftk:ButtonSpinner x:Name="_spinner_index" Width="50" Margin="0,-2, 2,-2">
+            <TextBox Text="0" HorizontalContentAlignment="{Binding _index}" />
+        </wpftk:ButtonSpinner>
+
         <ProgressBar Width="40" Height="10" Minimum="{Binding _intensity_min}" Maximum="{Binding _intensity_max}" Value="{Binding _intensity}"/>
         <TextBlock x:Name="_tbk_val" Margin="3,0" Width="20" VerticalAlignment="Center" TextAlignment="Right" HorizontalAlignment="Center"/>
         <TextBlock Text="{Binding _ON}" Width="36" VerticalAlignment="Center"/>
