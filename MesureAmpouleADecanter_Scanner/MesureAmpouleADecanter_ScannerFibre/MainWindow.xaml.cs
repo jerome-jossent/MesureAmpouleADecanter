@@ -25,6 +25,8 @@ using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using OpenCvSharp.WpfExtensions;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using static System.Net.Mime.MediaTypeNames;
 using static MesureAmpouleADecanter_ScannerFibre.SensorMap;
@@ -1417,9 +1419,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 //supprimer
                 cercles.Remove(cercleSelected);
-                Sensor_UC sensor_uc = cercleSelected.sensor.uc;
-                //lv_sensors.Items.Remove(sensor_uc);
-                _sensors_uc.Remove(sensor_uc);
+                if (cercleSelected.sensor != null)
+                {
+                    Sensor_UC sensor_uc = cercleSelected.sensor.uc;
+                    //lv_sensors.Items.Remove(sensor_uc);
+                    _sensors_uc.Remove(sensor_uc);
+                }
             }
             else
                 cercleSelected.sensor.uc._Selected();
@@ -1728,5 +1733,57 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             _store_scans = !_store_scans;
         }
+
+
+
+
+        #region AVALONDOCK
+        void LayoutSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            XmlLayoutSerializer layoutSerializer = new XmlLayoutSerializer(DManager);
+            using (var writer = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "docks.txt"))
+            {
+                layoutSerializer.Serialize(writer);
+            }
+        }
+
+        void LayoutLoadButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                XmlLayoutSerializer layoutSerializer = new XmlLayoutSerializer(DManager);
+                using (var reader = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "docks.txt"))
+                {
+                    layoutSerializer.Deserialize(reader);
+                }
+            }
+            catch (System.IO.FileNotFoundException ex)
+            {
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
+            //views = new List<LayoutAnchorable>() {
+            //    layoutAnchorable_algorythn_parameters,
+            //    layoutAnchorable_arduino_config,
+            //    layoutAnchorable_arduino_read,
+            //    layoutAnchorable_augmented_display,
+            //    layoutAnchorable_camera_config,
+            //    layoutAnchorable_data_points,
+            //    layoutAnchorable_graph1,
+            //    layoutAnchorable_graph2,
+            //    layoutAnchorable_image_process,
+            //    layoutAnchorable_system_paremeters,
+            //    layoutAnchorable_view1,
+            //    layoutAnchorable_view2,
+            //    layoutAnchorable_view3,
+            //    layoutAnchorable_view4
+            //};
+        }
+
+        #endregion
     }
 }
