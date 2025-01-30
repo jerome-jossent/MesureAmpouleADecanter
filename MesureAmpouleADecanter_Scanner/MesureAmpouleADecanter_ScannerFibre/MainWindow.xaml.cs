@@ -893,6 +893,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     if (c.actif)
                         Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.center, _rayon + 2, Scalar.White, -1);
+
                     //dessin du disque
                     Cv2.Circle(cercles_mat, (OpenCvSharp.Point)c.center, _rayon, c.couleur, -1);
 
@@ -940,7 +941,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return cercles_mat;
         }
 
-        private void Sensor_UC_spinner_index_Spin(object? sender, Xceed.Wpf.Toolkit.SpinEventArgs e)
+        void Sensor_UC_spinner_index_Spin(object? sender, Xceed.Wpf.Toolkit.SpinEventArgs e)
         {
             ButtonSpinner spinner = (ButtonSpinner)sender;
             StackPanel sp = spinner.Parent as StackPanel;
@@ -959,29 +960,22 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 //si premier, annuler
                 if (suc._s.numero == 0) return;
                 //celui du dessus je l'augmente
-                valeurcherchee = (int)suc._s.numero + 1;
-                foreach (Sensor_UC suc_other in sensors_uc)
-                {
-                    if (suc_other._s.numero == valeurcherchee)
-                    {
-                        suc_other._s.SetNumero(valeurcherchee + 1);
-                    }
-                }
+                valeurcherchee = (int)suc._s.numero - 1;
+                foreach (Sensor_UC suc_other in sensors_uc)                
+                    if (suc_other._s.numero == valeurcherchee)                    
+                        suc_other._s.SetNumero((int)suc._s.numero);                    
+                
                 suc._s.SetNumero(valeurcherchee);
             }
             else //descend
-
             {
                 //si dernier, annuler
                 if (suc._s.numero == sensors_uc.Count - 1) return;
-                valeurcherchee = (int)suc._s.numero - 1;
-                foreach (Sensor_UC suc_other in sensors_uc)
-                {
-                    if (suc_other._s.numero == valeurcherchee)
-                    {
-                        suc_other._s.SetNumero(valeurcherchee - 1);
-                    }
-                }
+                valeurcherchee = (int)suc._s.numero + 1;
+                foreach (Sensor_UC suc_other in sensors_uc)                
+                    if (suc_other._s.numero == valeurcherchee)                    
+                        suc_other._s.SetNumero((int)suc._s.numero);                    
+                
                 suc._s.SetNumero(valeurcherchee);
             }
 
@@ -993,17 +987,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             if (_sensors.Count == 0) return;
 
-            if (scan_mat == null || scan_mat.Height != _sensors.Count)
-            {
-                scan_mat = new Mat(_sensors.Count, scan_mat_width, MatType.CV_8UC3);
-
-                //scan_mat_uc = new(scan_mat, "Live");
-                //scan_mat_uc._img.StretchDirection = StretchDirection.UpOnly;
-                //scan_mat_uc._img.Stretch = Stretch.UniformToFill;
-                //scan_mat_uc.Height = _scans_height;
-                //_scans.Clear();
-                //_scans.Add(scan_mat_uc);
-            }
+            if (scan_mat == null || scan_mat.Height != _sensors.Count)            
+                scan_mat = new Mat(_sensors.Count, scan_mat_width, MatType.CV_8UC3);            
 
             if (scan_mat_T0 == null)
                 scan_mat_T0 = DateTime.Now;
@@ -1026,7 +1011,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 try
                 {
                     _image3 = scan_mat.ToBitmapSource();
-                    //scan_mat_uc._Update(scan_mat);
                 }
                 catch (Exception ex) { }
             }));
@@ -1046,6 +1030,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 if (_scan_save)
                 {
                     string folder = "_SCANS\\";
+                    Directory.CreateDirectory(folder);
                     string name = t0.ToString("yyyy-MM-dd hh-mm-ss.fff")
                         + " (" + duree.TotalSeconds.ToString("F2") + ")";
                     //sauvegarde image
@@ -1064,7 +1049,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         s.Height = _scans_height;
 
                         _scans.Add(s);
-                        //_scans.Insert(_scans.Count - 2, s);
 
                         //follow last
                         if (scan_focus_last)

@@ -201,21 +201,23 @@
             <!--VUES DYNAMIQUES-->
             <xcad:LayoutRoot x:Name="_layoutRoot">
                 <xcad:LayoutPanel Orientation="Horizontal">
+                    
                     <!--Camera-->
                     <xcad:LayoutDocumentPane x:Name="_Avalon_Views">
                         <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False">
 
-                            <Grid Grid.Row="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="auto"/>
-                                </Grid.ColumnDefinitions>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="auto"/>
+                                </Grid.RowDefinitions>
 
-                                <Image Grid.Column="0" Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
+                                <Image Grid.Row="0" Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
                      Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" MouseDown="Image_Click" />
 
-                                <ListBox Grid.Column="1" x:Name="_lbx_rois"/>
+                                <ListBox Grid.Row="1" x:Name="_lbx_rois"/>
                             </Grid>
+                            
                         </xcad:LayoutAnchorable>
                     </xcad:LayoutDocumentPane>
 
@@ -233,7 +235,7 @@
 
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="50"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
@@ -271,7 +273,7 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                                     
                                 </StackPanel>
 
-                                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" Grid.Column="0">
+                                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto">
                                     <ListBox ItemsSource="{Binding _scans}" Name="_lbx_scans" SelectedItem="{Binding _scan_last}" >
                                         <ListBox.ItemContainerStyle>
                                             <Style TargetType="ListBoxItem">
@@ -294,8 +296,7 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                         <xcad:LayoutAnchorable ContentId="scan realtime" Title="Scan = f(t)" CanClose="False">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
-                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="50"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
@@ -326,8 +327,10 @@ MouseDown="Scan_save_Switch_Click"/>
                                     </Grid>
                                 </StackPanel>
 
-                                <Grid Grid.Row="2">
-                                    <Image Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                                <Grid Grid.Row="1">
+                                    <Image Height="{Binding _scans_height}" VerticalAlignment="Top" HorizontalAlignment="Left" 
+                                           Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" 
+                                           Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                                 </Grid>
 
                             </Grid>
