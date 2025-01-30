@@ -26,19 +26,31 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         public event PropertyChangedEventHandler? PropertyChanged;
 
-
-
         public OpenCvSharp.Mat _mat;
-        public BitmapSource _bitmapSource { get => _mat.ToBitmapSource(); }
+        public DateTime _t;
+        public TimeSpan _deltatT;
+
+        public BitmapSource _bitmapSource
+        {
+            get
+            {
+                if (_mat == null || _mat.Empty() || _mat.Width == 0 || _mat.Height == 0)
+                    return null;
+                return _mat.ToBitmapSource();
+            }
+        }
         public string _name { get; set; }
 
-        public Scan_UC(OpenCvSharp.Mat scan_mat, string name)
+        public Scan_UC(OpenCvSharp.Mat scan_mat, DateTime t, TimeSpan deltatT)
         {
             InitializeComponent();
             DataContext = this;
             _mat = scan_mat;
             //bitmapSource.Freeze();
-            this._name = name;
+            _t= t;
+            _deltatT = deltatT;
+            _name = deltatT.TotalSeconds.ToString("f1");
+
         }
 
         public void _Update(OpenCvSharp.Mat mat)
