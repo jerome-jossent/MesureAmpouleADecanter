@@ -42,12 +42,14 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public string _color_string
         {
-            get => _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B + "[" +
-
-
-                _s.normalisation_a[0].ToString("0.00") + ";" + _s.normalisation_a[1].ToString("0.00") + ";" + _s.normalisation_a[2].ToString("0.00") + ";" + "|" +
-                _s.normalisation_b[0].ToString("0.00") + ";" + _s.normalisation_b[1].ToString("0.00") + ";" + _s.normalisation_b[2].ToString("0.00") + ";" +
-               "]";
+            get =>                 
+                _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B
+               
+                // _color.Color.R + ", " + _color.Color.G + ", " + _color.Color.B + "[" +
+               // _s.normalisation_a[0].ToString("0.00") + ";" + _s.normalisation_a[1].ToString("0.00") + ";" + _s.normalisation_a[2].ToString("0.00") + ";" + "|" +
+               // _s.normalisation_b[0].ToString("0.00") + ";" + _s.normalisation_b[1].ToString("0.00") + ";" + _s.normalisation_b[2].ToString("0.00") + ";" +
+               //"]"                
+                ;
         }
 
         public string _index

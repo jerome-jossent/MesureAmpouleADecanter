@@ -25,7 +25,7 @@
         <TextBlock Text="x" Width="10" TextAlignment="Center" />
         <wpftk:IntegerUpDown Value="{Binding _y}" Minimum="0" Width="55" Height="18"/>
 
-        <Border BorderThickness="1" BorderBrush="Magenta" Margin="3,0" Width="500" >
+        <Border BorderThickness="1" BorderBrush="Magenta" Margin="3,0" Width="auto" Padding="4,0" >
             <TextBlock x:Name="_tbk" Text="{Binding _color_string}" Background="{Binding _color}"
                        TextAlignment="Center" />
         </Border>

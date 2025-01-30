@@ -11,14 +11,19 @@ namespace MesureAmpouleADecanter_ScannerFibre
 {
     public class Config
     {
+        public static Config _instance { get => instance; }
+        static Config instance;
+
         public string webcam_name { get; set; }
         public Format webcam_format { get; set; }
         public WebCamParameters_UC.WebCamParameters webcam_parameters { get; set; }
         public List<Rect> rois { get; set; } = new List<Rect>();
         public List<Sensor> sensors { get; set; } = new List<Sensor>();
 
+        [JsonIgnore] // pour le moment
+        public Index_Hauteur_Manager index_Hauteur_Manager { get; set; } = new Index_Hauteur_Manager();
 
-        public Config() { }
+        public Config() { instance = this; }
 
         public static Config FromJSON(string jsonString)
         {

@@ -55,7 +55,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         [JsonIgnore]
         internal Sensor_UC uc;
 
-        public Sensor() { }
+        public Sensor() { } //pour json
 
         public Sensor(Cercle c)
         {
@@ -69,11 +69,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             this.numero = numero;
             uc?._SetIndexName();
+            hauteur_mm = Config._instance.index_Hauteur_Manager._GetHauteur(numero);
         }
 
         public float[] normalisation_a = new float[] { 0, 0, 0 }, normalisation_b = new float[] { 0, 0, 0 };
-
-
 
         void ComputeNormalizationFactors()
         {
