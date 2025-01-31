@@ -9,23 +9,23 @@ namespace MesureAmpouleADecanter_ScannerFibre
     public class Index_Hauteur_Manager
     {
         public List<Index_Hauteur> coordonnees = new List<Index_Hauteur>() {
-                new Index_Hauteur(0,   0.05f),
-                new Index_Hauteur(10,  2.30f ),
-                new Index_Hauteur(20,  4.75f ),
-                new Index_Hauteur(30,  7.25f ),
-                new Index_Hauteur(40,  9.75f ),
-                new Index_Hauteur(50,  12.20f),
-                new Index_Hauteur(60,  14.65f),
-                new Index_Hauteur(70,  17.15f),
-                new Index_Hauteur(80,  19.65f),
-                new Index_Hauteur(90,  22.15f),
-                new Index_Hauteur(100, 24.65f),
-                new Index_Hauteur(110, 27.12f),
-                new Index_Hauteur(120, 29.60f),
-                new Index_Hauteur(130, 32.50f),
-                new Index_Hauteur(140, 34.55f),
-                new Index_Hauteur(150, 37.20f),
-                new Index_Hauteur(160, 39.50f)};
+                new Index_Hauteur(0,   00.5f),
+                new Index_Hauteur(10,  23.0f ),
+                new Index_Hauteur(20,  47.5f ),
+                new Index_Hauteur(30,  72.5f ),
+                new Index_Hauteur(40,  97.5f ),
+                new Index_Hauteur(50,  122.0f),
+                new Index_Hauteur(60,  146.5f),
+                new Index_Hauteur(70,  171.5f),
+                new Index_Hauteur(80,  196.5f),
+                new Index_Hauteur(90,  221.5f),
+                new Index_Hauteur(100, 246.5f),
+                new Index_Hauteur(110, 271.2f),
+                new Index_Hauteur(120, 296.0f),
+                new Index_Hauteur(130, 325.0f),
+                new Index_Hauteur(140, 345.5f),
+                new Index_Hauteur(150, 372.0f),
+                new Index_Hauteur(160, 395.0f)};
 
         public float _GetHauteur(int index)
         {

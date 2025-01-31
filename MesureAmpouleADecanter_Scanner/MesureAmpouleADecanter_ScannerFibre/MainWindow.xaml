@@ -213,7 +213,7 @@
                                 </Grid.RowDefinitions>
 
                                 <Image Grid.Row="0" Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
-                     Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" MouseDown="Image_Click" />
+                                     Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" />
 
                                 <ListBox Grid.Row="1" x:Name="_lbx_rois"/>
                             </Grid>

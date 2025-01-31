@@ -87,6 +87,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public bool Selected;
 
+        public float _hauteur_mm { get { return _s.hauteur_mm; } }
+
         public Sensor_UC()
         {
             InitializeComponent();

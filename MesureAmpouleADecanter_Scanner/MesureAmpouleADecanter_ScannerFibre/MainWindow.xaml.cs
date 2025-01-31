@@ -1099,24 +1099,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 CirclesReset();
         }
 
-        void Image_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                _play = !_play;
-            }
-            else if (e.ChangedButton == MouseButton.Right)
-            {
-                CirclesReset();
-                ProcessFrame(frame);
-            }
-            else if (e.ChangedButton == MouseButton.Middle)
-            {
-
-            }
-        }
-
-
         void SensorMap_Load_Click(object sender, MouseButtonEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
