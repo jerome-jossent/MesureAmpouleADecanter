@@ -55,7 +55,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         [JsonIgnore]
         internal Sensor_UC uc;
 
-        public Sensor() { } //pour json
+        public Sensor() {} //pour json
 
         public Sensor(Cercle c)
         {

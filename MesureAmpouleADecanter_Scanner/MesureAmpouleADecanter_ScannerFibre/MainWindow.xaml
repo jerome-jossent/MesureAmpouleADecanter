@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        
         xmlns:local="clr-namespace:MesureAmpouleADecanter_ScannerFibre"        
         
         xmlns:wpftk="http://schemas.xceed.com/wpf/xaml/toolkit"  
@@ -128,7 +129,7 @@
                         </Grid>
 
                         <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                           MouseDown="CirclesReset_Click" ToolTip="Reset sensor detection"/>
+                           ToolTip="Reset sensor detection"/>
 
                         <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="Sensors_Save_Click" ToolTip="Save"/>
@@ -201,7 +202,7 @@
             <!--VUES DYNAMIQUES-->
             <xcad:LayoutRoot x:Name="_layoutRoot">
                 <xcad:LayoutPanel Orientation="Horizontal">
-                    
+
                     <!--Camera-->
                     <xcad:LayoutDocumentPane x:Name="_Avalon_Views">
                         <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False">
@@ -217,7 +218,7 @@
 
                                 <ListBox Grid.Row="1" x:Name="_lbx_rois"/>
                             </Grid>
-                            
+
                         </xcad:LayoutAnchorable>
                     </xcad:LayoutDocumentPane>
 
@@ -246,7 +247,7 @@
 
 
                                     <TextBlock Text="Store in HMI :" VerticalAlignment="Center"/>
-                                    
+
                                     <Grid Margin="5">
                                         <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
     Visibility="{Binding _store_scans, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
@@ -256,9 +257,9 @@ MouseDown="Store_scans_Switch_Click"/>
 MouseDown="Store_scans_Switch_Click"/>
                                     </Grid>
 
-                                    
+
                                     <TextBlock Text="Focus on last :" VerticalAlignment="Center"/>
-                                    
+
                                     <Grid Margin="5">
                                         <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
     Visibility="{Binding _scan_focus_last, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
@@ -270,7 +271,7 @@ MouseDown="Scan_focus_last_Switch_Click"/>
 
                                     <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="Scan_Save_Click" ToolTip="Save to one image"/>
-                                    
+
                                 </StackPanel>
 
                                 <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto">
@@ -291,7 +292,7 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                         </xcad:LayoutAnchorable>
                     </xcad:LayoutDocumentPane>
 
-                    <!--Scan = f(t)-->
+                    <!--Scan live = f(t)-->
                     <xcad:LayoutDocumentPane>
                         <xcad:LayoutAnchorable ContentId="scan realtime" Title="Scan = f(t)" CanClose="False">
                             <Grid>
@@ -300,6 +301,7 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
+                                <!--Menu scan live-->
                                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                                     <Grid Margin="5">
                                         <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
@@ -327,17 +329,19 @@ MouseDown="Scan_save_Switch_Click"/>
                                     </Grid>
                                 </StackPanel>
 
-                                <Grid Grid.Row="1">
-                                    <Image Height="{Binding _scans_height}" VerticalAlignment="Top" HorizontalAlignment="Left" 
+                                <Image Grid.Row="1" Height="{Binding _scans_height, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" HorizontalAlignment="Left" 
                                            Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" 
                                            Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
-                                </Grid>
-
                             </Grid>
 
                         </xcad:LayoutAnchorable>
                     </xcad:LayoutDocumentPane>
 
+                    <xcad:LayoutDocumentPane>
+                        <xcad:LayoutAnchorable ContentId="Intensity" Title="I = f(H)" CanClose="False">
+                            <local:Graph x:Name="_graph1"/>
+                        </xcad:LayoutAnchorable>
+                    </xcad:LayoutDocumentPane>
                     <!--<xcad:LayoutDocumentPaneGroup >
                     </xcad:LayoutDocumentPaneGroup >-->
                 </xcad:LayoutPanel>

@@ -87,7 +87,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public bool Selected;
 
-        public float _hauteur_mm { get { return _s.hauteur_mm; } }
+        public string _hauteur_mm { get { return _s.hauteur_mm.ToString("f1"); } }
 
         public Sensor_UC()
         {

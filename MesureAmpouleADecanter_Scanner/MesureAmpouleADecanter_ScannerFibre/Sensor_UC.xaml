@@ -12,7 +12,7 @@
              Height="25">
     <StackPanel Orientation ="Horizontal" Height="20" >
         <TextBlock Text="{Binding _index}" Width="30" TextAlignment="Right" VerticalAlignment="Center" />
-        <TextBlock Text="{Binding _hauteur_mm}" Width="30" TextAlignment="Right" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding _hauteur_mm}" Width="30" TextAlignment="Center" VerticalAlignment="Center" />
 
         <wpftk:ButtonSpinner x:Name="_spinner_index" Width="50" Margin="0,-2, 2,-2">
             <TextBox Text="0" HorizontalContentAlignment="{Binding _index}" />

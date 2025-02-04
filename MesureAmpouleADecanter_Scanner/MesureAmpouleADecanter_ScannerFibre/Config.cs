@@ -29,6 +29,14 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             //Config config = System.Text.Json.JsonSerializer.Deserialize<Config>(jsonString);
             Config config = JsonConvert.DeserializeObject<Config>(jsonString);
+
+            //recompute H
+            foreach (Sensor sensor in config.sensors)
+            {
+                if (sensor.numero != null)
+                    sensor.hauteur_mm = Config._instance.index_Hauteur_Manager._GetHauteur((int)sensor.numero);
+            }
+
             return config;
         }
 
