@@ -22,6 +22,12 @@
                         StrokeThickness="1"
                         LineSmoothness="0"
                         />
+                <lvc:LineSeries Values="{Binding _chartValuesDerivate}" 
+                        Fill="Transparent"
+                        PointGeometrySize="6"
+                        StrokeThickness="1"
+                        LineSmoothness="0"
+                        />
             </lvc:CartesianChart.Series>
             <lvc:CartesianChart.AxisX>
                 <lvc:Axis x:Name="_chart_AxeX"/>

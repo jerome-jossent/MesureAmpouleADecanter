@@ -69,6 +69,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 image3 = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(_scans_height));
             }
         }
         ImageSource image3;
@@ -645,43 +646,43 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void ThreadVideoLive(CancellationToken cancellationToken)
         {
-            bool loop = true;
+            //bool loop = true;
             frame = new Mat();
             //CirclesReset();
             int nframe = 0;
 
-            while (!capVideo.IsDisposed && loop)
+            //while (!capVideo.IsDisposed && loop)
+            //{
+            //CirclesReset();
+            while (!capVideo.IsDisposed &&
+                !cancellationToken.IsCancellationRequested)
             {
-                //CirclesReset();
-                while (!capVideo.IsDisposed &&
-                    !cancellationToken.IsCancellationRequested)
+                //read next frame
+                capVideo.Read(frame);
+
+                _title = nframe++.ToString();
+
+                //si echec alors on saute la frame
+                if (frame.Empty())
                 {
-                    //read next frame
-                    capVideo.Read(frame);
+                    _title += " frame is Empty !";
+                    continue;
+                }
 
-                    _title = nframe++.ToString();
+                //display
+                Show(frame);
 
-                    //si echec alors on saute la frame
-                    if (frame.Empty())
-                    {
-                        _title += " frame is Empty !";
-                        continue;
-                    }
+                UpdateROIS(frame);
 
-                    //display
-                    Show(frame);
+                //si pause & pas fermeture de la fenêtre
+                while (!_play &&
+                       !cancellationToken.IsCancellationRequested)
+                {
+                    Thread.Sleep(10);
 
-                    UpdateROIS(frame);
-
-                    //si pause & pas fermeture de la fenêtre
-                    while (!_play &&
-                           !cancellationToken.IsCancellationRequested)
-                    {
-                        Thread.Sleep(10);
-
-                    }
                 }
             }
+            //}
         }
 
 
@@ -857,6 +858,30 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
+
+        void SensorsRemove(Sensor s)
+        {
+            int i = 0;
+            try
+            {
+                s.uc._spinner_index.Spin -= Sensor_UC_spinner_index_Spin;
+                i = 1;
+                s.uc._btn_Delete.MouseDown -= Sensor_UC_DeleteMe;
+                i = 2;
+                _sensors_uc.Remove(s.uc);
+                i = 3;
+                cercles.Remove(s.cercle);
+                i = 4;
+                _sensors.Remove(s);
+                i = 5;
+            }
+            catch (Exception ex)
+            {
+                ex = ex;
+
+            }
+        }
+
         Mat SensorsUpdate(int w, int h, ROI_UC roi)
         {
             Mat cercles_mat = new Mat(new OpenCvSharp.Size(w, h), MatType.CV_8UC3, CirclesReset_color);
@@ -911,6 +936,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                             Sensor_UC sensor_uc = new Sensor_UC();
                             sensor_uc._Link(s);
                             sensor_uc._spinner_index.Spin += Sensor_UC_spinner_index_Spin;
+                            sensor_uc._btn_Delete.MouseDown += Sensor_UC_DeleteMe;
                             _sensors_uc.Add(sensor_uc);
                         });
                     }
@@ -928,6 +954,16 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
             return cercles_mat;
         }
+
+        void Sensor_UC_DeleteMe(object sender, MouseButtonEventArgs e)
+        {
+            var im = sender as System.Windows.Controls.Image;
+            var sp = im.Parent as StackPanel;
+            var uc = sp.Parent as Sensor_UC;
+            Sensor s = uc._s;
+            SensorsRemove(s);
+        }
+
 
         void Sensor_UC_spinner_index_Spin(object? sender, Xceed.Wpf.Toolkit.SpinEventArgs e)
         {
@@ -1072,61 +1108,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
 
 
-        //void CirclesReset_Click(object sender, MouseButtonEventArgs e)
-        //{
-        //    circle_Recompute = true;
-        //    if (_play)
-        //        CirclesReset();
-        //}
-
-        //void SensorMap_Load_Click(object sender, MouseButtonEventArgs e)
-        //{
-        //    OpenFileDialog dialog = new OpenFileDialog();
-        //    dialog.FileName = "SensorMap";
-        //    dialog.DefaultExt = ".sm";
-        //    dialog.Filter = "SensorMap (.sm)|*.sm";
-        //    if (File.Exists(_file))
-        //        dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
-
-        //    if (dialog.ShowDialog() == true)
-        //    {
-        //        string jsonString = File.ReadAllText(dialog.FileName);
-        //        SensorMap sm = SensorMap.FromJSON(jsonString);
-
-        //        //set ROI
-        //        roi_left = sm.roi_left_up_right_bottom.left;
-        //        roi_top = sm.roi_left_up_right_bottom.top;
-        //        roi_right = sm.roi_left_up_right_bottom.right;
-        //        roi_bottom = sm.roi_left_up_right_bottom.bottom;
-
-        //        //load SensorMap
-        //        sensorMap = sm;
-        //    }
-        //}
-
-        //void SensorMap_Save_Click(object sender, MouseButtonEventArgs e)
-        //{
-        //    SensorMap sm = new SensorMap();
-        //    sm.DefineROI((int)roi_left, (int)roi_top, (int)roi_right, (int)roi_bottom);
-        //    foreach (Cercle c in cercles)
-        //    {
-        //        //Sensor s = new Sensor(c);
-        //        sm.AddSensor(c.sensor);
-        //    }
-        //    string jsonString = sm.ToJSON();
-
-        //    SaveFileDialog dialog = new SaveFileDialog();
-        //    dialog.FileName = "SensorMap";
-        //    dialog.DefaultExt = ".sm";
-        //    dialog.Filter = "SensorMap (.sm)|*.sm";
-
-        //    //au même endroit que la vidéo
-        //    if (File.Exists(_file))
-        //        dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
-
-        //    if (dialog.ShowDialog() == true)
-        //        File.WriteAllText(dialog.FileName, jsonString);
-        //}
         #endregion
 
 
@@ -1175,33 +1156,33 @@ namespace MesureAmpouleADecanter_ScannerFibre
             sensors_to_sorted = true;
         }
 
-        void SensorMap_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Right)
-            {
-                var image = sender as System.Windows.Controls.Image;
-                System.Windows.Point p = e.GetPosition(image);
+        //void SensorMap_Click(object sender, MouseButtonEventArgs e)
+        //{
+        //    if (e.ChangedButton == MouseButton.Right)
+        //    {
+        //        var image = sender as System.Windows.Controls.Image;
+        //        System.Windows.Point p = e.GetPosition(image);
 
-                float x = (float)(p.X / image.ActualWidth * cercles_mat.Width);
-                float y = (float)(p.Y / image.ActualHeight * cercles_mat.Height);
-                Point2f pointClick = new Point2f(x, y);
+        //        float x = (float)(p.X / image.ActualWidth * cercles_mat.Width);
+        //        float y = (float)(p.Y / image.ActualHeight * cercles_mat.Height);
+        //        Point2f pointClick = new Point2f(x, y);
 
-                Cercle cercleSelectionné = null;
-                //quel cercle est concerné ?
-                foreach (Cercle cercle in cercles)
-                {
-                    if (Point2f.Distance(pointClick, cercle.circleSegment.Center) < rayon)
-                    {
-                        //trouvé !
-                        cercleSelectionné = cercle;
-                        break;
-                    }
-                }
-                if (cercleSelectionné == null) return;
+        //        Cercle cercleSelectionné = null;
+        //        //quel cercle est concerné ?
+        //        foreach (Cercle cercle in cercles)
+        //        {
+        //            if (Point2f.Distance(pointClick, cercle.circleSegment.Center) < rayon)
+        //            {
+        //                //trouvé !
+        //                cercleSelectionné = cercle;
+        //                break;
+        //            }
+        //        }
+        //        if (cercleSelectionné == null) return;
 
-                cercleSelectionné.sensor.uc._Selected();
-            }
-        }
+        //        cercleSelectionné.sensor.uc._Selected();
+        //    }
+        //}
 
         OpenCvSharp.Rect? SelectROI()
         {
@@ -1398,6 +1379,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 lv_sensors.ScrollIntoView(nearestSensor.uc);
                 lv_sensors.SelectedItem = nearestSensor.uc;
                 lv_sensors.Focus();
+                nearestSensor.uc._Selected();
             }
         }
 
@@ -1448,9 +1430,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     }
 
                     //if (roi._circlesCount > 0)
-//                    {
-                        Mat sensormap = SensorsUpdate(G.Width, G.Height, roi);
-//                    }
+                    //                    {
+                    Mat sensormap = SensorsUpdate(G.Width, G.Height, roi);
+                    //                    }
 
                     SensorsMeasure();
 
@@ -1639,6 +1621,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     sensor.Load();
                     Sensor_UC sensor_uc = new Sensor_UC();
                     sensor_uc._spinner_index.Spin += Sensor_UC_spinner_index_Spin;
+                    sensor_uc._btn_Delete.MouseDown += Sensor_UC_DeleteMe;
                     sensor_uc._Link(sensor);
                     _sensors_uc.Add(sensor_uc);
                 }

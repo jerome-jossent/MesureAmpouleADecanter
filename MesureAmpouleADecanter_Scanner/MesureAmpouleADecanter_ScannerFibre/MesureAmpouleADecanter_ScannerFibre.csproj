@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\19764-bubka-Add.png" />
+    <None Remove="Images\19775-bubka-Delete.png" />
     <None Remove="Images\arrow_down.png" />
     <None Remove="Images\arrow_right.png" />
     <None Remove="Images\arrow_up.png" />
@@ -44,6 +46,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\19764-bubka-Add.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\19775-bubka-Delete.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\arrow_down.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>

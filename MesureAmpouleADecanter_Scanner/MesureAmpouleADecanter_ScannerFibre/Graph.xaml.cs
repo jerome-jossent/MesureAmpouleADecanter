@@ -16,12 +16,10 @@ using System.Windows.Shapes;
 using System.Collections.ObjectModel;
 using LiveCharts.Defaults;
 using LiveCharts;
+using System.Windows.Threading;
 
 namespace MesureAmpouleADecanter_ScannerFibre
 {
-
-    //https://scottplot.net/cookbook/5.0/Signal/SignalDateTime/
-
     public partial class Graph : UserControl
     {
         public class XY
@@ -35,11 +33,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
 
         public ChartValues<ObservablePoint> _chartValues { get; set; }
+        public ChartValues<ObservablePoint> _chartValuesDerivate { get; set; }
 
         bool first = true;
         XY[] xys;
         double[] xs;
         double[] ys;
+        double[] ys_previous;
 
         public Graph()
         {
@@ -51,9 +51,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
         void Graph_INIT()
         {
             _chartValues = new ChartValues<ObservablePoint>();
+            _chartValuesDerivate = new ChartValues<ObservablePoint>();
             _chart_AxeX.MinValue = 0;
             _chart_AxeY.MinValue = 0;
-            _chart_AxeY.MaxValue = 100;
         }
 
         public static XY[] SortedXY(ObservableCollection<Sensor> sensors)
@@ -68,29 +68,48 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         internal void _Update(ObservableCollection<Sensor> sensors)
         {
+            try
+            {
                 xys = SortedXY(sensors);
 
-                if (first)
+                if (first || xs.Length != sensors.Count)
                 {
                     first = false;
-
+                    _chartValues.Clear();
                     xs = xys.Select(p => p.x).ToArray();
                     ys = xys.Select(p => p.y).ToArray();
+                    ys_previous = ys.ToArray();
 
                     for (int i = 0; i < xs.Length; i++)
                     {
                         double x = xs[i];
                         double y = ys[i];
                         _chartValues.Add(new ObservablePoint(x, y));
+                        _chartValuesDerivate.Add(new ObservablePoint(x, 0));
                     }
-                    _chart_AxeX.MaxValue = xs.Length;
 
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        _chart_AxeX.MaxValue = xs.Max();
+                        _chart_AxeY.MaxValue = ys.Max();
+                    });
                 }
                 else
                 {
                     for (int i = 0; i < xys.Length; i++)
+                    {
                         _chartValues[i].Y = xys[i].y;
+
+                        double derive = xys[i].y - ys_previous[i];
+                        _chartValuesDerivate[i].Y = derive * 100; //en attendant d'utiliser un axe secondaire
+                        ys_previous[i] = xys[i].y;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
     }
 }

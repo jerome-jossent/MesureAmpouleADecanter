@@ -78,7 +78,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public float _intensity_min { get => _s.intensity_min; }
         public float _intensity_max { get => _s.intensity_max; }
-        public bool _ON { get => _s.ON; }
+        public string _ON { get => _s.ON?"ON":"off"; }
 
         public Sensor _s;
 
@@ -87,7 +87,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         public bool Selected;
 
-        public string _hauteur_mm { get { return _s.hauteur_mm.ToString("f1"); } }
+        public string _hauteur_mm { get { return " (" + _s.hauteur_mm.ToString("f1")+"mm)"; } }
+
+        public Visibility _isVisible { get => Selected?Visibility.Visible:Visibility.Collapsed; }
+
 
         public Sensor_UC()
         {
@@ -105,8 +108,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         internal void _SetIndexName()
         {
-            _index = (_s.numero == null) ? "? : " : ((int)_s.numero).ToString("00") + " : ";
+            _index = (_s.numero == null) ? "?" : ((int)_s.numero).ToString();
         }
+
+
+
 
         internal void _Update(Vec3b pixelValue)
         {
@@ -142,6 +148,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             Selected = !Selected;
             Background = new SolidColorBrush(Selected ? Colors.DarkGray : Colors.Transparent);
+            OnPropertyChanged(nameof(_isVisible));
         }
 
     }

@@ -128,8 +128,8 @@
           MouseDown="HoughCircle_Switch_Click"/>
                         </Grid>
 
-                        <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                           ToolTip="Reset sensor detection"/>
+                        <!--<Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                           ToolTip="Reset sensor detection"/>-->
 
                         <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="Sensors_Save_Click" ToolTip="Save"/>
