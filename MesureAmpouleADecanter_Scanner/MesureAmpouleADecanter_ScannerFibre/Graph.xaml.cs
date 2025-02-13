@@ -13,9 +13,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-using ScottPlot;
-using static OpenTK.Graphics.OpenGL.GL;
 using System.Collections.ObjectModel;
+using LiveCharts.Defaults;
+using LiveCharts;
 
 namespace MesureAmpouleADecanter_ScannerFibre
 {
@@ -24,8 +24,22 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
     public partial class Graph : UserControl
     {
-        //ScottPlot.Plottables.DataLogger chart;
-        ScottPlot.Plottables.SignalXY signalPlot;
+        public class XY
+        {
+            public double x, y;
+            public XY(Sensor sensor)
+            {
+                x = sensor.hauteur_mm;
+                y = sensor.intensity * 100;
+            }
+        }
+
+        public ChartValues<ObservablePoint> _chartValues { get; set; }
+
+        bool first = true;
+        XY[] xys;
+        double[] xs;
+        double[] ys;
 
         public Graph()
         {
@@ -36,12 +50,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void Graph_INIT()
         {
-            //chart = WpfPlot1.Plot.Add.DataLogger();
-            WpfPlot1.Plot.Grid.LineColor = ScottPlot.Colors.Blue.WithAlpha(.2);
-            WpfPlot1.Plot.Grid.LinePattern = LinePattern.Dotted;
-            WpfPlot1.Plot.YLabel("Intensity (%)");
-            WpfPlot1.Plot.Title("Height (mm)");
-
+            _chartValues = new ChartValues<ObservablePoint>();
+            _chart_AxeX.MinValue = 0;
+            _chart_AxeY.MinValue = 0;
+            _chart_AxeY.MaxValue = 100;
         }
 
         public static XY[] SortedXY(ObservableCollection<Sensor> sensors)
@@ -54,28 +66,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
             return sortedPoints.ToArray();
         }
 
-
-        public class XY
-        {
-            public double x, y;
-            public XY(Sensor sensor)
-            {
-                x = sensor.hauteur_mm;
-                y = sensor.intensity*100;
-            }
-        }
-        bool first = true;
-
-        XY[] xys;
-
-        double[] xs;
-        double[] ys;
-
-
         internal void _Update(ObservableCollection<Sensor> sensors)
         {
-            try
-            {
                 xys = SortedXY(sensors);
 
                 if (first)
@@ -84,22 +76,21 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     xs = xys.Select(p => p.x).ToArray();
                     ys = xys.Select(p => p.y).ToArray();
-                    signalPlot = WpfPlot1.Plot.Add.SignalXY(xs, ys);
+
+                    for (int i = 0; i < xs.Length; i++)
+                    {
+                        double x = xs[i];
+                        double y = ys[i];
+                        _chartValues.Add(new ObservablePoint(x, y));
+                    }
+                    _chart_AxeX.MaxValue = xs.Length;
+
                 }
                 else
                 {
-                    double[] ys_new = new double[sensors.Count];
                     for (int i = 0; i < xys.Length; i++)
-                        ys_new[i] = xys[i].y;
-                    ys = ys_new;
+                        _chartValues[i].Y = xys[i].y;
                 }
-
-                WpfPlot1.Refresh();
-            }
-            catch (Exception)
-            {
-
-            }
         }
     }
 }
