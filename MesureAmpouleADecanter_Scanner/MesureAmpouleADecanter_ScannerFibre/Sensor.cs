@@ -41,6 +41,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
         [JsonIgnore]
         public bool ON_previous;
 
+        public Scalar couleur { get => ColorFromHSV(255 - (255 / 160) * (int)numero, 1, 1); }
+
+
         [JsonIgnore]
         public Scalar color_scalar { get; set; }
         [JsonIgnore]
@@ -118,9 +121,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 if (ON_previous != ON)
                 {
                     SetNumero(Sensor.SensorsNextIndex);
-                    //numero = Sensor.SensorsNextIndex;
                     SensorsNextIndex++;
-                    //uc._SetIndexName((int)numero);
                     cercle?.SetNumero((int)numero);
                 }
             }
@@ -161,10 +162,40 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         }
 
-        internal void Reset()
+        internal void ResetPosition()
         {
             uc._index = "?";
             numero = null;
+        }
+
+        internal void ResetMinMax()
+        {
+            intensity_min = -1;
+            intensity_max = -1;
+        }
+        public static Scalar ColorFromHSV(double hue, double saturation, double value)
+        {
+            int hi = (int)(Math.Floor(hue / 60)) % 6;
+            double f = hue / 60 - Math.Floor(hue / 60);
+
+            value = value * 255;
+            int v = (int)(value);
+            int p = (int)(value * (1 - saturation));
+            int q = (int)(value * (1 - f * saturation));
+            int t = (int)(value * (1 - (1 - f) * saturation));
+
+            if (hi == 0)
+                return Scalar.FromRgb(v, t, p);
+            else if (hi == 1)
+                return Scalar.FromRgb(q, v, p);
+            else if (hi == 2)
+                return Scalar.FromRgb(p, v, t);
+            else if (hi == 3)
+                return Scalar.FromRgb(p, q, v);
+            else if (hi == 4)
+                return Scalar.FromRgb(t, p, v);
+            else
+                return Scalar.FromRgb(v, p, q);
         }
     }
 }

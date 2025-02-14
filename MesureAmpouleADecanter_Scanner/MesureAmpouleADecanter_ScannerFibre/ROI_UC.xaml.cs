@@ -43,7 +43,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
         ImageSource image;
-        
+
         public ImageSource _sensormap
         {
             get => sensormap;
@@ -81,7 +81,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 {
                     _image = frame.ToWriteableBitmap();
                 }
-                catch (Exception ex) { }
+                catch (Exception ex)
+                {
+                    ex = ex;
+                }
             }));
         }
 
@@ -93,7 +96,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 {
                     _sensormap = frame.ToWriteableBitmap();
                 }
-                catch (Exception ex) { }
+                catch (Exception ex)
+                {
+                    ex = ex;
+                }
             }));
         }
 

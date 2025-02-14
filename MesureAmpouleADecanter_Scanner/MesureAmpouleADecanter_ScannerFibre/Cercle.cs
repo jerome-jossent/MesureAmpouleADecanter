@@ -20,8 +20,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public int roi_Top { get; set; }
 
         [JsonIgnore]
-        public Scalar couleur { get; set; }
-        [JsonIgnore]
         public CircleSegment circleSegment { get; set; }
         [JsonIgnore]
         public static Scalar couleurTexte = new Scalar(0, 0, 0);
@@ -57,33 +55,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public void SetNumero(int index)
         {
             numero = index;
-            couleur = ColorFromHSV(255 - (255 / 160) * numero, 1, 1);
         }
 
-        public static Scalar ColorFromHSV(double hue, double saturation, double value)
-        {
-            int hi = (int)(Math.Floor(hue / 60)) % 6;
-            double f = hue / 60 - Math.Floor(hue / 60);
-
-            value = value * 255;
-            int v = (int)(value);
-            int p = (int)(value * (1 - saturation));
-            int q = (int)(value * (1 - f * saturation));
-            int t = (int)(value * (1 - (1 - f) * saturation));
-
-            if (hi == 0)
-                return Scalar.FromRgb(v, t, p);
-            else if (hi == 1)
-                return Scalar.FromRgb(q, v, p);
-            else if (hi == 2)
-                return Scalar.FromRgb(p, v, t);
-            else if (hi == 3)
-                return Scalar.FromRgb(p, q, v);
-            else if (hi == 4)
-                return Scalar.FromRgb(t, p, v);
-            else
-                return Scalar.FromRgb(v, p, q);
-        }
     }
 
 }

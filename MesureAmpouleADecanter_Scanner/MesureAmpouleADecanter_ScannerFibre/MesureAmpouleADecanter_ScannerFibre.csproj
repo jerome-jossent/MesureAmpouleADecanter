@@ -30,6 +30,7 @@
     <None Remove="Images\Stop.png" />
     <None Remove="Images\toggle_off2.png" />
     <None Remove="Images\toggle_on2.png" />
+    <None Remove="Images\window_s_bar.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -107,6 +108,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\toggle_on2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\window_s_bar.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

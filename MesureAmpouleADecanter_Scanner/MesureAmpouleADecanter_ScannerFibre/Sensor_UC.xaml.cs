@@ -85,11 +85,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
         public int _x { get { return _s.x; } set { _s.x = value; } }
         public int _y { get { return _s.y; } set { _s.y = value; } }
 
-        public bool Selected;
+        public bool _selected;
 
         public string _hauteur_mm { get { return " (" + _s.hauteur_mm.ToString("f1")+"mm)"; } }
 
-        public Visibility _isVisible { get => Selected?Visibility.Visible:Visibility.Collapsed; }
+        public Visibility _isVisible { get => _selected?Visibility.Visible:Visibility.Collapsed; }
 
 
         public Sensor_UC()
@@ -146,8 +146,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         internal void _Selected()
         {
-            Selected = !Selected;
-            Background = new SolidColorBrush(Selected ? Colors.DarkGray : Colors.Transparent);
+            _selected = !_selected;
+            Background = new SolidColorBrush(_selected ? Colors.DarkGray : Colors.Transparent);
             OnPropertyChanged(nameof(_isVisible));
         }
 
