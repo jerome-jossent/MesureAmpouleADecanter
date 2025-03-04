@@ -18,6 +18,7 @@ using LiveCharts.Defaults;
 using LiveCharts;
 using System.Windows.Threading;
 using Xceed.Wpf.AvalonDock.Controls;
+using LiveCharts.Wpf;
 
 namespace MesureAmpouleADecanter_ScannerFibre
 {
@@ -33,12 +34,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
-        public ChartValues<ObservablePoint> _chartValues { get; set; }
+        public ChartValues<ObservablePoint> _chartValues1 { get; set; }
         public ChartValues<ObservablePoint> _chartValues2 { get; set; }
         public ChartValues<ObservablePoint> _chartValuesDerivate { get; set; }
 
         int ys_previous_index;
-       
+
         public int ys_previous_window = 10;
 
         bool first = true;
@@ -58,9 +59,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void Graph_INIT()
         {
-            _chartValues = new ChartValues<ObservablePoint>();
+            _chartValues1 = new ChartValues<ObservablePoint>();
             _chartValues2 = new ChartValues<ObservablePoint>();
             _chartValuesDerivate = new ChartValues<ObservablePoint>();
+
             _chart_AxeY.MinValue = 0;
         }
 
@@ -75,7 +77,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
 
 
-        internal void _Update(Sensor[] sensors)
+        internal float? _Update(Sensor[] sensors)
         {
             try
             {
@@ -84,7 +86,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 if (first || xs.Length != sensors.Length)
                 {
                     first = false;
-                    _chartValues.Clear();
+                    _chartValues1.Clear();
                     _chartValues2.Clear();
                     _chartValuesDerivate.Clear();
 
@@ -99,10 +101,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     {
                         double x = xs[i];
                         double y = ys[i];
-                        _chartValues.Add(new ObservablePoint(x, y));
+                        _chartValues1.Add(new ObservablePoint(x, y));
                         _chartValues2.Add(new ObservablePoint(x, 0));
                         _chartValuesDerivate.Add(new ObservablePoint(x, i));
                     }
+                    return null;
                 }
                 else
                 {
@@ -116,9 +119,13 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     ys = xys.Select(p => p.y).ToArray();
 
+                    int H_max_pos = 0;
+                    double H_max;
+                    double DeltaI_Max = 0;
+
                     for (int i = 0; i < xys.Length; i++)
                     {
-                        _chartValues[i].Y = xys[i].y;
+                        _chartValues1[i].Y = xys[i].y;
 
                         double y_previous = 0;
                         //moyenne
@@ -133,18 +140,33 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         double delta_tmoins1 = xys[i].y - y_previous;
                         //if (delta_tmoins1 != 0)
                         _chartValuesDerivate[i].Y = delta_tmoins1;
+
+                        if (delta_tmoins1 > DeltaI_Max)
+                        {
+                            DeltaI_Max = delta_tmoins1;
+                            H_max_pos = i;
+                            H_max = _chartValues1[H_max_pos].X;
+                        }
+                        _chartValues2[i].Y = 0;
                     }
 
+                    _chartValues2[H_max_pos].Y = H_max_pos;
+
+                    //update data list pour moyenne glissante
                     ys_previous.Add(ys);
                     if (ys_previous.Count > ys_previous_window)
                         ys_previous.RemoveAt(0);
 
+                    //update min max Axis
                     Dispatcher.BeginInvoke(() =>
                     {
-                        _chart_AxeX.MinValue = xs.Min();
-                        _chart_AxeX.MaxValue = xs.Max();
-
-                        _chart_AxeY.MaxValue = ys.Max();
+                        if (xs.Length > 0)
+                        {
+                            _chart_AxeX.MinValue = xs.Min();
+                            _chart_AxeX.MaxValue = xs.Max();
+                        }
+                        if (ys.Length > 0)
+                            _chart_AxeY.MaxValue = ys.Max();
 
                         _chart_AxeY2.MinValue = -5;
                         _chart_AxeY2.MaxValue = 5;
@@ -153,12 +175,18 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     ys_previous_index++;
                     if (ys_previous_index > ys_previous_window - 1)
                         ys_previous_index = 0;
+
+                    if (DeltaI_Max > 1) //A CHANGER !!!
+                        return -(float)_chartValues2[H_max_pos].Y;
+                    else
+                        return null;
                 }
             }
             catch (Exception ex)
             {
-
+                ex = ex;
             }
+            return null;
         }
 
         void Reset_Click(object sender, RoutedEventArgs e)

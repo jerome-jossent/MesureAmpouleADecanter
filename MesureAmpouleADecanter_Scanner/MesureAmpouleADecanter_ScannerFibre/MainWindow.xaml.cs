@@ -340,7 +340,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 _graph1.ys_previous_window = value;
                 OnPropertyChanged();
             }
-        }        
+        }
         #endregion
 
         #region Parameters
@@ -778,8 +778,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                         //Trouver le front
                         //Tracer I = f(H)
-                        _graph1._Update(_sensors.Where(x => x.hauteur_mm > experience_h_min).Where(x => x.hauteur_mm < experience_h_max).ToArray());
+                        float? H = _graph1._Update(_sensors.Where(x => x.hauteur_mm > experience_h_min).Where(x => x.hauteur_mm < experience_h_max).ToArray());
 
+                        if (H != null)
+                        {
+                            _graph2._Update(x: DateTime.Now, y: (float)H);
+                        }
                     }
 
                     roi.Show_sensormap(sensormap);
@@ -938,7 +942,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     //reset actif pour la prochaine frame
                     c.actif = false;
-
                 }
                 catch (Exception ex)
                 {
@@ -956,15 +959,23 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     if (sensor.uc?._selected == true)
                         Cv2.Circle(cercles_mat, center, _rayon + 2, Scalar.White, -1);
 
-                    //dessin du disque
-                    Cv2.Circle(cercles_mat, center, _rayon, sensor.couleur, -1);
-
-                    //écrit le numéro
                     OpenCvSharp.Point xy = new OpenCvSharp.Point(center.X, center.Y);
+                    string text = "";
 
-                    //positionne le numéro par rapport au centre du cercle détecté
-                    string text = ((int)sensor.numero).ToString();
+                    if (sensor.numero != null)
+                    {
+                        //dessin du disque
+                        Cv2.Circle(cercles_mat, center, _rayon, sensor.couleur, -1);
+                        text = ((int)sensor.numero).ToString();
+                    }
+                    else
+                    {
+                        //dessin du disque
+                        Cv2.Circle(cercles_mat, center, _rayon, Scalar.Magenta, -1);
+                        text = "?";
+                    }
 
+                    //positionne le texte par rapport au centre du cercle détecté
                     xy.Y += offsetY;
                     xy.X += -offsetX * text.Length;
                     Cv2.PutText(cercles_mat, text, xy,
@@ -1361,8 +1372,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 if (cercleSelected.sensor != null)
                 {
                     Sensor_UC sensor_uc = cercleSelected.sensor.uc;
-                    //lv_sensors.Items.Remove(sensor_uc);
-                    _sensors_uc.Remove(sensor_uc);
+                    ////lv_sensors.Items.Remove(sensor_uc);
+                    //_sensors_uc.Remove(sensor_uc);
+                    SensorsRemove(cercleSelected.sensor);
                 }
             }
             else
@@ -1523,6 +1535,15 @@ namespace MesureAmpouleADecanter_ScannerFibre
             OnPropertyChanged(nameof(_rois));
         }
 
+        void Sensors_Clear_Click(object sender, MouseButtonEventArgs e)
+        {
+            while (_sensors.Count > 0)
+            {
+                Sensor sensor = _sensors[0];
+                SensorsRemove(sensor);
+            }
+        }
+
         void Sensors_Load_Click(object sender, MouseButtonEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
@@ -1565,12 +1586,16 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 //ROIs
                 _rois.Clear();
                 _lbx_rois.Items.Clear();
+
                 foreach (Rect roi in config.rois)
                     ROI_New(roi);
 
                 //Sensors
                 _sensors_uc = new ObservableCollection<Sensor_UC>();
                 _sensors = new ObservableCollection<Sensor>(config.sensors);
+
+                Sensor.SetSensorsOrder(_sensors.Count);
+
                 foreach (Sensor sensor in _sensors)
                 {
                     sensor.Load();
@@ -1713,6 +1738,32 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void AddNewAvalonView(Control vue, string nom)
         {
+            //LayoutAnchorable anchorable = new LayoutAnchorable
+            //{
+            //    Title = nom,
+            //    Content = vue,
+            //    CanClose = false,
+            //};
+
+            //_Avalon_Views.Children.Add(anchorable);
+            //anchorable.IsActive = true;
+            //anchorable.IsSelected = true;
+
+            //-------------------
+
+            //LayoutDocument document = new LayoutDocument
+            //{
+            //    Title = nom,
+            //    Content = vue,
+            //    CanClose = false,
+            //};
+
+            //_Avalon_Views.Children.Add(document);
+            //document.IsActive = true;
+            //document.IsSelected = true;
+
+            //-------------------
+
             LayoutAnchorable anchorable = new LayoutAnchorable
             {
                 Title = nom,
@@ -1723,12 +1774,31 @@ namespace MesureAmpouleADecanter_ScannerFibre
             // Création d'un nouveau LayoutAnchorablePane si aucun n'existe
             LayoutAnchorablePane newPane = new LayoutAnchorablePane();
             newPane.Children.Add(anchorable);
-            _DManager.Layout.RootPanel.Children.Add(newPane);
+            //            _DManager.Layout.RootPanel.Children.Add(newPane);
 
-            // Afficher l'élément
-            anchorable.IsActive = true;
-            anchorable.IsSelected = true;
+            LayoutPanel rootPanel = _DManager.Layout.RootPanel as LayoutPanel;
+
+            //if (rootPanel == null)
+            //{
+            //    // Créer un LayoutPanel si RootPanel n'est pas encore défini
+            //    rootPanel = new LayoutPanel { Orientation = Orientation.Vertical };
+            //    _DManager.Layout.RootPanel = rootPanel;
+            //}
+            //else
+            //{
+            //    // S'assurer que l'orientation est verticale
+            //    rootPanel.Orientation = Orientation.Vertical;
+            //}
+
+            // Ajouter le nouveau panneau
+            rootPanel.Children.Add(newPane);
+
+
+            //-------------------
+
+
         }
+
     }
 
     #endregion
