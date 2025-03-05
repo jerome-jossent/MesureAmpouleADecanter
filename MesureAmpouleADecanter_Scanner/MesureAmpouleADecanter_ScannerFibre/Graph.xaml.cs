@@ -177,7 +177,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         ys_previous_index = 0;
 
                     if (DeltaI_Max > 1) //A CHANGER !!!
-                        return -(float)_chartValues2[H_max_pos].Y;
+                        return (float)_chartValues2[H_max_pos].Y;
                     else
                         return null;
                 }

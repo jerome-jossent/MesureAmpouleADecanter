@@ -730,6 +730,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         ///PINCIPAL LOOP
         void UpdateROIS(Mat frame)
         {
+            DateTime t = DateTime.Now;
             foreach (ROI_UC roi in _rois)
             {
                 try
@@ -782,7 +783,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                         if (H != null)
                         {
-                            _graph2._Update(x: DateTime.Now, y: (float)H);
+                            //H système : origine en haut ; plus on descend plus H augmente
+                            float H_niveau_d_eau = 20;
+                            float H_niveau_bas_flacon = 40;
+                            float h_front = (H_niveau_bas_flacon - H_niveau_d_eau) + H_niveau_d_eau - (float)H;
+                            _graph2._Update(x: t, y: h_front);
                         }
                     }
 
