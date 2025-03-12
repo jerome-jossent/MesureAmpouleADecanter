@@ -45,8 +45,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <CheckBox Grid.Row="0" Grid.Column="0" Content="Camera" VerticalContentAlignment="Center" />
-                        <CheckBox Grid.Row="1" Grid.Column="0" Content="Video file" VerticalContentAlignment="Center" />
+                        <RadioButton Grid.Row="0" Grid.Column="0" Content="Camera" VerticalContentAlignment="Center" Checked="SourceRadioButton_Change" x:Name="_rb_source_camera"  />
+                        <RadioButton Grid.Row="1" Grid.Column="0" Content="Video file" VerticalContentAlignment="Center"  Checked="SourceRadioButton_Change" x:Name="_rb_source_videofile"  />
 
                         <!--MENU WEBCAM-->
                         <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
@@ -95,6 +95,9 @@
                             <!--<Image Margin="5" Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
   MouseDown="OpenVideoFile_Click" />-->
 
+                            <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="VideoFile_Select_Click" ToolTip="Select video file"/>
+
                             <Grid Margin="5">
                                 <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                                    Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
@@ -107,9 +110,6 @@
 
                             <!--<Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
    MouseDown="DefineROI_Click" ToolTip="Menu : define region of interest" />-->
-
-                            <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
 
 
                         </StackPanel>

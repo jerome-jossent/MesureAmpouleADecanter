@@ -364,7 +364,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         List<Cercle> cercles;
         bool circle_Recompute;
         VideoCapture capVideo;
-        int sleepTime;
+        int sleepTime_ms;
         Thread videoThread;
         CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         Scalar CirclesReset_color = Scalar.Black;
@@ -484,11 +484,12 @@ namespace MesureAmpouleADecanter_ScannerFibre
             VideoStop();
 
             capVideo = new OpenCvSharp.VideoCapture(filePath);
-            sleepTime = (int)Math.Round(1000 / capVideo.Fps);
+
+            sleepTime_ms = (int)Math.Round(1000 / capVideo.Fps);
             OnPropertyChanged(nameof(_videoTotalFrames));
 
             CancellationToken token = cancellationTokenSource.Token;
-            //Task.Factory.StartNew(() => PlayVideo(token), token);
+            Task.Factory.StartNew(() => PlayVideo(token), token);
         }
 
         void VideoStop()
@@ -511,7 +512,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             capVideo.Open(webcam_index, VideoCaptureAPIs.DSHOW);
 
             CancellationToken token_cameralive = cancellationTokenSource.Token;
-            Task.Factory.StartNew(() => ThreadVideoLive(token_cameralive), token_cameralive);
+            Task.Factory.StartNew(() => ThreadCameraLive(token_cameralive), token_cameralive);
         }
 
         void Show(Mat mat)
@@ -526,7 +527,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }));
         }
 
-        #region VIDEO FILE (UNUSED)
+        #region VIDEO FILE
         public string _file
         {
             get => file;
@@ -543,98 +544,97 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         string file = Settings.Default.file;
 
-        //public int _videoPositionFrame
-        //{
-        //    get
-        //    {
-        //        if (capVideo != null)
-        //            return capVideo.PosFrames;
-        //        return 1;
-        //    }
-        //    set
-        //    {
-        //        if (capVideo != null)
-        //            newWantedPosFrames = value;
-        //    }
-        //}
-        //int? newWantedPosFrames;
+        public int _videoPositionFrame
+        {
+            get
+            {
+                if (capVideo != null)
+                    return capVideo.PosFrames;
+                return 1;
+            }
+            set
+            {
+                if (capVideo != null)
+                    newWantedPosFrames = value;
+            }
+        }
+        int? newWantedPosFrames;
 
 
-        //void PlayVideo(CancellationToken cancellationToken)
-        //{
-        //    int framestart = 1190;
-        //    capVideo.PosFrames = framestart;
+        void PlayVideo(CancellationToken cancellationToken)
+        {
+            //int framestart = 1190;
+            //capVideo.PosFrames = framestart;
 
-        //    _roi_width_maximum = capVideo.FrameWidth;
-        //    _roi_height_maximum = capVideo.FrameHeight;
+            bool loop = true;
 
-        //    if (_roi_right == 0)
-        //        _roi_right = _roi_width_maximum;
-        //    if (_roi_top == 0)
-        //        _roi_top = _roi_height_maximum;
+            frame = new Mat();
 
-        //    bool loop = true;
+            while (!capVideo.IsDisposed &&
+                   loop &&
+                   !cancellationToken.IsCancellationRequested)
+            {
+                //init
+                capVideo.PosFrames = 0;
+                //CirclesReset();
 
-        //    frame = new Mat();
+                while (!capVideo.IsDisposed &&
+                       !cancellationToken.IsCancellationRequested)
+                {
 
-        //    while (!capVideo.IsDisposed && loop)
-        //    {
-        //        //init
-        //        capVideo.PosFrames = 0;
-        //        CirclesReset();
+                    //si goto frame number
+                    if (newWantedPosFrames != null)
+                    {
+                        capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
+                        newWantedPosFrames = null;
+                    }
 
-        //        while (!capVideo.IsDisposed &&
-        //            !cancellationToken.IsCancellationRequested)
-        //        {
+                    //read next frame
+                    capVideo.Read(frame);
+                    OnPropertyChanged(nameof(_videoPositionFrame));
 
-        //            //si goto frame number
-        //            if (newWantedPosFrames != null)
-        //            {
-        //                capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
-        //                newWantedPosFrames = null;
-        //            }
+                    //si arrivé à la fin
+                    if (frame.Empty())
+                        break;
 
-        //            //read next frame
-        //            capVideo.Read(frame);
-        //            OnPropertyChanged("_videoPositionFrame");
+                    DateTime t_avant_process = DateTime.Now;
 
-        //            //si arrivé à la fin
-        //            if (frame.Empty())
-        //                break;
+                    //display
+                    Show(frame);
 
-        //            Thread.Sleep(sleepTime);
+                    //process
 
-        //            if (roi_change || houghCircle_change)
-        //                CirclesReset();
+                    UpdateROIS(frame);
 
-        //            ProcessFrame(frame);
+                    //attente complémentaire
+                    int process_time_ms = (int)((DateTime.Now - t_avant_process).TotalMilliseconds);
+                    if (process_time_ms < sleepTime_ms)
+                        Thread.Sleep(sleepTime_ms - process_time_ms);
 
-        //            ScanConstructFromSensors();
+                    //si pause & pas fermeture de la fenêtre
+                    while (!_play &&
+                           !cancellationToken.IsCancellationRequested)
+                    {
+                        Thread.Sleep(10);
 
-        //            //si pause & pas fermeture de la fenêtre
-        //            while (!_play &&
-        //                   !cancellationToken.IsCancellationRequested)
-        //            {
-        //                Thread.Sleep(10);
+                        //if (newWantedPosFrames != null)
+                        //{
+                        //    capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
+                        //    newWantedPosFrames = null;
+                        //    capVideo.Read(frame);
+                        //    ProcessFrame(frame);
+                        //}
 
-        //                if (newWantedPosFrames != null)
-        //                {
-        //                    capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
-        //                    newWantedPosFrames = null;
-        //                    capVideo.Read(frame);
-        //                    ProcessFrame(frame);
-        //                }
-
-        //                if (roi_change || houghCircle_change || circle_Recompute)
-        //                {
-        //                    circle_Recompute = false;
-        //                    CirclesReset();
-        //                    ProcessFrame(frame);
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
+                        //if (roi_change || houghCircle_change || circle_Recompute)
+                        //{
+                        //    circle_Recompute = false;
+                        //    CirclesReset();
+                        //    ProcessFrame(frame);
+                        //}
+                    }
+                }
+            }
+        }
 
         //void ProcessFrame(Mat frame)
         //{
@@ -677,23 +677,27 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         //    }
         //}
+        void VideoFile_Select_Click(object sender, MouseButtonEventArgs e)
+        {
+            SelectVideoFile();
+        }
 
-        //void SelectVideoFile()
-        //{
-        //    OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
-        //    dialog.FileName = "Video";
-        //    dialog.DefaultExt = ".mp4";
-        //    dialog.Filter = "Videos (.mp4)|*.mp4";
-        //    if (File.Exists(_file))
-        //        dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
+        void SelectVideoFile()
+        {
+            OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.FileName = "Video";
+            dialog.DefaultExt = ".mp4";
+            dialog.Filter = "Videos (.mp4)|*.mp4";
+            if (File.Exists(_file))
+                dialog.DefaultDirectory = System.IO.Path.GetDirectoryName(_file);
 
-        //    if (dialog.ShowDialog() == true)
-        //        _file = dialog.FileName;
-        //}
+            if (dialog.ShowDialog() == true)
+                _file = dialog.FileName;
+        }
 
         #endregion
 
-        void ThreadVideoLive(CancellationToken cancellationToken)
+        void ThreadCameraLive(CancellationToken cancellationToken)
         {
             frame = new Mat();
             int nframe = 0;
@@ -1560,33 +1564,37 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 string jsonString = File.ReadAllText(dialog.FileName);
                 config = Config.FromJSON(jsonString);
-                //caméra présente ?
-                bool camerapresente = false;
-                for (int i = 0; i < _cbx_webcam.Items.Count; i++)
+
+                if (mode == Mode.Camera)
                 {
-                    TextBlock tb = _cbx_webcam.Items[i] as TextBlock;
-                    if (tb.Text == config.webcam_name)
+                    //caméra présente ?
+                    bool camerapresente = false;
+                    for (int i = 0; i < _cbx_webcam.Items.Count; i++)
                     {
-                        camerapresente = true;
-                        webcam_index = i;
-                        webcam = webcams[i];
+                        TextBlock tb = _cbx_webcam.Items[i] as TextBlock;
+                        if (tb.Text == config.webcam_name)
+                        {
+                            camerapresente = true;
+                            webcam_index = i;
+                            webcam = webcams[i];
+                        }
                     }
+
+                    if (!camerapresente)
+                    {
+                        MessageBox.Show("Caméra demandée non présente :\n" + config.webcam_name);
+                        return;
+                    }
+
+                    CameraSelected();
+
+                    FormatForce();
+
+                    OnPropertyChanged(nameof(_webcam_format));
+
+                    //appliqués les réglages caméra
+                    WebCamParameters_UC._Manager.Set_WebCamConfig(config.webcam_name, config.webcam_parameters);
                 }
-
-                if (!camerapresente)
-                {
-                    MessageBox.Show("Caméra demandée non présente :\n" + config.webcam_name);
-                    return;
-                }
-
-                CameraSelected();
-
-                FormatForce();
-
-                OnPropertyChanged(nameof(_webcam_format));
-
-                //appliqués les réglages caméra
-                WebCamParameters_UC._Manager.Set_WebCamConfig(config.webcam_name, config.webcam_parameters);
 
                 //ROIs
                 _rois.Clear();
@@ -1803,6 +1811,30 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
 
         }
+
+        enum Mode { Camera, VideoFile }
+        Mode mode;
+
+        void SourceRadioButton_Change(object sender, RoutedEventArgs e)
+        {
+            if (sender == _rb_source_camera)
+            {
+                mode = Mode.Camera;
+                //stop video file
+                VideoStop();
+            }
+
+
+            if (sender == _rb_source_videofile)
+            {
+                mode = Mode.VideoFile;
+                //stop camera
+                //StopAll();
+            }
+
+
+        }
+
 
     }
 
