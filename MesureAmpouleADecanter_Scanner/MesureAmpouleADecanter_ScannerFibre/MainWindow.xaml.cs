@@ -610,6 +610,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     int process_time_ms = (int)((DateTime.Now - t_avant_process).TotalMilliseconds);
                     if (process_time_ms < sleepTime_ms)
                         Thread.Sleep(sleepTime_ms - process_time_ms);
+                    else
+                        Thread.Sleep(1); // attends au moins 1 ms histoire de purger quelques tâches de fond
 
                     //si pause & pas fermeture de la fenêtre
                     while (!_play &&
@@ -791,7 +793,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                             float H_niveau_d_eau = 20;
                             float H_niveau_bas_flacon = 40;
                             float h_front = (H_niveau_bas_flacon - H_niveau_d_eau) + H_niveau_d_eau - (float)H;
-                            _graph2._Update(x: t, y: h_front);
+                            Dispatcher.BeginInvoke(() =>
+                            {
+                                _graph2._Update(x: t, y: h_front);
+                            });
                         }
                     }
 
@@ -802,6 +807,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     ex = ex;
                 }
             }
+            double temps_ms = (DateTime.Now-t).TotalMilliseconds;
+            Dispatcher.BeginInvoke(() => { 
+            _title = temps_ms.ToString();
+            });
         }
 
 
