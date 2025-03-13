@@ -63,6 +63,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
             _chartValues2 = new ChartValues<ObservablePoint>();
             _chartValuesDerivate = new ChartValues<ObservablePoint>();
 
+            _LineSeries1.Title = "I lum (%)";
+            _LineSeries2.Title = "dI/dt";
+            _LineSeries3.Title = "H à max(dI/dt)";
+
             _chart_AxeY.MinValue = 0;
         }
 

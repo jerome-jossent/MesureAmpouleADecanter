@@ -347,8 +347,9 @@
 
                     <xcad:LayoutDocumentPaneGroup x:Name="_Avalon_LayoutDocumentPaneGroup">
                         <xcad:LayoutDocumentPane x:Name="_Avalon_Views">
-                            <!--Camera-->
-                            <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False">
+                            
+                            <!--Affichage Video/Camera-->
+                            <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False" CanHide="True">
 
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -357,21 +358,29 @@
                                     </Grid.RowDefinitions>
 
                                     <Image Grid.Row="0" Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
-                                     Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" />
+                                     Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"
+                                           MouseDown="Display_MouseDown"
+                                           />
+
+                                    <Slider Grid.Row="0" VerticalAlignment="Bottom" 
+                                            Minimum="1"
+                                            Maximum="{Binding _videoTotalFrames, UpdateSourceTrigger=PropertyChanged}"
+                                            Value="{Binding _videoPositionFrame, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
 
                                     <ListBox Grid.Row="1" x:Name="_lbx_rois"/>
                                 </Grid>
 
                             </xcad:LayoutAnchorable>
 
-
                             <!--Sensors list-->
-                            <xcad:LayoutAnchorable ContentId="sensors" Title="Sensors" CanClose="False">
+                            <xcad:LayoutAnchorable ContentId="sensors" Title="Sensors" CanClose="False" CanHide="True">
                                 <!--Sensor's values-->
                                 <ListView ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors" KeyDown="_roi_sensor_KeyPress"         />
                             </xcad:LayoutAnchorable>
+                            
                             <!--Scans-->
-                            <xcad:LayoutAnchorable ContentId="scans" Title="Scans" CanClose="False">
+                            <xcad:LayoutAnchorable ContentId="scans" Title="Scans" CanClose="False" CanHide="True">
 
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -429,8 +438,9 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                                     </ScrollViewer>
                                 </Grid>
                             </xcad:LayoutAnchorable>
+                            
                             <!--Scan live = f(t)-->
-                            <xcad:LayoutAnchorable ContentId="scan realtime" Title="Scan = f(t)" CanClose="False">
+                            <xcad:LayoutAnchorable ContentId="scan realtime" Title="Scan = f(t)" CanClose="False" CanHide="True">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="50"/>
@@ -471,14 +481,17 @@ MouseDown="Scan_save_Switch_Click"/>
                                 </Grid>
 
                             </xcad:LayoutAnchorable>
-                            <!--Graph 1-->
-                            <xcad:LayoutAnchorable ContentId="Intensity" Title="I = f(H)" CanClose="False">
+                            
+                                <!--Graph 1-->
+                            <xcad:LayoutAnchorable ContentId="Intensity" Title="I = f(H)" CanClose="False" CanHide="True">
                                 <local:Graph x:Name="_graph1"/>
                             </xcad:LayoutAnchorable>
-                            <!--Graph 2-->
-                            <xcad:LayoutAnchorable ContentId="H" Title="H = f(t)" CanClose="False">
+                            
+                                <!--Graph 2-->
+                            <xcad:LayoutAnchorable ContentId="H" Title="H = f(t)" CanClose="False" CanHide="True">
                                 <local:Graph_H_ft x:Name="_graph2"/>
                             </xcad:LayoutAnchorable>
+                                
                         </xcad:LayoutDocumentPane>
                     </xcad:LayoutDocumentPaneGroup>
 

@@ -27,7 +27,8 @@
             <lvc:CartesianChart.Series>
                 <lvc:LineSeries Values="{Binding _chartValues1}"
                                 x:Name="_LineSeries1"
-                        Fill="Transparent"
+ 
+                                Fill="Transparent"
                         PointGeometrySize="6"
                         StrokeThickness="1"
                         LineSmoothness="0"

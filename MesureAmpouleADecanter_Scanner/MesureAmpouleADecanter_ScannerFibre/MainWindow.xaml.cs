@@ -591,7 +591,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     //read next frame
                     capVideo.Read(frame);
-                    OnPropertyChanged(nameof(_videoPositionFrame));
+
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        OnPropertyChanged(nameof(_videoPositionFrame));
+                    });
 
                     //si arrivé à la fin
                     if (frame.Empty())
@@ -603,7 +607,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     Show(frame);
 
                     //process
-
                     UpdateROIS(frame);
 
                     //attente complémentaire
@@ -619,20 +622,18 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     {
                         Thread.Sleep(10);
 
-                        //if (newWantedPosFrames != null)
-                        //{
-                        //    capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
-                        //    newWantedPosFrames = null;
-                        //    capVideo.Read(frame);
-                        //    ProcessFrame(frame);
-                        //}
+                        if (newWantedPosFrames != null)
+                        {
+                            capVideo.Set(VideoCaptureProperties.PosFrames, (int)newWantedPosFrames - 1);
+                            newWantedPosFrames = null;
+                            capVideo.Read(frame);
 
-                        //if (roi_change || houghCircle_change || circle_Recompute)
-                        //{
-                        //    circle_Recompute = false;
-                        //    CirclesReset();
-                        //    ProcessFrame(frame);
-                        //}
+                            //display
+                            Show(frame);
+
+                            //process
+                            UpdateROIS(frame);
+                        }
                     }
                 }
             }
@@ -697,6 +698,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 _file = dialog.FileName;
         }
 
+        void Display_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _play = !_play;
+        }
         #endregion
 
         void ThreadCameraLive(CancellationToken cancellationToken)
@@ -807,9 +812,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     ex = ex;
                 }
             }
-            double temps_ms = (DateTime.Now-t).TotalMilliseconds;
-            Dispatcher.BeginInvoke(() => { 
-            _title = temps_ms.ToString();
+            double temps_ms = (DateTime.Now - t).TotalMilliseconds;
+            Dispatcher.BeginInvoke(() =>
+            {
+                _title = temps_ms.ToString();
             });
         }
 
@@ -1843,8 +1849,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
 
         }
-
-
     }
 
     #endregion
