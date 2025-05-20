@@ -48,7 +48,7 @@
             </lvc:CartesianChart.Series>
         </lvc:CartesianChart>
 
-        <TextBlock Margin="0,50" x:Name="_txt" Text="blop" TextAlignment="Center"/>
+        <TextBlock Margin="0,50" x:Name="_txt" Text="" TextAlignment="Center"/>
 
         <Button Content="Reset" Click="Reset_Click" Width="60" Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
     </Grid>

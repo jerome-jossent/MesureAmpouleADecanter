@@ -34,6 +34,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             double dT_sec = (x - t0).TotalSeconds;
             _chartValues1.Add(new ObservablePoint(dT_sec, y));
+            _txt.Text = y.ToString("f2");
             //_chartValues2.Add(new ObservablePoint(x, 0));
             //_chartValues3.Add(new ObservablePoint(x, i));                    //update min max Axis
             //Dispatcher.BeginInvoke(() =>

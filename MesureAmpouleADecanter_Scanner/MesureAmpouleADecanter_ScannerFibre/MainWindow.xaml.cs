@@ -107,6 +107,19 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         bool HoughCircle_Detection = false;
 
+
+        public bool _Graph_H_ft_enabled
+        {
+            get => Graph_H_ft_enabled;
+            set
+            {
+                Graph_H_ft_enabled = value;
+                OnPropertyChanged();
+            }
+        }
+        bool Graph_H_ft_enabled = true;
+
+
         public bool _scan_save
         {
             get => scan_save;
@@ -789,19 +802,25 @@ namespace MesureAmpouleADecanter_ScannerFibre
                         ScanPart_Save();
 
                         //Trouver le front
+
+
+
                         //Tracer I = f(H)
                         float? H = _graph1._Update(_sensors.Where(x => x.hauteur_mm > experience_h_min).Where(x => x.hauteur_mm < experience_h_max).ToArray());
 
-                        if (H != null)
+                        if (_Graph_H_ft_enabled)
                         {
-                            //H système : origine en haut ; plus on descend plus H augmente
-                            float H_niveau_d_eau = 20;
-                            float H_niveau_bas_flacon = 40;
-                            float h_front = (H_niveau_bas_flacon - H_niveau_d_eau) + H_niveau_d_eau - (float)H;
-                            Dispatcher.BeginInvoke(() =>
+                            if (H != null)
                             {
-                                _graph2._Update(x: t, y: h_front);
-                            });
+                                //H système : origine en haut ; plus on descend plus H augmente
+                                float H_niveau_d_eau = 20;
+                                float H_niveau_bas_flacon = 40;
+                                float h_front = (H_niveau_bas_flacon - H_niveau_d_eau) + H_niveau_d_eau - (float)H;
+                                Dispatcher.BeginInvoke(() =>
+                                {
+                                    _graph2._Update(x: t, y: h_front);
+                                });
+                            }
                         }
                     }
 
@@ -1559,6 +1578,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
             OnPropertyChanged(nameof(_rois));
         }
 
+        void Graph_H_ft_enabled_Click(object sender, MouseButtonEventArgs e)
+        {
+            _Graph_H_ft_enabled = !_Graph_H_ft_enabled;
+        }
+
         void Sensors_Clear_Click(object sender, MouseButtonEventArgs e)
         {
             while (_sensors.Count > 0)
@@ -1849,6 +1873,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
 
         }
+
     }
 
     #endregion
