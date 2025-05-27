@@ -340,15 +340,187 @@
         </Grid>
 
         <!--VUES-->
-        <xcad:DockingManager Grid.Row="1" x:Name="_DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
-            <!--VUES DYNAMIQUES-->
+        <Grid Grid.Row="1" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!--Affichage Video/Camera-->
+            <Grid Grid.Column="2" Grid.Row="0" Grid.RowSpan="2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Image Grid.Row="0" Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
+                                     Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"
+                                           MouseDown="Display_MouseDown"
+                                           />
+
+                    <Slider Grid.Row="0" VerticalAlignment="Bottom" 
+                                            Minimum="1"
+                                            Maximum="{Binding _videoTotalFrames, UpdateSourceTrigger=PropertyChanged}"
+                                            Value="{Binding _videoPositionFrame, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+
+                    <ListBox Grid.Row="1" x:Name="_lbx_rois"/>
+                </Grid>
+            </Grid>
+            <Grid Grid.Column="2" Grid.Row="2" Grid.RowSpan="3">
+                <ListView x:Name="_lsv_rois" ScrollViewer.VerticalScrollBarVisibility="Visible">
+                    
+                </ListView>
+            </Grid>
+
+            <!--Sensors list-->
+            <Grid Grid.Column="0" Grid.Row="0" Grid.RowSpan="5">
+                <ListView ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors" KeyDown="_roi_sensor_KeyPress"         />
+            </Grid>
+
+            <!--Scans-->
+            <Grid Grid.Column="1" Grid.Row="3">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                        <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                           MouseDown="ScansReset_Click" ToolTip="Clear scans"/>
+
+
+                        <TextBlock Text="Store in HMI :" VerticalAlignment="Center"/>
+
+                        <Grid Margin="5">
+                            <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _store_scans, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="Store_scans_Switch_Click"/>
+                            <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _store_scans, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="Store_scans_Switch_Click"/>
+                        </Grid>
+
+
+                        <TextBlock Text="Focus on last :" VerticalAlignment="Center"/>
+
+                        <Grid Margin="5">
+                            <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_focus_last, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="Scan_focus_last_Switch_Click"/>
+                            <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_focus_last, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="Scan_focus_last_Switch_Click"/>
+                        </Grid>
+
+                        <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Scan_Save_Click" ToolTip="Save to one image"/>
+
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto">
+                        <ListBox ItemsSource="{Binding _scans}" Name="_lbx_scans" SelectedItem="{Binding _scan_last}" >
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel IsItemsHost="True" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+
+            <!--Scan live = f(t)-->
+            <Grid Grid.Column="1" Grid.Row="2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!--Menu scan live-->
+                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                        <Grid Margin="5">
+                            <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                             MouseDown="btn_play_Click"/>
+                            <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                             MouseDown="btn_pause_Click"/>
+                        </Grid>
+
+                        <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
+
+                        <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
+
+                        <TextBlock Text="Save each mini-scan" VerticalAlignment="Center"/>
+                        <Grid Margin="5">
+                            <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="Scan_save_Switch_Click"/>
+                            <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="Scan_save_Switch_Click"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <Image Grid.Row="1" Height="{Binding _scans_height, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" HorizontalAlignment="Left" 
+                                           Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" 
+                                           Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                </Grid>
+            </Grid>
+
+            <!--Graph 1-->
+            <Grid Grid.Column="1" Grid.Row="0">
+                <local:Graph x:Name="_graph1"/>
+            </Grid>
+            
+            <!--Graph 2-->
+            <Grid Grid.Column="1" Grid.Row="1">
+                <Grid>
+                    <local:Graph_H_ft x:Name="_graph2"/>
+
+                    <Grid Margin="5" HorizontalAlignment="Right" VerticalAlignment="Top">
+                        <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _Graph_H_ft_enabled, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+          MouseDown="Graph_H_ft_enabled_Click"/>
+                        <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _Graph_H_ft_enabled, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+          MouseDown="Graph_H_ft_enabled_Click"/>
+                    </Grid>
+                </Grid>
+            </Grid>
+
+        </Grid>
+
+
+        <!--<xcad:DockingManager Grid.Row="1" x:Name="_DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
+            --><!--VUES DYNAMIQUES--><!--
             <xcad:LayoutRoot x:Name="_layoutRoot">
                 <xcad:LayoutPanel x:Name="_layoutPanel" Orientation="Horizontal">
 
                     <xcad:LayoutDocumentPaneGroup x:Name="_Avalon_LayoutDocumentPaneGroup">
                         <xcad:LayoutDocumentPane x:Name="_Avalon_Views">
 
-                            <!--Affichage Video/Camera-->
+                            --><!--Affichage Video/Camera--><!--
                             <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False" CanHide="True">
 
                                 <Grid>
@@ -373,13 +545,13 @@
 
                             </xcad:LayoutAnchorable>
 
-                            <!--Sensors list-->
+                            --><!--Sensors list--><!--
                             <xcad:LayoutAnchorable ContentId="sensors" Title="Sensors" CanClose="False" CanHide="True">
-                                <!--Sensor's values-->
+                                --><!--Sensor's values--><!--
                                 <ListView ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors" KeyDown="_roi_sensor_KeyPress"         />
                             </xcad:LayoutAnchorable>
 
-                            <!--Scans-->
+                            --><!--Scans--><!--
                             <xcad:LayoutAnchorable ContentId="scans" Title="Scans" CanClose="False" CanHide="True">
 
                                 <Grid>
@@ -439,7 +611,7 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
-                            <!--Scan live = f(t)-->
+                            --><!--Scan live = f(t)--><!--
                             <xcad:LayoutAnchorable ContentId="scan realtime" Title="Scan = f(t)" CanClose="False" CanHide="True">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -447,7 +619,7 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <!--Menu scan live-->
+                                    --><!--Menu scan live--><!--
                                     <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                                         <Grid Margin="5">
                                             <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
@@ -482,14 +654,14 @@ MouseDown="Scan_save_Switch_Click"/>
 
                             </xcad:LayoutAnchorable>
 
-                            <!--Graph 1-->
+                            --><!--Graph 1--><!--
                             <xcad:LayoutAnchorable ContentId="Intensity" Title="I = f(H)" CanClose="False" CanHide="True">
                                 <Grid>
                                     <local:Graph x:Name="_graph1"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
-                            <!--Graph 2-->
+                            --><!--Graph 2--><!--
                             <xcad:LayoutAnchorable ContentId="H" Title="H = f(t)" CanClose="False" CanHide="True">
                                 <Grid>
                                     <local:Graph_H_ft x:Name="_graph2"/>
@@ -510,7 +682,8 @@ MouseDown="Scan_save_Switch_Click"/>
 
                 </xcad:LayoutPanel>
             </xcad:LayoutRoot>
-        </xcad:DockingManager>
+        </xcad:DockingManager>-->
+    
     </Grid>
 
 </Window>
