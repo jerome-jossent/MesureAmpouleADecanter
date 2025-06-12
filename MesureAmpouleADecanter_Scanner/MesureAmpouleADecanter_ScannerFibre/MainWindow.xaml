@@ -37,8 +37,8 @@
                 <TabItem Header="Source">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="40"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
@@ -49,7 +49,7 @@
                         <RadioButton Grid.Row="1" Grid.Column="0" Content="Video file" VerticalContentAlignment="Center"  Checked="SourceRadioButton_Change" x:Name="_rb_source_videofile"  />
 
                         <!--MENU WEBCAM-->
-                        <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
+                        <StackPanel x:Name="_sp_menu_webcam" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
 
                             <ComboBox x:Name ="_cbx_webcam" MinWidth="150" Margin="5" SelectionChanged="_cbx_webcam_SelectionChanged"
                               VerticalContentAlignment="Center"/>
@@ -90,7 +90,7 @@
                         </StackPanel>
 
                         <!--MENU VIDEO FILE-->
-                        <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
+                        <StackPanel x:Name="_sp_menu_videofile" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
 
                             <!--<Image Margin="5" Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
   MouseDown="OpenVideoFile_Click" />-->
@@ -116,7 +116,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem Header="ROIs">
+                <TabItem Header="ROIs and sensors detection">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
@@ -124,6 +124,12 @@
                         </Grid.RowDefinitions>
 
                         <Grid Grid.Row="0">
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="auto"/>
@@ -132,17 +138,128 @@
                             <!--MENU-->
                             <StackPanel Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal">
 
+                                <Grid Margin="5">
+                                    <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                             MouseDown="btn_play_Click"/>
+                                    <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                             MouseDown="btn_pause_Click"/>
+                                </Grid>
+                                
+                                <Image Margin="5" Source="/Images/Settings.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                    MouseDown="WebCamSettings_Show_Click" ToolTip="camera webcam" 
+                                    Visibility="{Binding _mode_camera, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                                    />
+                                <Rectangle VerticalAlignment="Stretch" Width="1" Margin="2" Stroke="Gray"
+                                    Visibility="{Binding _mode_camera, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                                    />
+
+                                <TextBlock Text="Select ROI(s) : " VerticalAlignment="Center"/>
+
                                 <Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="DefineROI_Click" ToolTip="Menu : define region of interest" />
+                                       MouseDown="DefineROI_Click" ToolTip="Menu : define region of interest" />
+                                <Rectangle VerticalAlignment="Stretch" Width="1" Margin="2" Stroke="Gray" />
+
+                                <TextBlock Text="No ROI (use full resolution) : " VerticalAlignment="Center"/>
+                                <Image Margin="5" Source="/Images/1.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                       MouseDown="NoROI_Click" ToolTip="Menu : no crop" />
 
                             </StackPanel>
+
+
+                            <StackPanel Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal">
+
+                                <Image Margin="5" Source="/Images/Corbeille.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                           MouseDown="Sensors_Clear_Click" ToolTip="Clear all sensors"/>
+
+                                <Rectangle VerticalAlignment="Stretch" Width="1" Margin="2" Stroke="Gray" />
+                                
+                                <TextBlock Text="Sensor's Detection (Hough Circles) :" VerticalAlignment="Center"/>
+
+                                <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+   MouseDown="HoughCircle_Once_Click" ToolTip="Detect once" />
+                                
+                                <Grid Margin="5">
+                                    <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _HoughCircle_Detection, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="HoughCircle_Switch_Click"/>
+                                    <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _HoughCircle_Detection, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="HoughCircle_Switch_Click"/>
+                                </Grid>
+
+
+                                <Rectangle VerticalAlignment="Stretch" Width="1" Margin="2" Stroke="Gray" />
+                                <TextBlock Text="Show sensors" VerticalAlignment="Center"/>
+                                <Grid Margin="5">
+                                    <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _sensors_display, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+          MouseDown="Sensors_display_Switch_Click"/>
+                                    <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+              Visibility="{Binding _sensors_display, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+          MouseDown="Sensors_display_Switch_Click"/>
+                                </Grid>
+
+                                <Rectangle VerticalAlignment="Stretch" Width="1" Margin="2" Stroke="Gray" />
+
+                                <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
+                            </StackPanel>
+
+
+                            <!--Hough circles parameters-->
+                            <Grid Grid.Row="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Content="dp" />
+                                <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="10" Value="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding _houghcircle_dp, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Content="param1" />
+                                <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding _houghcircle_param1, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Content="param2" />
+                                <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding _houghcircle_param2, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="3" Grid.Column="0" Content="Rayon min/max" />
+                                <wpftk:RangeSlider Grid.Row="3" Grid.Column="1" Step="1"
+                               LowerValue="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}"
+                               HigherValue="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" 
+                               Minimum="0" Maximum="200"                               
+                               />
+                                <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal">
+                                    <Label  Content="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Label  Content=" / " />
+                                    <Label  Content="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                            </Grid>
 
                         </Grid>
                     </Grid>
                 </TabItem>
 
-                <TabItem Header="Sensors detection's" >
+                <TabItem Header="Sort sensors" >
                     <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="65*"/>
+                            <ColumnDefinition Width="512*"/>
+                        </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
@@ -150,7 +267,7 @@
                         </Grid.RowDefinitions>
 
                         <!--MENU-->
-                        <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                        <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Grid.ColumnSpan="2">
 
                             <Grid Margin="5">
                                 <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
@@ -161,86 +278,23 @@
                              MouseDown="btn_pause_Click"/>
                             </Grid>
 
-                            <Image Margin="5" Source="/Images/Settings.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="WebCamSettings_Show_Click" ToolTip="Menu : define region of interest" />
 
-                            <TextBlock Text="Detection (Hough Circles) :" VerticalAlignment="Center"/>
-                            <Grid Margin="5">
-                                <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-              Visibility="{Binding _HoughCircle_Detection, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
-          MouseDown="HoughCircle_Switch_Click"/>
-                                <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-              Visibility="{Binding _HoughCircle_Detection, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
-          MouseDown="HoughCircle_Switch_Click"/>
-                            </Grid>
+                            <Button Content="Reset MinMax of all sensors" Click="Sensors_ResetMinMax" Margin="5,0" />
 
-                            <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                           MouseDown="Sensors_Clear_Click" ToolTip="Clear all sensors"/>
-
-                            <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
 
                             <TextBlock Text="Sort Sensors :&#x0a;from up to down" VerticalAlignment="Center"/>
 
                             <Image Margin="5" Source="/Images/arrow_down.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
    MouseDown="SortSensors_Up2Down_Click" ToolTip="Save"/>
 
+                            <Rectangle VerticalAlignment="Stretch" Width="1" Margin="2" Stroke="Gray" />
 
-                            <TextBlock Text="Show sensors" VerticalAlignment="Center"/>
-                            <Grid Margin="5">
-                                <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-              Visibility="{Binding _sensors_display, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
-          MouseDown="Sensors_display_Switch_Click"/>
-                                <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-              Visibility="{Binding _sensors_display, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
-          MouseDown="Sensors_display_Switch_Click"/>
-                            </Grid>
+                            <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
 
-                            <Button Content="Reset MinMax of all sensors" Click="Sensors_ResetMinMax" />
 
                         </StackPanel>
 
-                        <!--Hough circles parameters-->
-                        <Grid Grid.Row="1">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Label Grid.Row="0" Grid.Column="0" Content="dp" />
-                            <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="10" Value="{Binding _houghcircle_dp, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding _houghcircle_dp, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
-
-                            <Label Grid.Row="1" Grid.Column="0" Content="param1" />
-                            <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param1, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding _houghcircle_param1, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
-
-                            <Label Grid.Row="2" Grid.Column="0" Content="param2" />
-                            <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="300" Value="{Binding _houghcircle_param2, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding _houghcircle_param2, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" />
-
-                            <Label Grid.Row="3" Grid.Column="0" Content="Rayon min/max" />
-                            <wpftk:RangeSlider Grid.Row="3" Grid.Column="1" Step="1"
-                               LowerValue="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}"
-                               HigherValue="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" 
-                               Minimum="0" Maximum="200"                               
-                               />
-                            <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal">
-                                <Label  Content="{Binding _houghcircle_radius_min, UpdateSourceTrigger=PropertyChanged}" />
-                                <Label  Content=" / " />
-                                <Label  Content="{Binding _houghcircle_radius_max, UpdateSourceTrigger=PropertyChanged}" />
-                            </StackPanel>
-
-                        </Grid>
                     </Grid>
                 </TabItem>
 
@@ -250,53 +304,6 @@
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
-
-                        <!--<Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal">
-
-                            <TextBlock Text="H max :"/>
-                            
-                            
-
-                            -->
-                        <!--<Image Margin="5" Source="/Images/folder.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-  MouseDown="OpenVideoFile_Click" />-->
-
-                        <!--<Grid Margin="5">
-                                <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
-                               MouseDown="btn_play_Click"/>
-                                <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                                   Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
-                               MouseDown="btn_pause_Click"/>
-                            </Grid>
-
-                            <Image Margin="5" Source="/Images/Settings.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="WebCamSettings_Show_Click" ToolTip="Menu : define region of interest" />
-
-                            <Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="DefineROI_Click" ToolTip="Menu : define region of interest" />-->
-                        <!--
-
-                            <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
-
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
-
-                            -->
-                        <!--<Image Margin="5" Source="/Images/window_s_bar.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                       MouseDown="LayoutSaveButton_Click" ToolTip="Save Windows positions"/>-->
-                        <!--
-
-                        </StackPanel>
-                    </Grid>-->
 
                         <Grid Grid.Row="1">
 
@@ -331,31 +338,16 @@
                     </Grid>
                 </TabItem>
             </TabControl>
-            <StackPanel Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
 
+            <StackPanel Grid.Column="1" HorizontalAlignment="Left" Orientation="Horizontal">
                 <Image Margin="5" Source="/Images/window_s_bar.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="LayoutSaveButton_Click" ToolTip="Save Windows positions"/>
-
             </StackPanel>
         </Grid>
 
-        <!--VUES-->
-        <Grid Grid.Row="1" >
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!--Affichage Video/Camera-->
-            <Grid Grid.Column="2" Grid.Row="0" Grid.RowSpan="2">
+        <TabControl Grid.Row="1" SelectedIndex="{Binding _tabindex}" >
+            <TabItem Visibility="Hidden" >
+                <!--Affichage Video/Camera-->
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -375,152 +367,200 @@
 
                     <ListBox Grid.Row="1" x:Name="_lbx_rois"/>
                 </Grid>
-            </Grid>
-            <Grid Grid.Column="2" Grid.Row="2" Grid.RowSpan="3">
-                <ListView x:Name="_lsv_rois" ScrollViewer.VerticalScrollBarVisibility="Visible">
-                    
-                </ListView>
-            </Grid>
+            </TabItem>
 
-            <!--Sensors list-->
-            <Grid Grid.Column="0" Grid.Row="0" Grid.RowSpan="5">
-                <ListView ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors" KeyDown="_roi_sensor_KeyPress"         />
-            </Grid>
-
-            <!--Scans-->
-            <Grid Grid.Column="1" Grid.Row="3">
+            <TabItem Visibility="Hidden">
+                <!--ROI-->
                 <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+
+                    <!--Sensors list-->
+                    <Grid Grid.Column="0" >
+                        <ListView ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors" KeyDown="_roi_sensor_KeyPress"         />
+                    </Grid>
+
+                    <Grid Grid.Column="1" >
+                        <ListView x:Name="_lsv_rois" ScrollViewer.VerticalScrollBarVisibility="Visible">
+
+                        </ListView>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Visibility="Hidden">
+                <Grid Grid.Row="1" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
 
-                        <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                    <!--Sensors list-->
+                    <Grid Grid.Column="0" Grid.Row="0" Grid.RowSpan="5">
+                        <ListView ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors_bis" KeyDown="_roi_sensor_KeyPress"         />
+                    </Grid>
+
+                    <!--Scans-->
+                    <Grid Grid.Column="1" Grid.Row="0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="50"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                                <Image Margin="5" Source="/Images/new.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                            MouseDown="ScansReset_Click" ToolTip="Clear scans"/>
 
 
-                        <TextBlock Text="Store in HMI :" VerticalAlignment="Center"/>
+                                <TextBlock Text="Store in HMI :" VerticalAlignment="Center"/>
 
-                        <Grid Margin="5">
-                            <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                <Grid Margin="5">
+                                    <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
     Visibility="{Binding _store_scans, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
 MouseDown="Store_scans_Switch_Click"/>
-                            <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                    <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
     Visibility="{Binding _store_scans, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
 MouseDown="Store_scans_Switch_Click"/>
-                        </Grid>
+                                </Grid>
 
 
-                        <TextBlock Text="Focus on last :" VerticalAlignment="Center"/>
+                                <TextBlock Text="Focus on last :" VerticalAlignment="Center"/>
 
-                        <Grid Margin="5">
-                            <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                <Grid Margin="5">
+                                    <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
     Visibility="{Binding _scan_focus_last, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
 MouseDown="Scan_focus_last_Switch_Click"/>
-                            <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                    <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
     Visibility="{Binding _scan_focus_last, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
 MouseDown="Scan_focus_last_Switch_Click"/>
-                        </Grid>
+                                </Grid>
 
-                        <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
                        MouseDown="Scan_Save_Click" ToolTip="Save to one image"/>
 
-                    </StackPanel>
+                            </StackPanel>
 
-                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto">
-                        <ListBox ItemsSource="{Binding _scans}" Name="_lbx_scans" SelectedItem="{Binding _scan_last}" >
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                </Style>
-                            </ListBox.ItemContainerStyle>
-                            <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel IsItemsHost="True" />
-                                </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                        </ListBox>
-                    </ScrollViewer>
+                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto">
+                                <ListBox ItemsSource="{Binding _scans}" Name="_lbx_scans" SelectedItem="{Binding _scan_last}" >
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel IsItemsHost="True" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+
+                    <!--Scan live = f(t)-->
+                    <Grid Grid.Column="1" Grid.Row="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="50"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!--Menu scan live-->
+                            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                <Grid Margin="5">
+                                    <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+                             MouseDown="btn_play_Click"/>
+                                    <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+                             MouseDown="btn_pause_Click"/>
+                                </Grid>
+
+                                <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
+
+                                <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
+
+                                <TextBlock Text="Save each mini-scan" VerticalAlignment="Center"/>
+                                <Grid Margin="5">
+                                    <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
+MouseDown="Scan_save_Switch_Click"/>
+                                    <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+MouseDown="Scan_save_Switch_Click"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <Image Grid.Row="1" Height="{Binding _scans_height, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" HorizontalAlignment="Left" 
+                                           Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" 
+                                           Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                        </Grid>
+                    </Grid>
+
                 </Grid>
-            </Grid>
+            </TabItem>
 
-            <!--Scan live = f(t)-->
-            <Grid Grid.Column="1" Grid.Row="2">
+            <TabItem Visibility="Hidden">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="50"/>
+                    <Grid.RowDefinitions >
+                        <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!--Menu scan live-->
-                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                        <Grid Margin="5">
-                            <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
-                             MouseDown="btn_play_Click"/>
-                            <Image Source="/Images/Pause.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                                 Visibility="{Binding _play, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
-                             MouseDown="btn_pause_Click"/>
-                        </Grid>
 
-                        <Image Margin="5" Source="/Images/save2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                       MouseDown="Sensors_Save_Click" ToolTip="Save"/>
+                    <!--Graph 1-->
+                    <Grid Grid.Row="0">
+                        <local:Graph x:Name="_graph1"/>
+                    </Grid>
 
-                        <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-                       MouseDown="Sensors_Load_Click" ToolTip="Load"/>
+                    <!--Graph 2-->
+                    <Grid Grid.Row="1">
+                        <Grid>
+                            <local:Graph_H_ft x:Name="_graph2"/>
 
-                        <TextBlock Text="Save each mini-scan" VerticalAlignment="Center"/>
-                        <Grid Margin="5">
-                            <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
-MouseDown="Scan_save_Switch_Click"/>
-                            <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-    Visibility="{Binding _scan_save, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
-MouseDown="Scan_save_Switch_Click"/>
-                        </Grid>
-                    </StackPanel>
-
-                    <Image Grid.Row="1" Height="{Binding _scans_height, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" HorizontalAlignment="Left" 
-                                           Source="{Binding _image3, UpdateSourceTrigger=PropertyChanged}" 
-                                           Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
-                </Grid>
-            </Grid>
-
-            <!--Graph 1-->
-            <Grid Grid.Column="1" Grid.Row="0">
-                <local:Graph x:Name="_graph1"/>
-            </Grid>
-            
-            <!--Graph 2-->
-            <Grid Grid.Column="1" Grid.Row="1">
-                <Grid>
-                    <local:Graph_H_ft x:Name="_graph2"/>
-
-                    <Grid Margin="5" HorizontalAlignment="Right" VerticalAlignment="Top">
-                        <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                            <Grid Margin="5" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <Image Source="/Images/toggle_off2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
               Visibility="{Binding _Graph_H_ft_enabled, Converter={StaticResource _Converter}, ConverterParameter=Inverted}"
           MouseDown="Graph_H_ft_enabled_Click"/>
-                        <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                                <Image Source="/Images/toggle_on2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
               Visibility="{Binding _Graph_H_ft_enabled, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
           MouseDown="Graph_H_ft_enabled_Click"/>
+                            </Grid>
+                        </Grid>
                     </Grid>
                 </Grid>
-            </Grid>
 
-        </Grid>
+            </TabItem>
+        </TabControl>
+
+
 
 
         <!--<xcad:DockingManager Grid.Row="1" x:Name="_DManager" MinHeight="20" AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="0">
-            --><!--VUES DYNAMIQUES--><!--
+            -->
+        <!--VUES DYNAMIQUES-->
+        <!--
             <xcad:LayoutRoot x:Name="_layoutRoot">
                 <xcad:LayoutPanel x:Name="_layoutPanel" Orientation="Horizontal">
 
                     <xcad:LayoutDocumentPaneGroup x:Name="_Avalon_LayoutDocumentPaneGroup">
                         <xcad:LayoutDocumentPane x:Name="_Avalon_Views">
 
-                            --><!--Affichage Video/Camera--><!--
+                            -->
+        <!--Affichage Video/Camera-->
+        <!--
                             <xcad:LayoutAnchorable ContentId="camera" Title="Camera" CanClose="False" CanHide="True">
 
                                 <Grid>
@@ -545,13 +585,19 @@ MouseDown="Scan_save_Switch_Click"/>
 
                             </xcad:LayoutAnchorable>
 
-                            --><!--Sensors list--><!--
+                            -->
+        <!--Sensors list-->
+        <!--
                             <xcad:LayoutAnchorable ContentId="sensors" Title="Sensors" CanClose="False" CanHide="True">
-                                --><!--Sensor's values--><!--
+                                -->
+        <!--Sensor's values-->
+        <!--
                                 <ListView ItemsSource="{Binding _sensors_uc}" x:Name="lv_sensors" KeyDown="_roi_sensor_KeyPress"         />
                             </xcad:LayoutAnchorable>
 
-                            --><!--Scans--><!--
+                            -->
+        <!--Scans-->
+        <!--
                             <xcad:LayoutAnchorable ContentId="scans" Title="Scans" CanClose="False" CanHide="True">
 
                                 <Grid>
@@ -611,7 +657,9 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
-                            --><!--Scan live = f(t)--><!--
+                            -->
+        <!--Scan live = f(t)-->
+        <!--
                             <xcad:LayoutAnchorable ContentId="scan realtime" Title="Scan = f(t)" CanClose="False" CanHide="True">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -619,7 +667,9 @@ MouseDown="Scan_focus_last_Switch_Click"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    --><!--Menu scan live--><!--
+                                    -->
+        <!--Menu scan live-->
+        <!--
                                     <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                                         <Grid Margin="5">
                                             <Image Source="/Images/Lecture.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
@@ -654,14 +704,18 @@ MouseDown="Scan_save_Switch_Click"/>
 
                             </xcad:LayoutAnchorable>
 
-                            --><!--Graph 1--><!--
+                            -->
+        <!--Graph 1-->
+        <!--
                             <xcad:LayoutAnchorable ContentId="Intensity" Title="I = f(H)" CanClose="False" CanHide="True">
                                 <Grid>
                                     <local:Graph x:Name="_graph1"/>
                                 </Grid>
                             </xcad:LayoutAnchorable>
 
-                            --><!--Graph 2--><!--
+                            -->
+        <!--Graph 2-->
+        <!--
                             <xcad:LayoutAnchorable ContentId="H" Title="H = f(t)" CanClose="False" CanHide="True">
                                 <Grid>
                                     <local:Graph_H_ft x:Name="_graph2"/>
@@ -683,7 +737,7 @@ MouseDown="Scan_save_Switch_Click"/>
                 </xcad:LayoutPanel>
             </xcad:LayoutRoot>
         </xcad:DockingManager>-->
-    
+
     </Grid>
 
 </Window>

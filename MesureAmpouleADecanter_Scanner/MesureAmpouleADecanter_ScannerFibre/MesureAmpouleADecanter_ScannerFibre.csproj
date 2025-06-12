@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\1.png" />
     <None Remove="Images\19764-bubka-Add.png" />
     <None Remove="Images\19775-bubka-Delete.png" />
     <None Remove="Images\arrow_down.png" />
@@ -16,11 +17,13 @@
     <None Remove="Images\arrow_up.png" />
     <None Remove="Images\camera.png" />
     <None Remove="Images\contour.png" />
+    <None Remove="Images\Corbeille.png" />
     <None Remove="Images\crop.png" />
     <None Remove="Images\folder.png" />
     <None Remove="Images\Lecture.png" />
     <None Remove="Images\load.png" />
     <None Remove="Images\load2.png" />
+    <None Remove="Images\magnifier.png" />
     <None Remove="Images\matrice.png" />
     <None Remove="Images\new.png" />
     <None Remove="Images\Pause.png" />
@@ -47,6 +50,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\19764-bubka-Add.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
@@ -68,6 +74,9 @@
     <Resource Include="Images\contour.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\Corbeille.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\crop.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
@@ -81,6 +90,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\load2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\magnifier.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\matrice.png">

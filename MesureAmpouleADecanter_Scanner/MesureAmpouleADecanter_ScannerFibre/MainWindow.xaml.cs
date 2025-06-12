@@ -107,6 +107,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         bool HoughCircle_Detection = false;
 
+        bool _HoughCircle_Detection_Once;
 
         public bool _Graph_H_ft_enabled
         {
@@ -238,7 +239,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
         ObservableCollection<Scan_UC> scans = new ObservableCollection<Scan_UC>();
 
-        public int _scans_height { get => _sensors.Count * 3; }
+        public int _scans_height { get => _sensors.Count * 2; }
 
         public bool _scan_focus_last
         {
@@ -354,6 +355,16 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 OnPropertyChanged();
             }
         }
+
+
+        enum Mode {Undefinied, Camera, VideoFile }
+        Mode mode;
+
+        public bool _mode_camera { 
+            get => 
+                mode == Mode.Camera;
+        }
+
         #endregion
 
         object lock_sensors_uc = new object();
@@ -420,6 +431,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void INITS()
         {
+            _sp_menu_webcam.Visibility = Visibility.Collapsed;
+            _sp_menu_videofile.Visibility = Visibility.Collapsed;
+
             CameraListRefresh_Click(null, null);
 
             lock (lock_cercles)
@@ -619,7 +633,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     if (frame.Empty())
                         break;
 
-                    DateTime t_avant_process = DateTime.Now;
+                    DateTime t0 = DateTime.Now;
 
                     //display
                     Show(frame);
@@ -628,11 +642,14 @@ namespace MesureAmpouleADecanter_ScannerFibre
                     UpdateROIS(frame);
 
                     //attente complémentaire
-                    int process_time_ms = (int)((DateTime.Now - t_avant_process).TotalMilliseconds);
+                    int process_time_ms = (int)((DateTime.Now - t0).TotalMilliseconds);
                     if (process_time_ms < sleepTime_ms)
                         Thread.Sleep(sleepTime_ms - process_time_ms);
                     else
                         Thread.Sleep(1); // attends au moins 1 ms histoire de purger quelques tâches de fond
+
+                    temps_ms[TimeType.Total] = DateTime.Now.Subtract(t0).TotalMilliseconds;
+                    UpdateTitle();
 
                     //si pause & pas fermeture de la fenêtre
                     while (!_play &&
@@ -651,10 +668,49 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                             //process
                             UpdateROIS(frame);
+
+                            UpdateTitle();
+                        }
+
+                        if (_HoughCircle_Detection_Once)
+                        {
+                            //_HoughCircle_Detection_Once = false;
+                            //display
+                            Show(frame);
+
+                            //process
+                            UpdateROIS(frame);
+
+                            UpdateTitle();
                         }
                     }
                 }
             }
+        }
+
+        void UpdateTitle()
+        {
+            string txt = "";
+            foreach (KeyValuePair<TimeType, double> t in temps_ms)
+            {
+                switch (t.Key)
+                {
+                    case TimeType.UpdateROIS:
+                        txt += "UpdateROIS time : " + t.Value.ToString("0.0") + "ms ";
+                        break;
+                    case TimeType.Total:
+                        txt += "Total time : " + t.Value.ToString("0.0") + "ms ";
+                        break;
+                    default:
+                        txt += t.Key.ToString() + " to implement !";
+                        break;
+                }
+            }
+            _title = txt;
+            //Dispatcher.BeginInvoke(() =>
+            //{
+            //    _title = "UpdateROIS " + temps_ms.ToString("0") + "ms " + (1000f / temps_ms).ToString("0.0") + "fps";
+            //});
         }
 
         //void ProcessFrame(Mat frame)
@@ -733,25 +789,25 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 //read next frame
                 capVideo.Read(frame);
 
-                _title = nframe++.ToString();
-
                 //si echec alors on saute la frame
                 if (frame.Empty())
                 {
-                    _title += " frame is Empty !";
+                    _title = "Frame is Empty !";
                     continue;
                 }
+                DateTime t0 = DateTime.Now;
 
                 //display
                 Show(frame);
 
                 UpdateROIS(frame);
 
+                temps_ms[TimeType.Total] = DateTime.Now.Subtract(t0).TotalMilliseconds;
+                UpdateTitle();
+
                 //si pause & pas fermeture de la fenêtre
                 while (!_play && !cancellationToken.IsCancellationRequested)
-                {
                     Thread.Sleep(10);
-                }
             }
         }
 
@@ -768,8 +824,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
                     Mat G = ToGray(roi_frame);
 
-                    if (_HoughCircle_Detection)
+                    if (_HoughCircle_Detection || _HoughCircle_Detection_Once)
                     {
+                        _HoughCircle_Detection_Once = false;
+
                         CircleSegment[] circleSegments = Cv2.HoughCircles(G,
                             method: HoughModes.Gradient,
                             dp: _houghcircle_dp, //1.9 4k vertical
@@ -840,11 +898,17 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 }
             }
             double temps_ms = (DateTime.Now - t).TotalMilliseconds;
-            Dispatcher.BeginInvoke(() =>
-            {
-                _title = temps_ms.ToString();
-            });
+            this.temps_ms[TimeType.UpdateROIS] = temps_ms;
         }
+
+        enum TimeType { UpdateROIS, Total }
+
+        Dictionary<TimeType, double> temps_ms = new Dictionary<TimeType, double>() {
+            { TimeType.UpdateROIS, 0},
+            { TimeType.Total, 0},
+
+        };
+
 
         void SensorsAdd(CircleSegment[] newCircleSegments, Rect roi)
         {
@@ -1357,6 +1421,16 @@ namespace MesureAmpouleADecanter_ScannerFibre
             }
         }
 
+        void NoROI_Click(object sender, MouseButtonEventArgs e)
+        {
+            _rois.Clear();
+            _lbx_rois.Items.Clear();
+            _lsv_rois.Items.Clear();
+
+            Rect full = new Rect(0, 0, capVideo.FrameWidth, capVideo.FrameHeight);
+            ROI_New(full);
+        }
+
         void DefineROI_Click(object sender, MouseButtonEventArgs e)
         {
             Rect? roi = SelectROI();
@@ -1488,6 +1562,10 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 if (e.ChangedButton == MouseButton.Left)
                 {
                     previousNearestSensor?.uc._Selected();
+                    lv_sensors_bis.ScrollIntoView(nearestSensor.uc);
+                    lv_sensors_bis.SelectedItem = nearestSensor.uc;
+                    lv_sensors_bis.Focus();
+
                     lv_sensors.ScrollIntoView(nearestSensor.uc);
                     lv_sensors.SelectedItem = nearestSensor.uc;
                     lv_sensors.Focus();
@@ -1602,6 +1680,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             //sort ?
             if (sensors_to_sorted && all_sensors_are_initialized)
             {
+                sensors_to_sorted = false;
                 Sensor_Sort();
             }
         }
@@ -1616,6 +1695,11 @@ namespace MesureAmpouleADecanter_ScannerFibre
         {
             _HoughCircle_Detection = !_HoughCircle_Detection;
             OnPropertyChanged(nameof(_rois));
+        }
+
+        void HoughCircle_Once_Click(object sender, MouseButtonEventArgs e)
+        {
+            _HoughCircle_Detection_Once = true;
         }
 
         void Graph_H_ft_enabled_Click(object sender, MouseButtonEventArgs e)
@@ -1798,6 +1882,29 @@ namespace MesureAmpouleADecanter_ScannerFibre
         }
 
 
+        void SourceRadioButton_Change(object sender, RoutedEventArgs e)
+        {
+            if (sender == _rb_source_camera)
+            {
+                mode = Mode.Camera;
+                //stop video file
+                VideoStop();
+                _sp_menu_webcam.Visibility = Visibility.Visible;
+                _sp_menu_videofile.Visibility = Visibility.Collapsed;
+            }
+
+
+            if (sender == _rb_source_videofile)
+            {
+                mode = Mode.VideoFile;
+                //stop camera
+                //StopAll();
+                _sp_menu_videofile.Visibility = Visibility.Visible;
+                _sp_menu_webcam.Visibility = Visibility.Collapsed;
+            }
+
+            OnPropertyChanged(nameof(_mode_camera));
+        }
 
 
         #region AVALONDOCK
@@ -1893,28 +2000,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             ////-------------------
         }
 
-        enum Mode { Camera, VideoFile }
-        Mode mode;
-
-        void SourceRadioButton_Change(object sender, RoutedEventArgs e)
-        {
-            if (sender == _rb_source_camera)
-            {
-                mode = Mode.Camera;
-                //stop video file
-                VideoStop();
-            }
-
-
-            if (sender == _rb_source_videofile)
-            {
-                mode = Mode.VideoFile;
-                //stop camera
-                //StopAll();
-            }
-
-
-        }
 
     }
 

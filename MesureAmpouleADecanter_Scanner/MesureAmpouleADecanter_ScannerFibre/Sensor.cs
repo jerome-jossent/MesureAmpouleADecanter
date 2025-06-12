@@ -41,7 +41,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
         [JsonIgnore]
         public bool ON_previous;
 
-        public Scalar couleur { get => ColorFromHSV(255 - (255f / SensorsNextIndex) * (int)numero, 1, 1); }
+        public Scalar couleur { get => (numero==null)?new Scalar(255, 255, 255) : ColorFromHSV(255 - (255f / SensorsNextIndex) * (int)numero, 1, 1); }
         //public Scalar couleur { get => ColorFromHSV(255 - (255 / 160) * (int)numero, 1, 1); }
 
 

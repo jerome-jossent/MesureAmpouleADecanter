@@ -12,7 +12,7 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Image Grid.Column="0" x:Name="_img" 
+        <Image Grid.Column="0" x:Name="_img" Visibility="Visible"
                Source="{Binding _image, UpdateSourceTrigger=PropertyChanged}"
             Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>
 
