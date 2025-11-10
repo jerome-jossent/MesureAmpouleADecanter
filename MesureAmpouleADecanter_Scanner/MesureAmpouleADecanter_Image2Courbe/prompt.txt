@@ -1,0 +1,13 @@
+Je cherche à faire du traitement d'image afin d'en produire une courbe décroissante.
+J'effectue une capture par image de façon temporelle, mais ces images sont des colonnes
+(1pixels par 160pixels) que je concatène pour former une image.
+En X, on a donc l'évolution en fonction du temps et
+en Y on observe (par le biais de la captation en une dimension) une décantation.
+La première image (colonne) présente un ensemble de pixels complètement identique et clairs,
+puis petit à petit (du coup de gauche à droite),
+les pixels se foncent et un front de décantation plus foncé commence à apparaître.
+Ce front au cours du temps forme la courbe que je souhaite produire.
+
+Peux tu me produire un code qui permet à partir d'une telle image,
+de produire un tableau d'environ 30 points (pas de temps fixe)
+avec les mesures de hauteur en pixel, que je convertirai en centimètre.

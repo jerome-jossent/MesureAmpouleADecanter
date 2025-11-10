@@ -79,7 +79,8 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 try
                 {
-                    _image = frame.ToWriteableBitmap();
+                    var temp = frame.ToWriteableBitmap();
+                    _image = temp;
                 }
                 catch (Exception ex)
                 {
