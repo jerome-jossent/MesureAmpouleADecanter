@@ -107,9 +107,13 @@
                                MouseDown="btn_pause_Click"/>
                             </Grid>
 
+                            <Rectangle VerticalAlignment="Stretch" Width="1" Margin="2" Stroke="Gray"
+    Visibility="{Binding _mode_camera, Converter={StaticResource _Converter}, ConverterParameter=Normal}"
+    />
+                            <TextBlock Text="Charger configuration :" VerticalAlignment="Center"/>
 
-                            <!--<Image Margin="5" Source="/Images/crop.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
-   MouseDown="DefineROI_Click" ToolTip="Menu : define region of interest" />-->
+                            <Image Margin="5" Source="/Images/load2.png" Width="30" RenderOptions.BitmapScalingMode="Fant"
+                       MouseDown="VideoFileConfig_Load_Click" ToolTip="Load"/>
 
 
                         </StackPanel>

@@ -87,6 +87,9 @@ namespace MesureAmpouleADecanter_ScannerFibre
             {
                 xys = SortedXY(sensors);
 
+                if (xys.Count() == 0)
+                    return null;
+
                 if (first || xs.Length != sensors.Length)
                 {
                     first = false;

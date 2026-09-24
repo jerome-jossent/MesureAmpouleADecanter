@@ -403,6 +403,14 @@ namespace MesureAmpouleADecanter_ScannerFibre
         Sensor nearestSensor;
         Scan_UC scan_mat_uc;
         #endregion
+        
+        enum TimeType { UpdateROIS, Total }
+
+        Dictionary<TimeType, double> temps_ms = new Dictionary<TimeType, double>() {
+            { TimeType.UpdateROIS, 0},
+            { TimeType.Total, 0},
+
+        };
 
         #region Window
         public MainWindow()
@@ -901,15 +909,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             this.temps_ms[TimeType.UpdateROIS] = temps_ms;
         }
 
-        enum TimeType { UpdateROIS, Total }
-
-        Dictionary<TimeType, double> temps_ms = new Dictionary<TimeType, double>() {
-            { TimeType.UpdateROIS, 0},
-            { TimeType.Total, 0},
-
-        };
-
-
         void SensorsAdd(CircleSegment[] newCircleSegments, Rect roi)
         {
             //pour chaque nouveau cercle
@@ -1259,8 +1258,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         #endregion
 
-
-
         void CameraListRefresh_Click(object sender, RoutedEventArgs e)
         {
             //_sp_webcam_list.Children.Clear();
@@ -1423,12 +1420,16 @@ namespace MesureAmpouleADecanter_ScannerFibre
 
         void NoROI_Click(object sender, MouseButtonEventArgs e)
         {
+            ROI_Clear();
+            Rect full = new Rect(0, 0, capVideo.FrameWidth, capVideo.FrameHeight);
+            ROI_New(full);
+        }
+
+        void ROI_Clear()
+        {
             _rois.Clear();
             _lbx_rois.Items.Clear();
             _lsv_rois.Items.Clear();
-
-            Rect full = new Rect(0, 0, capVideo.FrameWidth, capVideo.FrameHeight);
-            ROI_New(full);
         }
 
         void DefineROI_Click(object sender, MouseButtonEventArgs e)
@@ -1721,7 +1722,7 @@ namespace MesureAmpouleADecanter_ScannerFibre
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.FileName = "Config";
             dialog.DefaultExt = ".cfg";
-            dialog.Filter = "Config (.cfg)|*.cfg";
+            dialog.Filter = "Config|*.cfg";
 
             if (dialog.ShowDialog() == true)
             {
@@ -1760,8 +1761,81 @@ namespace MesureAmpouleADecanter_ScannerFibre
                 }
 
                 //ROIs
-                _rois.Clear();
-                _lbx_rois.Items.Clear();
+                ROI_Clear();
+
+                foreach (Rect roi in config.rois)
+                    ROI_New(roi);
+
+                //Sensors
+                _sensors_uc = new ObservableCollection<Sensor_UC>();
+                _sensors = new ObservableCollection<Sensor>(config.sensors);
+
+                Sensor.SetSensorsOrder(_sensors.Count);
+
+                lock (lock_sensors)
+                    foreach (Sensor sensor in _sensors)
+                    {
+                        sensor.Load();
+                        Sensor_UC sensor_uc = new Sensor_UC();
+                        sensor_uc._spinner_index.Spin += Sensor_UC_spinner_index_Spin;
+                        sensor_uc._btn_Delete.MouseDown += Sensor_UC_DeleteMe;
+                        sensor_uc._Link(sensor);
+                        lock (lock_sensors_uc)
+                            _sensors_uc.Add(sensor_uc);
+                    }
+                Sensor_Sort();
+
+                List<float> Hs = (sensors.Select(x => x.hauteur_mm)).ToList();
+
+                _play = true;
+            }
+        }
+                
+        void VideoFileConfig_Load_Click(object sender, MouseButtonEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.FileName = "Config";
+            dialog.DefaultExt = ".cfg";
+            dialog.Filter = "Config|*.cfg";
+
+            if (dialog.ShowDialog() == true)
+            {
+                string jsonString = File.ReadAllText(dialog.FileName);
+                config = Config.FromJSON(jsonString);
+
+                if (mode == Mode.Camera)
+                {
+                    //caméra présente ?
+                    bool camerapresente = false;
+                    for (int i = 0; i < _cbx_webcam.Items.Count; i++)
+                    {
+                        TextBlock tb = _cbx_webcam.Items[i] as TextBlock;
+                        if (tb.Text == config.webcam_name)
+                        {
+                            camerapresente = true;
+                            webcam_index = i;
+                            webcam = webcams[i];
+                        }
+                    }
+
+                    if (!camerapresente)
+                    {
+                        MessageBox.Show("Caméra demandée non présente :\n" + config.webcam_name);
+                        return;
+                    }
+
+                    CameraSelected();
+
+                    FormatForce();
+
+                    OnPropertyChanged(nameof(_webcam_format));
+
+                    //appliqués les réglages caméra
+                    WebCamParameters_UC._Manager.Set_WebCamConfig(config.webcam_name, config.webcam_parameters);
+                }
+
+                //ROIs
+                ROI_Clear();
 
                 foreach (Rect roi in config.rois)
                     ROI_New(roi);
@@ -1999,8 +2073,6 @@ namespace MesureAmpouleADecanter_ScannerFibre
             //rootPanel.Children.Add(newPane);
             ////-------------------
         }
-
-
     }
 
     #endregion
