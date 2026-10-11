@@ -5,3 +5,7 @@
 /DATA/multicam 03 Calcaire sensibilite fixe
 /MesureAmpouleADecanter/Assets/OpenCVForUnity
 /MesureAmpouleADecanter_Scanner/MesureAmpouleADecanter_Scanner/Bother Photos et Vidéos
+/MesureAmpouleADecanter_Fibre/*.FCBak
+/MesureAmpouleADecanter_Fibre/*.pm5s
+/MesureAmpouleADecanter_Scanner/mecanique/FibreHolder/*.CATPart
+/MesureAmpouleADecanter_Scanner/mecanique/FibreHolder/*.stl
